@@ -2,7 +2,7 @@
 
 import argparse
 import ctypes
-import json
+import getpass
 import os
 from pathlib import Path
 import platform
@@ -955,7 +955,6 @@ def main():
     system = get_os()
 
     if system == "Windows":
-        import ctypes
         if not ctypes.windll.shell32.IsUserAnAdmin():
             print("Requesting Administrator permissions...")
             ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
@@ -1042,21 +1041,6 @@ def main():
             break
         print("Last name cannot be empty.")
 
-    # EXACT COLUMN ORDER:
-    # 1. First Name
-    # 2. Last Name
-    # 3. UUID (Serial Number)
-    # 4. OS Distribution
-    # 5. OS Version Number
-    # 6. A5.10 Password Login Setup
-    # 7. A6.1 Auto Update Turned On
-    # 8. A6.2.1 Please list all internet browsers installed including version number.
-    # 9. A6.2.4 Please list Office Applications being used including version number.
-    # 10. A6.2.3 Please list email clients installed including version numbers.
-    # 11. A6.2.2 Please list the malware/anti-virus software you are using (including version)
-    # 12. A8.3 Is your anti-malware/anti-virus software setup to scan websites?
-    # 13. A4.1 Do you have a firewall enabled on your laptop?
-    # 14. A7.4 Have you restricted your laptop to admin privilages (including firewall changes) to a different account/password?
     row_values = [
         first_name,
         last_name,
@@ -1081,9 +1065,9 @@ def main():
     print("  COPY & PASTE INTO GOOGLE SHEETS")
     print("=" * 60)
     if copied:
-        print("Done! Your row has been automatically copied to your clipboard.")
+        print("Done! Your row has been automatically copied to your clipboard. If it didn't work, copy the text below (not the dashes) and paste into the furthest left cell")
     else:
-        print("Notice: Could not access system clipboard automatically.")
+        print("Notice: Could not access system clipboard automatically. Copy the text below and paste into the furthest left cell")
 
     print("\nClick on the FURTHEST LEFT cell (Column A / First Name) of the")
     print("NEWEST AVAILABLE ROW in the spreadsheet, then press Ctrl+V (or Cmd+V on Mac):\n")
