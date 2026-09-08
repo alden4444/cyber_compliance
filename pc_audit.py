@@ -2,7 +2,6 @@
 
 import argparse
 import ctypes
-import getpass
 import json
 import os
 from pathlib import Path
@@ -13,7 +12,6 @@ import shutil
 import subprocess
 import sys
 import time
-import urllib.request
 import webbrowser
 
 try:
@@ -26,7 +24,6 @@ try:
 except ImportError:
     pwd = None
 
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbysGXrmHrs8igDCIORukTCxJdTEObnArLHNaVbS4v8iWm6xFW2QVzMw20-6kQiLsgup/exec"
 _APT_BASE = ["env", "DEBIAN_FRONTEND=noninteractive", "NEEDRESTART_MODE=a"]
 
 
@@ -56,6 +53,42 @@ def log_warning(message):
 def log_info(message):
     print(f"   {message}", flush=True)
     delay(0.3)
+
+
+def copy_to_clipboard(text):
+    if shutil.which("pbcopy"):
+        try:
+            p = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE, close_fds=True)
+            p.communicate(input=text.encode("utf-8"))
+            return True
+        except Exception:
+            pass
+
+    if shutil.which("wl-copy"):
+        try:
+            p = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, close_fds=True)
+            p.communicate(input=text.encode("utf-8"))
+            return True
+        except Exception:
+            pass
+
+    if shutil.which("xclip"):
+        try:
+            p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, close_fds=True)
+            p.communicate(input=text.encode("utf-8"))
+            return True
+        except Exception:
+            pass
+
+    if platform.system().lower() == "windows":
+        try:
+            p = subprocess.Popen(["clip"], stdin=subprocess.PIPE, shell=True, close_fds=True)
+            p.communicate(input=text.encode("utf-8"))
+            return True
+        except Exception:
+            pass
+
+    return False
 
 
 def get_real_home():
@@ -731,37 +764,50 @@ def detect_web_scanning(system, home):
     return False
 
 
-def get_hardware_uuid(system):
+def is_dummy_identifier(val):
+    if not val:
+        return True
+    low = val.lower().strip()
+    bad_tokens = [
+        "none", "denied", "default", "o.e.m", "to be filled", "chassis",
+        "00000000", "12345678", "unknown", "system serial number",
+        "03000200-0400-0500-0006-000700080009"
+    ]
+    return any(b in low for b in bad_tokens)
+
+
+def get_hardware_serial(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
-        for sys_path in ["/sys/class/dmi/id/product_uuid", "/sys/class/dmi/id/product_serial"]:
+        for sys_path in ["/sys/class/dmi/id/product_serial", "/sys/class/dmi/id/board_serial", "/sys/class/dmi/id/chassis_serial"]:
             try:
                 p = Path(sys_path)
                 if p.is_file():
                     val = p.read_text(errors="ignore").strip()
-                    if val and not any(bad in val.lower() for bad in ["none", "denied", "default", "o.e.m", "00000000"]):
+                    if not is_dummy_identifier(val):
                         return val
             except Exception:
                 pass
 
         if shutil.which("dmidecode"):
-            cmd = ["dmidecode", "-s", "system-uuid"]
-            if hasattr(os, "geteuid") and os.geteuid() != 0 and shutil.which("sudo"):
-                cmd = ["sudo", "-n"] + cmd
-            try:
-                out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL, timeout=3).strip()
-                if out and not any(bad in out.lower() for bad in ["none", "denied", "default", "o.e.m", "00000000"]):
-                    return out
-            except Exception:
-                pass
-
-        for mid in [Path("/etc/machine-id"), Path("/var/lib/dbus/machine-id")]:
-            if mid.is_file():
+            for flag in ["system-serial-number", "baseboard-serial-number"]:
+                cmd = ["dmidecode", "-s", flag]
+                if hasattr(os, "geteuid") and os.geteuid() != 0 and shutil.which("sudo"):
+                    cmd = ["sudo", "-n"] + cmd
                 try:
-                    val = mid.read_text(errors="ignore").strip()
-                    if val:
-                        return val
+                    out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL, timeout=3).strip()
+                    if not is_dummy_identifier(out):
+                        return out
                 except Exception:
                     pass
+
+        try:
+            p_uuid = Path("/sys/class/dmi/id/product_uuid")
+            if p_uuid.is_file():
+                val = p_uuid.read_text(errors="ignore").strip()
+                if not is_dummy_identifier(val):
+                    return val
+        except Exception:
+            pass
 
         return platform.node() or "Unknown"
 
@@ -769,17 +815,15 @@ def get_hardware_uuid(system):
         try:
             raw = subprocess.check_output(["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"], text=True, stderr=subprocess.DEVNULL, timeout=5)
             match = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]+)"', raw)
-            if match:
+            if match and not is_dummy_identifier(match.group(1)):
                 return match.group(1)
-            match_uuid = re.search(r'"IOPlatformUUID"\s*=\s*"([^"]+)"', raw)
-            if match_uuid:
-                return match_uuid.group(1)
         except Exception:
             pass
+
         try:
             sp = subprocess.check_output(["system_profiler", "SPHardwareDataType"], text=True, stderr=subprocess.DEVNULL, timeout=5)
             match = re.search(r"Serial Number \([^)]+\):\s*(\S+)", sp)
-            if match:
+            if match and not is_dummy_identifier(match.group(1)):
                 return match.group(1)
         except Exception:
             pass
@@ -787,10 +831,14 @@ def get_hardware_uuid(system):
 
     elif system == "Windows":
         res = _run_powershell("(Get-CimInstance Win32_BIOS).SerialNumber", timeout=5)
-        if res and res.lower() != "to be filled by o.e.m.":
+        if not is_dummy_identifier(res):
+            return res
+        res = _run_powershell("(Get-CimInstance Win32_BaseBoard).SerialNumber", timeout=5)
+        if not is_dummy_identifier(res):
             return res
         res = _run_powershell("(Get-CimInstance Win32_ComputerSystemProduct).UUID", timeout=5)
-        return res if res else "Unknown"
+        if not is_dummy_identifier(res):
+            return res
 
     return "Unknown"
 
@@ -849,7 +897,7 @@ def run_audit(system):
         "browsers": "None detected",
         "email_apps": "N/A (Web only)",
         "office_apps": "Google Workspace",
-        "uuid": get_hardware_uuid(system),
+        "uuid": get_hardware_serial(system),
         "os_version": get_os_version(system),
         "anti_virus": detect_antivirus(system),
         "web_scanning": "Yes" if detect_web_scanning(system, home) else "No",
@@ -874,33 +922,32 @@ def print_summary_table(system, audit_data):
     print(f"      COMPLIANCE CHECK SUMMARY ({system.upper()})")
     print("=" * 54)
     labels = [
-        ("OS", audit_data.get("os_distro")),
-        ("Version", audit_data.get("os_version")),
-        ("Device UUID/Serial", audit_data.get("uuid")),
-        ("Firewall", audit_data.get("firewall")),
-        ("Anti-Virus", audit_data.get("anti_virus")),
-        ("Web Threat Scanning", audit_data.get("web_scanning")),
-        ("Privilege Separation", audit_data.get("admin_separated")),
-        ("Auto Updates", audit_data.get("auto_updates")),
-        ("Browsers", audit_data.get("browsers")),
-        ("Office Apps", audit_data.get("office_apps")),
-        ("Email Apps", audit_data.get("email_apps")),
-        ("Legacy Apps Removed", audit_data.get("unsupported_removed")),
+        ("UUID (Serial Number)", audit_data.get("uuid")),
+        ("OS Distribution", audit_data.get("os_distro")),
+        ("OS Version Number", audit_data.get("os_version")),
+        ("A5.10 Password Login", "Yes"),
+        ("A6.1 Auto Update", audit_data.get("auto_updates")),
+        ("A6.2.1 Browsers", audit_data.get("browsers")),
+        ("A6.2.4 Office Apps", audit_data.get("office_apps")),
+        ("A6.2.3 Email Apps", audit_data.get("email_apps")),
+        ("A6.2.2 Anti-Virus", audit_data.get("anti_virus")),
+        ("A8.3 Web Threat Scanning", audit_data.get("web_scanning")),
+        ("A4.1 Host Firewall", audit_data.get("firewall")),
+        ("A7.4 Admin Restricted", audit_data.get("admin_separated")),
     ]
     for label, val in labels:
         status_tag = ""
-        if label in ["Firewall", "Web Threat Scanning", "Privilege Separation"]:
+        if label in ["A4.1 Host Firewall", "A8.3 Web Threat Scanning", "A7.4 Admin Restricted"]:
             status_tag = " [OK]" if val == "Yes" else " [FAIL]"
-        elif label == "Anti-Virus":
+        elif label == "A6.2.2 Anti-Virus":
             status_tag = " [OK]" if val not in ["None", "Unknown"] else " [FAIL]"
-        print(f"{label.ljust(22)}: {val}{status_tag}")
+        print(f"{label.ljust(26)}: {val}{status_tag}")
     print("=" * 54 + "\n")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--audit-only", "--test", action="store_true")
-    parser.add_argument("--submit", action="store_true")
     parser.add_argument("--delay", action="store_true")
     parser.add_argument("--fast", action="store_true")
     args = parser.parse_args()
@@ -920,12 +967,12 @@ def main():
     print(f"      Device Compliance Audit ({system})")
     print("=" * 54)
 
-    is_automated = (not args.submit and (os.environ.get("CI") == "true" or not sys.stdin.isatty()))
+    is_automated = (os.environ.get("CI") == "true" or not sys.stdin.isatty())
 
     log_step("Checking system identification")
-    uuid_val = get_hardware_uuid(system)
+    uuid_val = get_hardware_serial(system)
     os_ver = get_os_version(system)
-    log_success(f"ID: {uuid_val}")
+    log_success(f"Serial Number: {uuid_val}")
     log_success(f"OS: {system} {os_ver}")
 
     log_step("Checking firewall")
@@ -995,41 +1042,54 @@ def main():
             break
         print("Last name cannot be empty.")
 
+    # EXACT COLUMN ORDER:
+    # 1. First Name
+    # 2. Last Name
+    # 3. UUID (Serial Number)
+    # 4. OS Distribution
+    # 5. OS Version Number
+    # 6. A5.10 Password Login Setup
+    # 7. A6.1 Auto Update Turned On
+    # 8. A6.2.1 Please list all internet browsers installed including version number.
+    # 9. A6.2.4 Please list Office Applications being used including version number.
+    # 10. A6.2.3 Please list email clients installed including version numbers.
+    # 11. A6.2.2 Please list the malware/anti-virus software you are using (including version)
+    # 12. A8.3 Is your anti-malware/anti-virus software setup to scan websites?
+    # 13. A4.1 Do you have a firewall enabled on your laptop?
+    # 14. A7.4 Have you restricted your laptop to admin privilages (including firewall changes) to a different account/password?
     row_values = [
         first_name,
         last_name,
         final.get("uuid", "Unknown"),
         final.get("os_distro", "Unknown"),
         final.get("os_version", "Unknown"),
+        "Yes",
         final.get("auto_updates", "Yes"),
-        final.get("office_apps", "Google Workspace"),
         final.get("browsers", "None detected"),
+        final.get("office_apps", "Google Workspace"),
         final.get("email_apps", "N/A (Web only)"),
         final.get("anti_virus", "None"),
         final.get("web_scanning", "No"),
         final.get("firewall", "No"),
-        final.get("unsupported_removed", "Yes"),
         final.get("admin_separated", "No"),
     ]
 
-    print("\nUploading results...")
-    delay(0.6)
-    try:
-        payload = json.dumps({"row": row_values}).encode("utf-8")
-        req = urllib.request.Request(
-            WEBHOOK_URL,
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            if resp.status == 200:
-                print("Done! Recorded in tracking sheet.\n")
-            else:
-                print(f"HTTP error {resp.status} sending to sheet. Notify IT.")
-    except Exception as e:
-        print(f"Network error: {e}")
-        print("Fallback tab-delimited row:")
-        print("\t".join(row_values))
+    tsv_line = "\t".join(row_values)
+    copied = copy_to_clipboard(tsv_line)
+
+    print("\n" + "=" * 60)
+    print("  COPY & PASTE INTO GOOGLE SHEETS")
+    print("=" * 60)
+    if copied:
+        print("Done! Your row has been automatically copied to your clipboard.")
+    else:
+        print("Notice: Could not access system clipboard automatically.")
+
+    print("\nClick on the FURTHEST LEFT cell (Column A / First Name) of the")
+    print("NEWEST AVAILABLE ROW in the spreadsheet, then press Ctrl+V (or Cmd+V on Mac):\n")
+    print("------------------------------------------------------------")
+    print(tsv_line)
+    print("------------------------------------------------------------\n")
 
 
 if __name__ == "__main__":
