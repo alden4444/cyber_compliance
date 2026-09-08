@@ -252,11 +252,28 @@ def check_windows_firewall():
     return res == "0"
 
 
-def enforce_firewall(system):
+def enforce_firewall(system, interactive=True):
     if system in ["Arch", "Ubuntu", "Linux"]:
         if ufw_is_correctly_configured():
             log_success("Firewall active and rules set.")
             return True
+
+        if interactive:
+            print("\n    Your firewall is currently inactive or not configured with baseline rules.")
+            ans = input("    Would you like the script to configure UFW automatically? [Y/n]: ").strip().lower()
+            if ans in ["n", "no"]:
+                print("\n    Manual configuration instructions for Linux:")
+                print("    1. Install UFW:")
+                print("       sudo pacman -S ufw        (Arch)")
+                print("       sudo apt install ufw      (Ubuntu/Debian)")
+                print("    2. Allow SSH (recommended before enabling):")
+                print("       sudo ufw allow 22/tcp")
+                print("    3. Set default policies and enable:")
+                print("       sudo ufw default deny incoming")
+                print("       sudo ufw default allow outgoing")
+                print("       sudo ufw enable")
+                input("\n    Press [Enter] once configured manually...")
+                return ufw_is_correctly_configured()
 
         log_info("Setting up UFW rules...")
         disable_competing_linux_firewalls()
@@ -296,6 +313,17 @@ def enforce_firewall(system):
             log_success("macOS firewall active.")
             return True
 
+        if interactive:
+            print("\n    Your macOS Application Firewall is currently disabled.")
+            ans = input("    Would you like the script to enable it automatically? [Y/n]: ").strip().lower()
+            if ans in ["n", "no"]:
+                print("\n    Manual configuration instructions for macOS:")
+                print("    1. Open System Settings.")
+                print("    2. Navigate to Network > Firewall.")
+                print("    3. Toggle the Firewall to On.")
+                input("\n    Press [Enter] once enabled manually...")
+                return check_mac_firewall()
+
         log_info("Enabling macOS firewall...")
         sudo_prefix = [] if (hasattr(os, "geteuid") and os.geteuid() == 0) else ["sudo"]
         fw_bin = "/usr/libexec/ApplicationFirewall/socketfilterfw"
@@ -314,6 +342,17 @@ def enforce_firewall(system):
             log_success("Windows Firewall active across all profiles.")
             return True
 
+        if interactive:
+            print("\n    Your Windows Firewall is currently disabled on one or more network profiles.")
+            ans = input("    Would you like the script to enable it automatically? [Y/n]: ").strip().lower()
+            if ans in ["n", "no"]:
+                print("\n    Manual configuration instructions for Windows:")
+                print("    1. Open Windows Security.")
+                print("    2. Navigate to Firewall & network protection.")
+                print("    3. Ensure Domain network, Private network, and Public network are all On.")
+                input("\n    Press [Enter] once enabled manually...")
+                return check_windows_firewall()
+
         log_info("Enabling Windows Firewall...")
         cmd = "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True -DefaultInboundAction Block -DefaultOutboundAction Allow"
         _run_powershell(cmd, timeout=20)
@@ -331,6 +370,7 @@ def enforce_firewall(system):
             return False
 
     return False
+
 
 def detect_antivirus(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
@@ -470,63 +510,14 @@ def check_admin_separated(system):
 
 def setup_admin_separation(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
-        dropin = Path("/etc/sudoers.d/cyber_essentials_targetpw")
-        if dropin.exists():
-            return True
-
-        print("\n    To isolate root elevation, sudo needs to require the root password")
-        print("    rather than your login account password.\n")
-
-        if not sys.stdin.isatty():
-            log_info("Non-interactive session: skipping root password prompt.")
-            return False
-
-        print("    Enter a dedicated root/admin password when prompted:")
-        cmd = ["passwd", "root"] if (hasattr(os, "geteuid") and os.geteuid() == 0) else ["sudo", "passwd", "root"]
-        set_pw = subprocess.run(cmd)
-        if set_pw.returncode != 0:
-            log_warning("Root password was not set.")
-            return False
-
-        admin_rules = []
-        if grp:
-            all_system_groups = {g.gr_name for g in grp.getgrall()}
-            if "sudo" in all_system_groups:
-                admin_rules.append("%sudo ALL=(ALL:ALL) ALL")
-            if "wheel" in all_system_groups:
-                admin_rules.append("%wheel ALL=(ALL:ALL) ALL")
-
-        if not admin_rules:
-            admin_rules = ["ALL ALL=(ALL:ALL) ALL"]
-
-        rule = (
-            "Defaults targetpw\n"
-            "Defaults timestamp_timeout=0\n"
-            + "\n".join(admin_rules) + "\n"
-        )
-
-        temp_file = Path("/tmp/cyber_essentials_targetpw")
-        try:
-            temp_file.write_text(rule)
-            sudo_prefix = [] if (hasattr(os, "geteuid") and os.geteuid() == 0) else ["sudo"]
-            check = subprocess.run(sudo_prefix + ["visudo", "-cf", str(temp_file)],
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if check.returncode == 0:
-                if hasattr(os, "geteuid") and os.geteuid() == 0:
-                    shutil.copy(temp_file, dropin)
-                    dropin.chmod(0o440)
-                else:
-                    subprocess.run(["sudo", "cp", str(temp_file), str(dropin)], check=True)
-                    subprocess.run(["sudo", "chmod", "0440", str(dropin)], check=True)
-                log_success("Root password elevation configured.")
-                return True
-            else:
-                log_warning("visudo syntax check failed; reverted.")
-        except Exception as e:
-            log_warning(f"Failed to configure sudoers: {e}")
-        finally:
-            temp_file.unlink(missing_ok=True)
-        return False
+        print("\n    To separate everyday use from administrative tasks:")
+        print("    1. Create a dedicated admin account or set a root password:")
+        print("       sudo passwd root")
+        print("    2. Require the root password for sudo (or remove your daily account from sudo/wheel):")
+        print("       echo 'Defaults targetpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw")
+        print("       sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw")
+        input("\n    Press [Enter] once configured...")
+        return True
 
     elif system == "macOS":
         print("\n    Standard user account separation required:")
@@ -938,7 +929,7 @@ def main():
     log_success(f"OS: {system} {os_ver}")
 
     log_step("Checking firewall")
-    enforce_firewall(system)
+    enforce_firewall(system, interactive=(not is_automated and not args.audit_only))
 
     log_step("Checking anti-virus")
     fix_antivirus_background(system)
@@ -996,11 +987,13 @@ def main():
         first_name = input("First Name: ").strip()
         if first_name:
             break
+        print("First name cannot be empty.")
 
     while True:
-        last_name = input("Last Name: ").strip()
+        last_name = input("Last Name : ").strip()
         if last_name:
             break
+        print("Last name cannot be empty.")
 
     row_values = [
         first_name,
