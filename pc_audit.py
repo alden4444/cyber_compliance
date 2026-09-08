@@ -253,6 +253,8 @@ def check_windows_firewall():
 
 
 def enforce_firewall(system):
+    if system in ["Arch", "Ubuntu", "Linux"]:
+        if ufw_is_correctly_configured():
             log_success("Firewall active and rules set.")
             return True
 
@@ -268,6 +270,9 @@ def enforce_firewall(system):
                 subprocess.run(sudo_prefix + _APT_BASE + ["apt", "install", "-y", "ufw"], check=False)
             elif system == "Arch" and shutil.which("pacman"):
                 subprocess.run(sudo_prefix + ["pacman", "-S", "--noconfirm", "ufw"], check=False)
+                subprocess.run(sudo_prefix + ["systemctl", "enable", "--now", "ufw"], check=False)
+
+        if not shutil.which("ufw"):
             print("    Please install it manually: sudo pacman -S ufw (Arch) or sudo apt install ufw (Ubuntu)")
             return False
 
@@ -326,7 +331,6 @@ def enforce_firewall(system):
             return False
 
     return False
-
 
 def detect_antivirus(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
