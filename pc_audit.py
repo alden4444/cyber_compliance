@@ -253,8 +253,6 @@ def check_windows_firewall():
 
 
 def enforce_firewall(system):
-    if system in ["Arch", "Ubuntu", "Linux"]:
-        if ufw_is_correctly_configured():
             log_success("Firewall active and rules set.")
             return True
 
@@ -270,10 +268,6 @@ def enforce_firewall(system):
                 subprocess.run(sudo_prefix + _APT_BASE + ["apt", "install", "-y", "ufw"], check=False)
             elif system == "Arch" and shutil.which("pacman"):
                 subprocess.run(sudo_prefix + ["pacman", "-S", "--noconfirm", "ufw"], check=False)
-                subprocess.run(sudo_prefix + ["systemctl", "enable", "--now", "ufw"], check=False)
-
-        if not shutil.which("ufw"):
-            log_warning("Failed to install UFW.")
             print("    Please install it manually: sudo pacman -S ufw (Arch) or sudo apt install ufw (Ubuntu)")
             return False
 
@@ -1034,7 +1028,7 @@ def main():
             if resp.status == 200:
                 print("Done! Recorded in tracking sheet.\n")
             else:
-                print(f"HTTP error {resp.status} sending to sheet. Notify John Pratt.")
+                print(f"HTTP error {resp.status} sending to sheet. Notify IT.")
     except Exception as e:
         print(f"Network error: {e}")
         print("Fallback tab-delimited row:")
