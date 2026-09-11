@@ -7,9 +7,6 @@ import subprocess
 import time
 import urllib.request
 
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbysGXrmHrs8igDCIORukTCxJdTEObnArLHNaVbS4v8iWm6xFW2QVzMw20-6kQiLsgup/exec"
-
-
 def get_data():
     data = {
         "node": platform.node(),
@@ -132,51 +129,6 @@ def check_default_passwords():
     except Exception:
         return "Unknown"
 
-
-def log_to_sheet(report):
-    ports_summary = ", ".join(
-        [f"{p['proto']}/{p['port']} ({'exposed' if p['exposed'] else 'local'})" for p in report["open_ports"]]
-    ) or "None"
-
-    iface_summary = ", ".join(
-        [f"{i['name']} ({', '.join(i['ips']) if i['ips'] else 'no ip'})" for i in report["interfaces"]]
-    )
-
-    row_values = [
-        report["identity"].get("node", "Unknown"),
-        report["identity"].get("machine_id", "Unknown"),
-        report["identity"].get("distro", "Unknown"),
-        report["identity"].get("release", "Unknown"),
-        iface_summary,
-        ports_summary,
-        report.get("firewall", "inactive"),
-        report.get("os_patch_status", "Unknown"),
-        report.get("default_passwords", "Unknown")
-    ]
-
-    payload = json.dumps({
-        "target": "Pathfinders",
-        "row": row_values
-    }).encode("utf-8")
-
-    req = urllib.request.Request(
-        WEBHOOK_URL,
-        data=payload,
-        headers={"Content-Type": "application/json"}
-    )
-
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            body = resp.read().decode("utf-8").strip()
-            print(f"Response: {body}")
-            if body == "SUCCESS":
-                print("Results logged to sheet.")
-            else:
-                print(f"Warning: Script failed with message: {body}")
-    except Exception as e:
-        print(f"Failed to post to sheet: {e}")
-
-
 def main():
     report = {
         "identity": get_data(),
@@ -187,8 +139,6 @@ def main():
         "default_passwords": check_default_passwords()
     }
     print(json.dumps(report, indent=2))
-    log_to_sheet(report)
-
 
 if __name__ == "__main__":
     main()
