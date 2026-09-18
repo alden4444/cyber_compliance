@@ -482,53 +482,33 @@ def check_admin_separated(system):
     return "No"
 
 
-def setup_admin_separation(system):
-    if system in ["Ubuntu", "Arch", "Linux"]:
-        dropin = Path("/etc/sudoers.d/cyber_essentials_targetpw")
-        if check_admin_separated(system) == "Yes":
-            return True
-
-        rule = "Defaults rootpw\n"
-        temp_file = Path("/tmp/cyber_essentials_targetpw")
-        try:
-            temp_file.write_text(rule)
-            sudo_prefix = [] if (hasattr(os, "geteuid") and os.geteuid() == 0) else ["sudo"]
-            check = subprocess.run(
-                sudo_prefix + ["visudo", "-cf", str(temp_file)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            if check.returncode == 0:
-                if hasattr(os, "geteuid") and os.geteuid() == 0:
-                    shutil.copy(temp_file, dropin)
-                    dropin.chmod(0o440)
-                else:
-                    subprocess.run(["sudo", "cp", str(temp_file), str(dropin)], check=True)
-                    subprocess.run(["sudo", "chmod", "0440", str(dropin)], check=True)
-                log_success("Configured sudo to require separate root/admin password.")
-                return True
-            else:
-                log_warning("visudo syntax check failed; could not configure sudo.")
-        except Exception as e:
-            log_warning(f"Failed to configure sudo: {e}")
-        finally:
-            temp_file.unlink(missing_ok=True)
-        return False
-
-    return False
-
-
 def instruct_admin_separation(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
-        print("\n    Separate Sudo Authentication Guidance:")
-        print("    Require root/admin password for all sudo commands:")
-        print("       echo 'Defaults rootpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw")
-        print("       sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw")
+        print("\n    Admin Privilege Separation Guidance (Linux):")
+        print("    Cyber Essentials requires daily work to be isolated from root/admin accounts.")
+        print("    You can configure this manually using either method:")
+        print("\n    Method 1: Separate Root Password (recommended for single-user machines):")
+        print("      1. Ensure a distinct root password is set:")
+        print("         sudo passwd root")
+        print("      2. Configure sudo to prompt for the root password:")
+        print("         echo 'Defaults rootpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw")
+        print("         sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw")
+        print("\n    Method 2: Dedicated Administrator Account:")
+        if system == "Ubuntu":
+            print("      1. Create a separate administrator (e.g., admin-user):")
+            print("         sudo adduser <admin-user> && sudo adduser <admin-user> sudo")
+            print("      2. Remove standard daily user from the sudo group:")
+            print("         sudo deluser <current-user> sudo")
+        else:
+            print("      1. Create a separate administrator (e.g., admin-user):")
+            print("         sudo useradd -m -G wheel <admin-user> && sudo passwd <admin-user>")
+            print("      2. Remove standard daily user from the wheel group:")
+            print("         sudo gpasswd -d <current-user> wheel")
         input("\n    Press [Enter] once configured...")
         return True
 
     if system == "macOS":
-        print("\n    Standard User Guidance:")
+        print("\n    Standard User Guidance (macOS):")
         print("    1. Open System Settings -> Users & Groups")
         print("    2. Create a dedicated Administrator account")
         print("    3. Demote your daily account to Standard")
@@ -537,7 +517,7 @@ def instruct_admin_separation(system):
         return True
 
     if system == "Windows":
-        print("\n    Standard User Guidance:")
+        print("\n    Standard User Guidance (Windows):")
         print("    1. Open Settings -> Accounts -> Other users")
         print("    2. Create an admin account and add it to the Administrators group")
         print("    3. Change your daily account type to Standard User")
@@ -1139,13 +1119,8 @@ def main():
     if admin_sep != "Yes":
         log_warning("Daily user account does not have isolated root/admin privilege boundaries.")
         if not is_automated and not args.audit_only:
-            if system in ["Ubuntu", "Arch", "Linux"]:
-                if setup_admin_separation(system):
-                    admin_sep = check_admin_separated(system)
-                else:
-                    instruct_admin_separation(system)
-            else:
-                instruct_admin_separation(system)
+            instruct_admin_separation(system)
+            admin_sep = check_admin_separated(system)
     else:
         log_success("Privilege separation confirmed.")
 
