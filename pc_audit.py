@@ -3,6 +3,7 @@
 import argparse
 import ctypes
 import getpass
+import json
 import os
 from pathlib import Path
 import platform
@@ -200,7 +201,52 @@ def get_binary_version(binary_name):
                 return version_match.group(1)
         except Exception:
             pass
+        try:
+            if shutil.which("dpkg-query"):
+                dpkg_out = subprocess.check_output(["dpkg-query", "-W", "-f=${Version}", binary_name], text=True, stderr=subprocess.DEVNULL, timeout=3)
+                m = re.search(r"(\d+(?:\.\d+)+)", dpkg_out)
+                if m:
+                    return m.group(1)
+            elif shutil.which("pacman"):
+                pac_out = subprocess.check_output(["pacman", "-Q", binary_name], text=True, stderr=subprocess.DEVNULL, timeout=3)
+                m = re.search(r"(\d+(?:\.\d+)+)", pac_out)
+                if m:
+                    return m.group(1)
+            elif shutil.which("rpm"):
+                rpm_out = subprocess.check_output(["rpm", "-q", "--queryformat", "%{VERSION}", binary_name], text=True, stderr=subprocess.DEVNULL, timeout=3)
+                m = re.search(r"(\d+(?:\.\d+)+)", rpm_out)
+                if m:
+                    return m.group(1)
+        except Exception:
+            pass
     return None
+
+
+def get_flatpak_version(app_id):
+    if shutil.which("flatpak"):
+        try:
+            output = subprocess.check_output(["flatpak", "info", app_id], text=True, stderr=subprocess.DEVNULL, timeout=5)
+            match = re.search(r"Version:\s*(\S+)", output)
+            if match:
+                return match.group(1)
+        except Exception:
+            pass
+    return None
+
+
+def get_snap_version(snap_name):
+    if shutil.which("snap"):
+        try:
+            output = subprocess.check_output(["snap", "list", snap_name], text=True, stderr=subprocess.DEVNULL, timeout=5)
+            lines = output.strip().splitlines()
+            if len(lines) > 1:
+                parts = lines[1].split()
+                if len(parts) >= 2:
+                    return parts[1]
+        except Exception:
+            pass
+    return None
+
 
 
 def ufw_is_correctly_configured():
@@ -643,6 +689,175 @@ def detect_browsers(system, home):
     return ", ".join(detected) if detected else "None detected"
 
 
+def detect_office_apps(system, home):
+    detected = []
+
+    if system in ["Ubuntu", "Arch", "Linux"]:
+        linux_office_apps = [
+            ("LibreOffice", ["libreoffice", "soffice"]),
+            ("OpenOffice", ["openoffice"]),
+            ("ONLYOFFICE", ["onlyoffice-desktopeditors", "desktopeditors"]),
+            ("WPS Office", ["wps", "et", "wpp"]),
+            ("AbiWord", ["abiword"]),
+            ("Gnumeric", ["gnumeric"]),
+            ("Calligra", ["calligrawords", "calligrasheets"]),
+        ]
+        for name, binaries in linux_office_apps:
+            for binary in binaries:
+                version = get_binary_version(binary)
+                if version:
+                    detected.append(f"{name} {version}")
+                    break
+
+        seen_names = {item.split()[0] for item in detected}
+        if "LibreOffice" not in seen_names:
+            lo_ver = get_flatpak_version("org.libreoffice.LibreOffice") or get_snap_version("libreoffice")
+            if lo_ver:
+                detected.append(f"LibreOffice {lo_ver}")
+        if "ONLYOFFICE" not in seen_names:
+            oo_ver = get_flatpak_version("org.onlyoffice.desktopeditors") or get_snap_version("onlyoffice-desktopeditors")
+            if oo_ver:
+                detected.append(f"ONLYOFFICE {oo_ver}")
+        if "WPS" not in seen_names:
+            wps_ver = get_flatpak_version("com.wps.Office") or get_snap_version("wps-office")
+            if wps_ver:
+                detected.append(f"WPS Office {wps_ver}")
+
+    elif system == "macOS":
+        applications = [
+            ("Microsoft Excel", Path("/Applications/Microsoft Excel.app")),
+            ("Microsoft Word", Path("/Applications/Microsoft Word.app")),
+            ("Microsoft PowerPoint", Path("/Applications/Microsoft PowerPoint.app")),
+            ("Microsoft OneNote", Path("/Applications/Microsoft OneNote.app")),
+            ("LibreOffice", Path("/Applications/LibreOffice.app")),
+            ("OpenOffice", Path("/Applications/OpenOffice.app")),
+            ("Apache OpenOffice", Path("/Applications/Apache OpenOffice.app")),
+            ("Pages", Path("/Applications/Pages.app")),
+            ("Numbers", Path("/Applications/Numbers.app")),
+            ("Keynote", Path("/Applications/Keynote.app")),
+            ("ONLYOFFICE", Path("/Applications/ONLYOFFICE.app")),
+            ("WPS Office", Path("/Applications/wpsoffice.app")),
+            ("WPS Office", Path("/Applications/WPS Office.app")),
+        ]
+        seen_names = set()
+        for name, app_path in applications:
+            norm_name = "OpenOffice" if "OpenOffice" in name else name
+            if norm_name in seen_names:
+                continue
+            candidates = [
+                app_path,
+                Path("/System") / app_path.relative_to("/"),
+                home / "Applications" / app_path.name,
+            ]
+            for target in candidates:
+                plist_path = target / "Contents/Info.plist"
+                if plist_path.is_file():
+                    try:
+                        with open(plist_path, "rb") as stream:
+                            parsed_plist = plistlib.load(stream)
+                            version = parsed_plist.get("CFBundleShortVersionString") or parsed_plist.get("CFBundleVersion")
+                            if version:
+                                detected.append(f"{norm_name} {version}")
+                                seen_names.add(norm_name)
+                                break
+                    except Exception:
+                        pass
+
+    elif system == "Windows":
+        known_executables = [
+            ("Microsoft Excel", [
+                r"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\root\Office16\EXCEL.EXE",
+                r"C:\Program Files\Microsoft Office\Office16\EXCEL.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office16\EXCEL.EXE",
+                r"C:\Program Files\Microsoft Office\Office15\EXCEL.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office15\EXCEL.EXE",
+                r"C:\Program Files\Microsoft Office\Office14\EXCEL.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office14\EXCEL.EXE",
+            ]),
+            ("Microsoft Word", [
+                r"C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\root\Office16\WINWORD.EXE",
+                r"C:\Program Files\Microsoft Office\Office16\WINWORD.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office16\WINWORD.EXE",
+                r"C:\Program Files\Microsoft Office\Office15\WINWORD.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office15\WINWORD.EXE",
+                r"C:\Program Files\Microsoft Office\Office14\WINWORD.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office14\WINWORD.EXE",
+            ]),
+            ("Microsoft PowerPoint", [
+                r"C:\Program Files\Microsoft Office\root\Office16\POWERPNT.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\root\Office16\POWERPNT.EXE",
+                r"C:\Program Files\Microsoft Office\Office16\POWERPNT.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office16\POWERPNT.EXE",
+                r"C:\Program Files\Microsoft Office\Office15\POWERPNT.EXE",
+                r"C:\Program Files (x86)\Microsoft Office\Office15\POWERPNT.EXE",
+            ]),
+            ("LibreOffice", [
+                r"C:\Program Files\LibreOffice\program\soffice.exe",
+                r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+            ]),
+            ("OpenOffice", [
+                r"C:\Program Files (x86)\OpenOffice 4\program\soffice.exe",
+                r"C:\Program Files\OpenOffice 4\program\soffice.exe",
+                r"C:\Program Files (x86)\OpenOffice.org 3\program\soffice.exe",
+                r"C:\Program Files\OpenOffice.org 3\program\soffice.exe",
+            ]),
+            ("ONLYOFFICE", [
+                r"C:\Program Files\ONLYOFFICE\DesktopEditors\DesktopEditors.exe",
+                r"C:\Program Files (x86)\ONLYOFFICE\DesktopEditors\DesktopEditors.exe",
+                os.path.expandvars(r"%LOCALAPPDATA%\Programs\ONLYOFFICE\DesktopEditors\DesktopEditors.exe"),
+            ]),
+        ]
+        seen_names = set()
+        for name, file_paths in known_executables:
+            for path_string in file_paths:
+                if Path(path_string).is_file():
+                    version = query_windows_system(
+                        f"(Get-Item '{path_string}').VersionInfo.ProductVersion",
+                        f"Extracting binary product version for {name}",
+                        timeout=5
+                    )
+                    detected.append(f"{name} {version}" if version else name)
+                    seen_names.add(name)
+                    break
+
+        if not ("Microsoft Excel" in seen_names and "Microsoft Word" in seen_names and "LibreOffice" in seen_names):
+            script = """
+            $targets = @(
+                @{Name='Microsoft Excel'; Exe='excel.exe'},
+                @{Name='Microsoft Word'; Exe='winword.exe'},
+                @{Name='Microsoft PowerPoint'; Exe='powerpnt.exe'},
+                @{Name='LibreOffice'; Exe='soffice.exe'}
+            )
+            foreach ($t in $targets) {
+                $exe = $t.Exe
+                $p = (Get-ItemProperty "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\$exe" -ErrorAction SilentlyContinue).'(default)'
+                if (-not $p) {
+                    $p = (Get-ItemProperty "HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\$exe" -ErrorAction SilentlyContinue).'(default)'
+                }
+                if ($p) {
+                    $clean = $p.Trim('\"')
+                    if (Test-Path $clean) {
+                        $v = (Get-Item $clean).VersionInfo.ProductVersion
+                        if ($v) { "$($t.Name)|$v" }
+                    }
+                }
+            }
+            """
+            output = query_windows_system(script, "Detecting office applications from Windows App Paths", timeout=8)
+            for line in output.splitlines():
+                if "|" in line:
+                    parts = line.split("|", 1)
+                    app_name = parts[0].strip()
+                    ver = parts[1].strip()
+                    if app_name not in seen_names and ver:
+                        detected.append(f"{app_name} {ver}")
+                        seen_names.add(app_name)
+
+    return ", ".join(detected) if detected else "None detected"
+
+
 def detect_web_scanning(system, home):
     extension_id = "cfnpidifppmenkapgihekkeednfoenal"
 
@@ -841,7 +1056,7 @@ def run_audit(system):
         "auto_updates": "Yes",
         "browsers": detect_browsers(system, home),
         "email_apps": "N/A (Web only)",
-        "office_apps": "Google Workspace",
+        "office_apps": detect_office_apps(system, home),
         "uuid": get_hardware_serial(system),
         "os_version": get_os_version(system),
         "anti_virus": inspect_antivirus(system),
@@ -959,9 +1174,14 @@ def main():
     browsers = detect_browsers(system, home)
     log_success(f"Browsers: {browsers}")
 
+    log_step("Checking office applications")
+    office_apps = detect_office_apps(system, home)
+    log_success(f"Office Apps: {office_apps}")
+
     final = run_audit(system)
     if web_ok:
         final["web_scanning"] = "Yes"
+    final["office_apps"] = office_apps
 
     print_summary_table(system, final)
 
@@ -992,7 +1212,7 @@ def main():
         "Yes",
         final.get("auto_updates", "Yes"),
         final.get("browsers", "None detected"),
-        final.get("office_apps", "Google Workspace"),
+        final.get("office_apps", "None detected"),
         final.get("email_apps", "N/A (Web only)"),
         final.get("anti_virus", "None"),
         final.get("web_scanning", "No"),
@@ -1019,5 +1239,15 @@ def main():
     print("------------------------------------------------------------\n")
 
 
+# Backward compatibility aliases
+def _run_powershell(code, timeout=5):
+    return query_windows_system(code, "Legacy PowerShell query", timeout=timeout)
+
+
+detect_antivirus = inspect_antivirus
+get_hardware_uuid = get_hardware_serial
+
+
 if __name__ == "__main__":
     main()
+
