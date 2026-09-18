@@ -358,10 +358,52 @@ def inspect_antivirus(system):
     return "None"
 
 
+def is_sudo_prompting_for_root():
+    try:
+        import pty
+        import select
+        pid, fd = pty.fork()
+        if pid == 0:
+            os.execvp("sudo", ["sudo", "-k", "-p", "PROMPT_USER:%p:", "true"])
+        else:
+            try:
+                r, _, _ = select.select([fd], [], [], 2.0)
+                if r:
+                    data = os.read(fd, 256).decode("utf-8", "replace")
+                    return "PROMPT_USER:root:" in data
+                return False
+            finally:
+                try:
+                    os.kill(pid, 9)
+                    os.waitpid(pid, 0)
+                except Exception:
+                    pass
+    except Exception:
+        return False
+
+
 def check_admin_separated(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
         dropin_config = Path("/etc/sudoers.d/cyber_essentials_targetpw")
-        return "Yes" if dropin_config.exists() else "No"
+        try:
+            if dropin_config.exists():
+                return "Yes"
+        except Exception:
+            pass
+
+        check_user = os.environ.get("SUDO_USER") or getpass.getuser()
+        try:
+            out = subprocess.check_output(["id", "-Gn", check_user], text=True, stderr=subprocess.DEVNULL, timeout=5)
+            groups = set(out.strip().split())
+            if "sudo" not in groups and "wheel" not in groups:
+                return "Yes"
+        except Exception:
+            pass
+
+        if is_sudo_prompting_for_root():
+            return "Yes"
+
+        return "No"
 
     if system == "macOS":
         target_user = os.environ.get("SUDO_USER") or getpass.getuser()
@@ -394,13 +436,47 @@ def check_admin_separated(system):
     return "No"
 
 
+def setup_admin_separation(system):
+    if system in ["Ubuntu", "Arch", "Linux"]:
+        dropin = Path("/etc/sudoers.d/cyber_essentials_targetpw")
+        if check_admin_separated(system) == "Yes":
+            return True
+
+        rule = "Defaults rootpw\n"
+        temp_file = Path("/tmp/cyber_essentials_targetpw")
+        try:
+            temp_file.write_text(rule)
+            sudo_prefix = [] if (hasattr(os, "geteuid") and os.geteuid() == 0) else ["sudo"]
+            check = subprocess.run(
+                sudo_prefix + ["visudo", "-cf", str(temp_file)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if check.returncode == 0:
+                if hasattr(os, "geteuid") and os.geteuid() == 0:
+                    shutil.copy(temp_file, dropin)
+                    dropin.chmod(0o440)
+                else:
+                    subprocess.run(["sudo", "cp", str(temp_file), str(dropin)], check=True)
+                    subprocess.run(["sudo", "chmod", "0440", str(dropin)], check=True)
+                log_success("Configured sudo to require separate root/admin password.")
+                return True
+            else:
+                log_warning("visudo syntax check failed; could not configure sudo.")
+        except Exception as e:
+            log_warning(f"Failed to configure sudo: {e}")
+        finally:
+            temp_file.unlink(missing_ok=True)
+        return False
+
+    return False
+
+
 def instruct_admin_separation(system):
     if system in ["Ubuntu", "Arch", "Linux"]:
-        print("\n    Separate Root / Sudo Authentication Guidance:")
-        print("    1. Set a dedicated root password different from your login account password:")
-        print("       sudo passwd root")
-        print("    2. Require target user (root) authentication for all sudo commands:")
-        print("       echo 'Defaults targetpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw")
+        print("\n    Separate Sudo Authentication Guidance:")
+        print("    Require root/admin password for all sudo commands:")
+        print("       echo 'Defaults rootpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw")
         print("       sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw")
         input("\n    Press [Enter] once configured...")
         return True
@@ -848,7 +924,13 @@ def main():
     if admin_sep != "Yes":
         log_warning("Daily user account does not have isolated root/admin privilege boundaries.")
         if not is_automated and not args.audit_only:
-            instruct_admin_separation(system)
+            if system in ["Ubuntu", "Arch", "Linux"]:
+                if setup_admin_separation(system):
+                    admin_sep = check_admin_separated(system)
+                else:
+                    instruct_admin_separation(system)
+            else:
+                instruct_admin_separation(system)
     else:
         log_success("Privilege separation confirmed.")
 
