@@ -13,12 +13,6 @@ import shutil
 import subprocess
 import sys
 import time
-import webbrowser
-
-try:
-    import grp
-except ImportError:
-    grp = None
 
 try:
     import pwd
@@ -46,11 +40,6 @@ def log_success(message):
 
 def log_warning(message):
     print(f"   Notice: {message}", flush=True)
-    delay(0.3)
-
-
-def log_info(message):
-    print(f"   {message}", flush=True)
     delay(0.3)
 
 
@@ -91,46 +80,6 @@ def get_real_home():
     if home_env and sudo_user:
         return Path(home_env)
     return Path.home()
-
-
-def open_url_safely(url):
-    system = platform.system().lower()
-    if system == "windows":
-        webbrowser.open(url)
-        return
-
-    sudo_user = os.environ.get("SUDO_USER")
-    if system == "darwin":
-        if sudo_user:
-            res = subprocess.run(["sudo", "-u", sudo_user, "open", url],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if res.returncode == 0:
-                return
-        subprocess.run(["open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return
-
-    if sudo_user:
-        forwarded_environment = [
-            f"{key}={os.environ[key]}"
-            for key in ["DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR"]
-            if key in os.environ
-        ]
-        environment_prefix = f"env {' '.join(forwarded_environment)} " if forwarded_environment else ""
-        open_command = f"{environment_prefix}xdg-open '{url}'"
-
-        if shutil.which("runuser"):
-            res = subprocess.run(["runuser", "-u", sudo_user, "--", "sh", "-c", open_command],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if res.returncode == 0:
-                return
-
-        if shutil.which("su"):
-            res = subprocess.run(["su", sudo_user, "-c", open_command],
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if res.returncode == 0:
-                return
-
-    webbrowser.open(url)
 
 
 def get_os():
@@ -175,18 +124,6 @@ def is_admin():
     if hasattr(os, "geteuid"):
         return os.geteuid() == 0
     return False
-
-
-def run_command(command, timeout=45):
-    try:
-        return subprocess.run(
-            command,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=timeout,
-        )
-    except Exception:
-        return None
 
 
 def query_windows_system(powershell_code, explanation, timeout=30):
@@ -666,8 +603,8 @@ def detect_browsers(system, home):
                 os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
             ]),
             ("Edge", [
-                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
                 r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             ]),
             ("Firefox", [
                 r"C:\Program Files\Mozilla Firefox\firefox.exe",
@@ -1247,15 +1184,6 @@ def main():
     print("------------------------------------------------------------")
     print(tsv_line)
     print("------------------------------------------------------------\n")
-
-
-# Backward compatibility aliases
-def _run_powershell(code, timeout=5):
-    return query_windows_system(code, "Legacy PowerShell query", timeout=timeout)
-
-
-detect_antivirus = inspect_antivirus
-get_hardware_uuid = get_hardware_serial
 
 
 if __name__ == "__main__":
