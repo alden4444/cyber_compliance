@@ -165,6 +165,18 @@ def get_os():
     return "Unknown"
 
 
+def is_admin():
+    system = platform.system().lower()
+    if system == "windows":
+        try:
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        except Exception:
+            return False
+    if hasattr(os, "geteuid"):
+        return os.geteuid() == 0
+    return False
+
+
 def run_command(command, timeout=45):
     try:
         return subprocess.run(
@@ -1098,11 +1110,25 @@ def main():
 
     system = get_os()
 
-    if system == "Windows":
-        if not ctypes.windll.shell32.IsUserAnAdmin():
-            print("Requesting Administrator permissions...")
-            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-            sys.exit(0)
+    if not is_admin():
+        print("\n" + "=" * 54)
+        print(" [!] PRIVILEGE ERROR: ROOT / ADMINISTRATOR REQUIRED")
+        print("=" * 54)
+        if system == "Windows":
+            print("This audit requires Administrator privileges to inspect system security.")
+            print("Please rerun this script in PowerShell or Command Prompt as Administrator:")
+            print()
+            print("  1. Right-click PowerShell or Terminal and select 'Run as administrator'")
+            cmd = f"python {' '.join(sys.argv)}" if sys.argv else "python audit.py"
+            print(f"  2. Run: {cmd}")
+        else:
+            print("This audit requires root/sudo privileges to inspect system security.")
+            print("Please rerun this script with sudo:")
+            print()
+            cmd = f"sudo python3 {' '.join(sys.argv)}" if sys.argv else "sudo python3 audit.py"
+            print(f"  {cmd}")
+        print("=" * 54 + "\n")
+        sys.exit(1)
 
     home = get_real_home()
 
@@ -1140,12 +1166,10 @@ def main():
     if not web_ok:
         log_warning("TrafficLight extension not detected.")
         if not is_automated and not args.audit_only:
-            print("\n    Opening extension page...")
-            open_url_safely("https://chromewebstore.google.com/detail/trafficlight/cfnpidifppmenkapgihekkeednfoenal")
-            print("\n    Manual links if the browser didn't open:")
-            print("      • Chromium / Chrome / Brave / Edge:")
+            print("\n    Please install Bitdefender TrafficLight for your browser:")
+            print("      • Chrome / Brave / Edge / Chromium (Chrome Web Store):")
             print("        https://chromewebstore.google.com/detail/trafficlight/cfnpidifppmenkapgihekkeednfoenal")
-            print("      • Firefox:")
+            print("      • Firefox (Firefox Add-ons):")
             print("        https://addons.mozilla.org/en-US/firefox/addon/trafficlight/")
             ans = input("\n    Do you already have Bitdefender TrafficLight active? [y/N]: ").strip().lower()
             if ans in ["y", "yes"]:
