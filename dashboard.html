@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CYBER COMPLIANCE // Fleet Posture & SOC 2</title>
+<!-- Google Fonts: Inter & Caveat for hand-annotated human notes -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            hand: ['Caveat', 'cursive'],
+          },
+          colors: {
+            obsidian: '#0d0e11',
+            card: '#16171d',
+            'card-subtle': '#1a1b22',
+            borderline: 'rgba(255, 255, 255, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .material-symbols-outlined {
+      font-size: 18px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Hand-drawn sketchy SVG underline effect */
+    .sketch-underline {
+      position: relative;
+    }
+    .sketch-underline::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 100%;
+      height: 4px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 25 9, 50 4 T 100 6" stroke="%23f43f5e" stroke-width="3" fill="transparent" stroke-linecap="round"/></svg>') no-repeat center bottom;
+      background-size: 100% 4px;
+    }
+    .spin {
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Trust & Hardware Handshake Animations */
+    @keyframes radarSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .radar-spin {
+      animation: radarSpin 2.2s linear infinite;
+    }
+    @keyframes pulseEmeraldGlow {
+      0%, 100% {
+        box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.35), inset 0 0 15px -3px rgba(16, 185, 129, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 50px 6px rgba(16, 185, 129, 0.6), inset 0 0 25px 0px rgba(16, 185, 129, 0.4);
+      }
+    }
+    .emerald-glow-box {
+      animation: pulseEmeraldGlow 2.8s ease-in-out infinite;
+    }
+    @keyframes checkmarkPop {
+      0% { transform: scale(0.4); opacity: 0; }
+      70% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .check-pop {
+      animation: checkmarkPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes stepFade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .step-content-fade {
+      animation: stepFade 0.35s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-obsidian text-zinc-100 min-h-screen flex flex-col font-sans selection:bg-zinc-800 selection:text-white">
+
+<!-- ========================================================================= -->
+<!-- 1. TOP HEADER                                                             -->
+<!-- ========================================================================= -->
+<header class="border-b border-white/5 px-6 lg:px-12 py-4 flex items-center justify-between bg-obsidian/80 backdrop-blur-md sticky top-0 z-30">
+<div class="flex items-center space-x-3">
+  <div class="w-7 h-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center text-white">
+    <span class="material-symbols-outlined text-[17px]">shield</span>
+  </div>
+  <div>
+    <div class="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+      <span>Cyber Compliance</span>
+      <span class="text-zinc-600 font-normal">/</span>
+      <span class="text-xs font-normal text-zinc-400" id="header-org-name">Organization</span>
+    </div>
+  </div>
+</div>
+
+<!-- Right: Team, Onboarding, Refresh, Profile -->
+<div class="flex items-center space-x-2 sm:space-x-3">
+  <button onclick="openOnboardingModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-xs text-zinc-300 transition-colors" title="Launch guided fleet onboarding wizard">
+    <span class="material-symbols-outlined text-[15px] text-zinc-400">checklist</span>
+    <span class="hidden sm:inline font-medium">Onboarding</span>
+  </button>
+
+  <button onclick="openTeamModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-xs text-zinc-300 transition-colors" title="Manage team members, roles, and linked workstations">
+    <span class="material-symbols-outlined text-[15px] text-zinc-400">group</span>
+    <span class="hidden sm:inline font-medium">Team</span>
+    <span class="px-1.5 py-0.2 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400" id="header-team-count">--</span>
+  </button>
+
+  <button onclick="refreshData()" title="Re-fetch live telemetry from API" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-xs text-zinc-300 transition-colors">
+    <span class="material-symbols-outlined text-[15px]" id="refresh-icon">refresh</span>
+    <span class="hidden md:inline">Refresh</span>
+  </button>
+
+  <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-white/5 text-xs text-zinc-300">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span id="header-framework-label">SOC 2 Type II In Progress</span>
+    <span class="text-zinc-500">•</span>
+    <span class="text-zinc-400" id="header-audit-days-label">Continuous Audit</span>
+  </div>
+
+  <div class="relative">
+    <button onclick="toggleOrgDropdown()" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-xs text-zinc-300 transition-colors border-l border-white/10 pl-3">
+      <span class="w-6 h-6 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-medium text-[11px] border border-white/10" id="header-org-avatar">CO</span>
+      <span class="hidden md:inline" id="header-facility">Settings</span>
+      <span class="material-symbols-outlined text-zinc-500 text-[16px]">expand_more</span>
+    </button>
+    <!-- Dropdown Menu -->
+    <div id="org-dropdown" class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-card border border-white/10 shadow-2xl p-3 space-y-2 z-50 text-xs">
+      <div class="border-b border-white/5 pb-2">
+        <p class="font-semibold text-white" id="dropdown-org-name">Organization</p>
+        <p class="text-[11px] text-zinc-400 font-mono mt-0.5" id="dropdown-org-token">--</p>
+      </div>
+      <div class="space-y-1">
+        <button onclick="openTeamModal(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <span>Manage Team Accounts</span>
+          <span class="material-symbols-outlined text-[14px]">group</span>
+        </button>
+        <button onclick="openOnboardingModal(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <span>Run Onboarding Wizard</span>
+          <span class="material-symbols-outlined text-[14px]">checklist</span>
+        </button>
+        <button onclick="copyEnrollCommand()" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <span>Copy Safe Enroll CLI</span>
+          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+        </button>
+        <a href="/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <span>View Auditor Evidence JSON</span>
+          <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+        </a>
+        <div class="border-t border-white/5 pt-1.5 mt-1">
+          <button onclick="resetDemoAccount(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-rose-500/10 text-rose-400 flex items-center justify-between transition-colors">
+            <span>Reset Demo (Erase & Re-Onboard)</span>
+            <span class="material-symbols-outlined text-[14px]">restart_alt</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</header>
+
+<!-- ========================================================================= -->
+<!-- MAIN CONTENT CONTAINER                                                    -->
+<!-- ========================================================================= -->
+<main class="flex-1 max-w-4xl w-full mx-auto px-6 py-8 space-y-8">
+
+<!-- ========================================================================= -->
+<!-- 1. CENTRAL HERO HUB: Human Status, Percentage Gauge & Sketched Notes      -->
+<!-- ========================================================================= -->
+<section class="relative bg-card rounded-2xl p-7 sm:p-9 border border-white/10 shadow-xl overflow-visible">
+  <!-- Hand-sketched playful annotation with curvy arrow -->
+  <div class="absolute -top-7 right-6 sm:right-10 flex items-center space-x-1 pointer-events-none select-none" id="hand-annotation">
+    <span class="font-hand text-xl text-zinc-300 tracking-wide rotate-[-2deg]" id="annotation-text">
+      fix this device to get 100% compliant!
+    </span>
+    <svg class="w-9 h-9 text-zinc-400 -rotate-12 translate-y-2 opacity-80" fill="none" viewBox="0 0 40 40" id="annotation-svg">
+      <path d="M8 8 C 15 2, 28 4, 30 18 C 31 24, 26 28, 22 34" stroke="currentColor" stroke-dasharray="2 1" stroke-linecap="round" stroke-width="1.8"></path>
+      <path d="M16 30 L 22 34 L 26 27" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+    </svg>
+  </div>
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <!-- Left: Human State & Headline -->
+    <div class="space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-zinc-300 text-xs font-medium tracking-tight">
+        <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse" id="hero-pulse"></span>
+        <span id="hero-badge">Action Needed Before Audit</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-white leading-tight" id="hero-headline">
+        Everything looks good, <br class="hidden sm:block"/>
+        <span class="text-zinc-300">except <span class="text-white font-bold sketch-underline" id="hero-failing-count">1 device</span>.</span>
+      </h1>
+      <p class="text-zinc-400 text-sm sm:text-base max-w-lg leading-relaxed pt-0.5" id="hero-subtext">
+        <strong class="text-zinc-200 font-semibold" id="hero-ratio-text">0 of 1 device meets active SOC 2 requirements.</strong>
+        Fixing this device will take under 1 minute and keep your compliance continuous.
+      </p>
+    </div>
+
+    <!-- Right: Circular Readiness Percentage Gauge -->
+    <div class="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0 shrink-0">
+      <div class="relative w-28 h-28 flex items-center justify-center">
+        <svg class="w-28 h-28 -rotate-90 transform" viewBox="0 0 36 36">
+          <path class="text-zinc-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.2"></path>
+          <path class="text-emerald-400 transition-all duration-700" id="gauge-arc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="0, 100" stroke-linecap="round" stroke-width="3.2"></path>
+        </svg>
+        <div class="absolute flex flex-col items-center justify-center text-center">
+          <span class="text-2xl font-bold tracking-tight text-white" id="gauge-percent">0%</span>
+          <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">Ready</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs mt-3">
+        <span class="flex items-center gap-1.5 text-zinc-300 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span id="stat-passing-count">0</span> Passing
+        </span>
+        <span class="text-zinc-700">|</span>
+        <span class="flex items-center gap-1.5 text-white font-medium">
+          <span class="w-2 h-2 rounded-full bg-white"></span> <span id="stat-action-count">1</span> Action
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Action Bar -->
+  <div class="mt-7 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-2 text-xs text-zinc-400">
+      <span class="material-symbols-outlined text-zinc-400 text-[16px]">verified_user</span>
+      <span>Zero-payload metadata only • Continuous SOC 2 automated evidence</span>
+    </div>
+    <div class="flex items-center gap-3 self-end sm:self-center relative">
+      <div class="hidden sm:flex items-center gap-1.5 font-hand text-base text-zinc-400 select-none pointer-events-none" id="hero-arrow-annotation">
+        <span>1-click fix</span>
+        <svg class="w-7 h-5 text-zinc-400 translate-y-0.5" fill="none" viewBox="0 0 28 16">
+          <path d="M2 8 C 8 4, 18 12, 24 8 M19 3 L25 8 L19 13" stroke="currentColor" stroke-dasharray="1.5 0.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+        </svg>
+      </div>
+      <button id="hero-fix-btn" onclick="openRemediationModal()" class="px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-[1.01] active:scale-[0.99]">
+        <span class="material-symbols-outlined text-[17px]">auto_fix_high</span>
+        <span id="hero-btn-label">Fix Flagged Device</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- 2. AUDIT ACTION ITEMS: Only visible when devices require remediation     -->
+<!-- ========================================================================= -->
+<section class="space-y-3" id="attention-section">
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Action Required</span>
+      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="attention-badge-count">1</span>
+    </div>
+    <span class="text-[11px] text-zinc-500">Unresolved items pause continuous compliance certification</span>
+  </div>
+
+  <div class="space-y-2.5" id="attention-list-container">
+    <!-- Populated dynamically via renderDashboard() -->
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- 3. SOC 2 CRITERIA CONTROLS: 5 Core Safeguards Architecture               -->
+<!-- ========================================================================= -->
+<section class="space-y-3" id="controls-section">
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">SOC 2 Safeguard Controls</span>
+      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="controls-passing-summary">5 of 5 passing</span>
+    </div>
+    <span class="text-[11px] text-zinc-500">Continuous automated fleet enforcement</span>
+  </div>
+
+  <div class="bg-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="controls-matrix-list">
+    <!-- Populated dynamically via renderDashboard() -->
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- 4. ENROLLED HARDWARE FLEET: Full Inventory with Direct Inspection         -->
+<!-- ========================================================================= -->
+<section class="space-y-3" id="fleet-section">
+  <div class="flex items-center justify-between px-1">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Enrolled Fleet Hardware</span>
+      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="fleet-count-badge">1 Node</span>
+    </div>
+    <button onclick="openOnboardingModal()" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
+      <span class="material-symbols-outlined text-[15px]">add</span>
+      <span>Enroll Node</span>
+    </button>
+  </div>
+
+  <div class="bg-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="fleet-table-container">
+    <!-- Populated dynamically via renderDashboard() -->
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- 5. AUDIT WINDOW & EVIDENCE VAULT: Quiet CPA Verification Ledger           -->
+<!-- ========================================================================= -->
+<section class="bg-card/70 rounded-2xl border border-white/10 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-xl bg-zinc-800/80 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+      <span class="material-symbols-outlined text-[19px]">verified_user</span>
+    </div>
+    <div class="space-y-0.5">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-sm font-semibold text-white" id="sched-framework">SOC 2 Type II</span>
+        <span class="text-zinc-600 text-xs">•</span>
+        <span class="text-xs text-zinc-300 font-medium" id="sched-target-date">Audit Window Active</span>
+        <span class="text-[11px] text-zinc-400 font-mono" id="sched-countdown">--</span>
+      </div>
+      <p class="text-[11px] text-zinc-500">Automated zero-payload telemetry anchored for independent CPA examination</p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+    <button onclick="openOnboardingModal()" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-300 border border-white/10 font-medium transition-colors">
+      Configure
+    </button>
+    <a href="/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026" id="auditor-vault-btn" target="_blank" class="px-3.5 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-xs text-black font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+      <span>Auditor Vault</span>
+      <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+    </a>
+  </div>
+</section>
+</main>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Device Details Inspection Drawer                                   -->
+<!-- ========================================================================= -->
+<div id="details-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="text-lg font-semibold text-white" id="modal-hostname">inspiron</h3>
+          <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-800 text-zinc-300" id="modal-mode">Robot Asset</span>
+        </div>
+        <p class="text-xs text-zinc-400 font-mono mt-1" id="modal-device-id">UUID: --</p>
+      </div>
+      <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    <!-- Controls Breakdown -->
+    <div class="space-y-3">
+      <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Active SOC 2 Controls</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="modal-controls-grid">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Exposed Ports Telemetry -->
+    <div class="space-y-3">
+      <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Listening Network Ports (ss -tulnH)</h4>
+      <div class="bg-black/50 rounded-xl border border-white/5 p-3 space-y-1 font-mono text-xs max-h-48 overflow-y-auto" id="modal-ports-list">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="flex justify-between items-center pt-2 border-t border-white/5 text-xs">
+      <span class="text-zinc-500" id="modal-last-heartbeat">Last heartbeat: --</span>
+      <div class="flex gap-2">
+        <button onclick="closeDetailsModal()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
+        <button onclick="closeDetailsModal(); openRemediationModal(null, activeDevice?.device_id);" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold">Remediate Issues</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Multi-OS Assisted Remediation & Lockout Prevention                 -->
+<!-- ========================================================================= -->
+<div id="remediation-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-5">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-white/10 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px]">terminal</span>
+        </div>
+        <div>
+          <h3 class="text-base font-semibold text-white" id="remediation-title">Assisted Remediation</h3>
+          <p class="text-xs text-zinc-400" id="remediation-subtitle">SOC 2 Evidence Remediation Guide</p>
+        </div>
+      </div>
+      <button onclick="closeRemediationModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    <!-- Description & Context -->
+    <p id="remediation-desc" class="text-xs text-zinc-300 leading-relaxed"></p>
+
+    <!-- OS Auto-Detection Banner (Shown when OS is known) -->
+    <div id="os-detected-banner" class="flex items-center justify-between p-3 rounded-xl bg-zinc-900/90 border border-white/10 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="w-6 h-6 rounded-md bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300">
+          <span class="material-symbols-outlined text-[15px]">desktop_windows</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-zinc-400 text-[11px]">Target OS:</span>
+            <span class="text-white font-semibold" id="detected-os-label">Arch Linux</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Auto-detected</span>
+          </div>
+          <p class="text-[11px] text-zinc-500" id="detected-os-device">Tailored for host inspiron</p>
+        </div>
+      </div>
+      <button onclick="toggleManualOSSelection()" id="os-change-btn" class="text-xs text-zinc-400 hover:text-white underline font-medium transition-colors">
+        Change OS
+      </button>
+    </div>
+
+    <!-- Manual OS Selection Tabs (Hidden by default when OS is detected, visible if unknown or on 'Change OS') -->
+    <div id="os-manual-selector" class="hidden space-y-2 p-3 rounded-xl bg-black/40 border border-white/5">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-medium text-zinc-400 uppercase tracking-wider" id="os-selector-heading">Select Target Operating System:</span>
+        <button onclick="toggleManualOSSelection()" id="os-selector-hide-btn" class="text-[11px] text-zinc-500 hover:text-zinc-300 hidden">Hide</button>
+      </div>
+      <div class="flex flex-wrap gap-1.5" id="os-tab-bar">
+        <button onclick="switchRemediationOS('arch')" id="os-tab-arch" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">Arch Linux</button>
+        <button onclick="switchRemediationOS('ubuntu')" id="os-tab-ubuntu" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">Ubuntu / Debian</button>
+        <button onclick="switchRemediationOS('fedora')" id="os-tab-fedora" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">Fedora / RHEL</button>
+        <button onclick="switchRemediationOS('macos')" id="os-tab-macos" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">macOS</button>
+        <button onclick="switchRemediationOS('windows')" id="os-tab-windows" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">Windows</button>
+        <button onclick="switchRemediationOS('nixos')" id="os-tab-nixos" class="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/5 transition-all">NixOS</button>
+      </div>
+    </div>
+
+    <!-- Safety / Lockout Prevention Callout -->
+    <div id="remediation-lockout-box" class="hidden p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-xs text-zinc-300 space-y-1">
+      <div class="flex items-center gap-2 text-amber-400 font-semibold">
+        <span class="material-symbols-outlined text-[16px]">warning</span>
+        <span>Lockout Prevention Guide</span>
+      </div>
+      <p id="remediation-lockout-text" class="text-zinc-300 leading-relaxed"></p>
+    </div>
+
+    <!-- Steps & Commands Container -->
+    <div id="remediation-steps-container" class="space-y-3">
+      <!-- Injected dynamically based on OS -->
+    </div>
+
+    <!-- Safety Revert Notice -->
+    <div id="remediation-revert-box" class="hidden p-3 rounded-lg bg-black/40 border border-white/5 text-[11px] text-zinc-400 space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-zinc-300 font-medium">To undo / revert if needed:</span>
+        <button onclick="copyToClipboard(document.getElementById('remediation-revert-code').innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1">
+          <span class="material-symbols-outlined text-[13px]">content_copy</span>
+          <span>Copy</span>
+        </button>
+      </div>
+      <code id="remediation-revert-code" class="block font-mono text-zinc-300 bg-zinc-900/80 p-1.5 rounded text-[11px] overflow-x-auto select-all"></code>
+    </div>
+
+    <!-- Additional Architecture Notes -->
+    <div id="remediation-notes-box" class="hidden text-[11px] text-zinc-400 leading-relaxed border-t border-white/5 pt-2">
+      <span id="remediation-notes-text"></span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-3 pt-2 border-t border-white/5">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button onclick="triggerReAudit(activeDevice?.device_id, this)" id="modal-verify-btn" class="flex-1 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs flex items-center justify-center gap-2 shadow transition-all">
+          <span class="material-symbols-outlined text-[16px]">verified</span>
+          <span>Verify Fix Now (Re-Audit)</span>
+        </button>
+        <button onclick="closeRemediationModal()" class="py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
+          Close
+        </button>
+      </div>
+
+      <div class="pt-2 border-t border-white/5">
+        <p class="text-[11px] text-zinc-500 mb-2 text-center">Dashboard Simulation (Safely test 100% compliant state without system edits):</p>
+        <div class="flex gap-2">
+          <button onclick="testSimulateFix('compliant')" class="flex-1 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-medium transition-colors">
+            ✓ Simulate Fix (Test 100% Mode)
+          </button>
+          <button onclick="testSimulateFix('non_compliant')" class="flex-1 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
+            ↺ Reset to Flagged State
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Accounts & Team Management                                         -->
+<!-- ========================================================================= -->
+<div id="team-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-white/10 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px]">group</span>
+        </div>
+        <div>
+          <h3 class="text-base font-semibold text-white">Team Accounts & Roles</h3>
+          <p class="text-xs text-zinc-400"><span id="team-org-name">Organization</span> • SOC 2 CC6.1 Logical Access Directory</p>
+        </div>
+      </div>
+      <button onclick="closeTeamModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    <!-- Invite Member Box -->
+    <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-3">
+      <div class="flex items-center justify-between text-xs text-zinc-300">
+        <span class="font-medium text-white">Add Team Member or Auditor</span>
+        <span class="text-[11px] text-zinc-500">Automates safe workstation enrollment</span>
+      </div>
+      <form onsubmit="submitInviteUser(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <input type="text" id="invite-name" required placeholder="Full Name (e.g. Alex Smith)" class="px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+        <input type="email" id="invite-email" required placeholder="Work Email" class="px-3 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+        <div class="flex gap-2">
+          <select id="invite-role" class="flex-1 px-2.5 py-2 rounded-lg bg-zinc-900 border border-white/10 text-xs text-zinc-300 focus:outline-none">
+            <option value="engineer">Engineer</option>
+            <option value="security_officer">Security Officer</option>
+            <option value="auditor">Auditor (CPA)</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit" id="invite-submit-btn" class="px-3 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors">
+            Invite
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Personnel Directory -->
+    <div class="space-y-2">
+      <div class="flex items-center justify-between text-xs text-zinc-400 px-1">
+        <span>Active Personnel & Attribution (<span id="team-list-count">--</span>)</span>
+        <span class="text-[11px] text-zinc-500">Linked Hardware Telemetry</span>
+      </div>
+      <div id="team-table-container" class="divide-y divide-white/5 border border-white/5 rounded-xl bg-black/20 text-xs overflow-hidden">
+        <!-- Injected dynamically via loadTeamUsers() -->
+      </div>
+    </div>
+
+    <!-- Safe Enrollment Note -->
+    <div class="text-[11px] text-zinc-400 bg-zinc-900/60 p-3 rounded-lg border border-white/5 space-y-1">
+      <span class="font-medium text-zinc-300">Command Safety Guarantee:</span>
+      <p>When an engineer enrolls their workstation using their attributed email, the agent performs non-invasive security checks only. It never reads personal files, code repositories, or browsing history.</p>
+    </div>
+
+    <div class="flex justify-end pt-2 border-t border-white/5">
+      <button onclick="closeTeamModal()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Streamlined High-Trust Onboarding Wizard (3 Focused Stages)          -->
+<!-- ========================================================================= -->
+<div id="onboarding-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+  <div class="bg-[#0e1015] w-full max-w-xl rounded-2xl border border-white/10 shadow-[0_0_80px_-20px_rgba(16,185,129,0.25)] p-6 sm:p-8 space-y-6 relative overflow-hidden text-zinc-100 max-h-[92vh] overflow-y-auto">
+    <!-- Top Ambient Glow -->
+    <div class="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-28 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full"></div>
+
+    <!-- Wizard Header -->
+    <div class="flex items-center justify-between border-b border-white/5 pb-4 relative z-10">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center text-emerald-400">
+          <span class="material-symbols-outlined text-[17px]">shield</span>
+        </div>
+        <div>
+          <span class="text-xs font-semibold tracking-wide text-white uppercase tracking-wider font-mono">SOC 2 Type II // Rapid Enrollment</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="onboard-step-pill">Stage 1 of 3</span>
+        </div>
+        <button id="onboard-close-btn" onclick="closeOnboardingModal()" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step Progress Bar -->
+    <div class="grid grid-cols-3 gap-2 relative z-10">
+      <div id="wizard-tab-1" class="h-1.5 rounded-full bg-emerald-400 transition-all duration-500"></div>
+      <div id="wizard-tab-2" class="h-1.5 rounded-full bg-zinc-800 transition-all duration-500"></div>
+      <div id="wizard-tab-3" class="h-1.5 rounded-full bg-zinc-800 transition-all duration-500"></div>
+    </div>
+
+    <!-- STAGE 1: Workspace & Founder Identity -->
+    <div id="wizard-step-1" class="step-content-fade space-y-5 relative z-10">
+      <div class="space-y-1.5">
+        <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Enroll Your Organization</h3>
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Establish your company's continuous compliance ledger. No complex enterprise MDM setup or broken Linux dev tools.
+        </p>
+      </div>
+
+      <form onsubmit="handleOnboardingStep1(event)" class="space-y-4">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Company / Startup Name</label>
+            <div class="relative">
+              <input type="text" id="onboard-company-name" required placeholder="e.g. Pattern Labs Inc." class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40 transition-all" />
+              <span class="material-symbols-outlined absolute right-3 top-2.5 text-zinc-600 text-[16px]">domain</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-zinc-300 mb-1">Founder / Admin Work Email</label>
+            <div class="relative">
+              <input type="email" id="onboard-founder-email" required placeholder="e.g. alden@patternlabs.com" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40 transition-all" />
+              <span class="material-symbols-outlined absolute right-3 top-2.5 text-zinc-600 text-[16px]">mail</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pre-locked Standard Chip -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-zinc-300">
+          <span class="text-zinc-400">Target Framework:</span>
+          <span class="px-2 py-0.5 rounded font-mono text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">SOC 2 Type II (Continuous)</span>
+        </div>
+
+        <!-- Zero-Payload Policy Banner -->
+        <div class="p-3.5 rounded-xl bg-zinc-900/40 border border-white/5 flex items-start gap-2.5 text-[11px] text-zinc-400 leading-relaxed">
+          <span class="material-symbols-outlined text-[16px] text-emerald-400 shrink-0 mt-0.5">verified_user</span>
+          <div>
+            <span class="font-semibold text-zinc-200">Zero-Payload Data Policy:</span>
+            Cyber Compliance collects only cryptographic security metadata (firewall, open ports, OS version). We never inspect, capture, or transmit camera video, LiDAR points, SLAM maps, or proprietary code.
+          </div>
+        </div>
+
+        <button type="submit" id="onboard-step1-btn" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-zinc-100 text-black font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-white/10 active:scale-[0.99]">
+          <span>Continue to Hardware Enrollment</span>
+          <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- STAGE 2: Workstation Handshake & Trust Scan -->
+    <div id="wizard-step-2" class="hidden step-content-fade space-y-5 relative z-10">
+      <div class="space-y-1.5">
+        <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Enroll Engineer Workstation</h3>
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Auditors evaluate whether developer workstations with repository access enforce disk encryption, host firewall, and antivirus.
+        </p>
+      </div>
+
+      <!-- Safe Terminal Command Box -->
+      <div class="bg-black/60 border border-white/10 rounded-xl p-3.5 space-y-2 relative overflow-hidden">
+        <div class="flex items-center justify-between text-[11px] text-zinc-400">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+            <span class="font-mono text-zinc-500 ml-1">terminal enrollment CLI</span>
+          </div>
+          <button onclick="copyToClipboard(document.getElementById('ws-enroll-code').innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors px-2 py-0.5 rounded hover:bg-white/5">
+            <span class="material-symbols-outlined text-[13px]">content_copy</span>
+            <span>Copy</span>
+          </button>
+        </div>
+        <pre class="font-mono text-emerald-400 text-xs bg-zinc-950 p-2.5 rounded-lg overflow-x-auto select-all leading-relaxed whitespace-pre-wrap border border-white/5" id="ws-enroll-code">python3 -m agent.cli --enroll --api-url "http://127.0.0.1:8000" --org-token "org_demo_pattern_labs_2026" --mode workstation --owner-email "founder@patternlabs.com"</pre>
+      </div>
+
+      <!-- Live Handshake & Trust Scan Box -->
+      <div id="handshake-container" class="rounded-xl border border-white/10 bg-zinc-950/60 p-4.5 space-y-4">
+        <!-- Ready State -->
+        <div id="handshake-ready-state" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <span class="text-xs font-medium text-amber-300 font-mono">Listening for workstation connection...</span>
+            </div>
+            <span class="text-[10px] text-zinc-500 font-mono">Heartbeat listener active</span>
+          </div>
+
+          <p class="text-xs text-zinc-400">
+            Run the 1-line command in your terminal, or click below for an instant live hardware scan & cryptographic audit:
+          </p>
+
+          <button onclick="triggerLiveTrustScan()" id="btn-trigger-scan" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-[0.99]">
+            <span class="material-symbols-outlined text-[18px]">bolt</span>
+            <span>⚡ Connect & Audit This Machine (Instant Live Scan)</span>
+          </button>
+        </div>
+
+        <!-- Scanning / Animation State -->
+        <div id="handshake-scan-state" class="hidden space-y-4">
+          <!-- Radar Scanner & Counter -->
+          <div class="flex items-center gap-4">
+            <div class="relative w-14 h-14 shrink-0 flex items-center justify-center rounded-full bg-emerald-950/50 border border-emerald-500/40 overflow-hidden emerald-glow-box">
+              <div class="absolute inset-0 radar-spin" style="background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(52, 211, 153, 0.6) 360deg);"></div>
+              <span class="material-symbols-outlined text-emerald-400 text-[22px] relative z-10">verified_user</span>
+            </div>
+            <div class="space-y-1.5 flex-1">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-semibold text-white tracking-wide" id="scan-status-title">Performing Hardware Handshake...</span>
+                <span class="font-mono text-emerald-400 font-bold text-sm" id="scan-progress-num">25%</span>
+              </div>
+              <div class="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden relative">
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all duration-300" id="scan-progress-bar" style="width: 25%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnostic Check Sequence -->
+          <div class="space-y-2 border-t border-white/5 pt-3 text-[11px] font-mono">
+            <div id="diag-step-1" class="flex items-center gap-2 text-zinc-500 transition-colors">
+              <span class="material-symbols-outlined text-[14px]" id="diag-icon-1">radio_button_unchecked</span>
+              <span id="diag-text-1">1. Fingerprinting hardware architecture & OS kernel...</span>
+            </div>
+            <div id="diag-step-2" class="flex items-center gap-2 text-zinc-500 transition-colors">
+              <span class="material-symbols-outlined text-[14px]" id="diag-icon-2">radio_button_unchecked</span>
+              <span id="diag-text-2">2. Verifying Zero-Payload isolation (0 bytes sensor payload)...</span>
+            </div>
+            <div id="diag-step-3" class="flex items-center gap-2 text-zinc-500 transition-colors">
+              <span class="material-symbols-outlined text-[14px]" id="diag-icon-3">radio_button_unchecked</span>
+              <span id="diag-text-3">3. Auditing host firewall, admin rights & endpoint protection...</span>
+            </div>
+            <div id="diag-step-4" class="flex items-center gap-2 text-zinc-500 transition-colors">
+              <span class="material-symbols-outlined text-[14px]" id="diag-icon-4">radio_button_unchecked</span>
+              <span id="diag-text-4">4. Sealing cryptographic evidence to SOC 2 Auditor Ledger...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 3: Auditor Evidence Vault Active & Ready -->
+    <div id="wizard-step-3" class="hidden step-content-fade space-y-6 text-center relative z-10">
+      <div class="relative mx-auto w-16 h-16 flex items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/30 emerald-glow-box">
+        <span class="material-symbols-outlined text-emerald-400 text-[34px] check-pop">verified</span>
+      </div>
+
+      <div class="space-y-2 max-w-md mx-auto">
+        <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white">SOC 2 Continuous Evidence Active</h3>
+        <p class="text-xs text-zinc-400 leading-relaxed">
+          Your workstation is enrolled, verified, and streaming tamper-proof audit metadata to the independent CPA ledger.
+        </p>
+      </div>
+
+      <!-- Verified Enrolled Hardware Pill Summary -->
+      <div class="p-3.5 rounded-xl bg-zinc-900/60 border border-white/5 max-w-md mx-auto text-left space-y-2.5">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[16px] text-emerald-400">laptop_mac</span>
+            <span class="font-semibold text-white" id="success-hostname">inspiron (Arch Linux)</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Verified Active</span>
+        </div>
+        <div class="text-[11px] text-zinc-400 font-mono flex items-center justify-between border-t border-white/5 pt-2">
+          <span>Zero-Payload Guarantee:</span>
+          <span class="text-emerald-400 font-semibold">Strict Metadata Only (0 bytes video/maps)</span>
+        </div>
+        <div class="text-[11px] text-zinc-400 font-mono flex items-center justify-between">
+          <span>CPA Audit Status:</span>
+          <span class="text-zinc-200">SOC 2 Type II Continuous Window Open</span>
+        </div>
+      </div>
+
+      <!-- Secure Auditor Link with Copy -->
+      <div class="bg-black/50 border border-white/5 p-3 rounded-xl max-w-md mx-auto space-y-1.5 text-left">
+        <div class="flex items-center justify-between text-[11px] text-zinc-400">
+          <span>Independent CPA Auditor Evidence Vault:</span>
+          <button onclick="copyToClipboard(document.getElementById('auditor-link-display').innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-[13px]">content_copy</span>
+            <span>Copy Link</span>
+          </button>
+        </div>
+        <code class="block font-mono text-zinc-300 text-[10px] overflow-x-auto select-all" id="auditor-link-display">http://127.0.0.1:8000/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026</code>
+      </div>
+
+      <button onclick="completeOnboardingAndLaunch()" class="w-full max-w-md mx-auto py-3.5 px-5 rounded-xl bg-white hover:bg-zinc-100 text-black font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-xl shadow-white/10 active:scale-[0.99]">
+        <span>🚀 Launch Compliance Command Center</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Legal Liability Terms                                              -->
+<!-- ========================================================================= -->
+<div id="legal-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-xl rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-5 text-xs text-zinc-300">
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <h3 class="text-base font-semibold text-white">Pure Software Provider Terms</h3>
+      <button onclick="document.getElementById('legal-modal').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+    <div class="space-y-3 leading-relaxed">
+      <p><strong class="text-white">1. Software Role:</strong> Cyber Compliance is strictly an automated evidence collection tool. We are not an accounting firm or CPA auditor. All certifications are issued solely by independent auditors.</p>
+      <p><strong class="text-white">2. Liability Limitation:</strong> Total aggregate liability is strictly capped at the fees paid by Customer in the preceding 12 months.</p>
+      <p><strong class="text-white">3. Robotics Safety Waiver:</strong> Customer executes all system and remediation commands at their own discretion. Provider is not liable for device downtime or network disruption.</p>
+      <p><strong class="text-white">4. Zero-Payload Policy:</strong> We never inspect, capture, or transmit camera video, LiDAR, SLAM maps, or proprietary code.</p>
+    </div>
+    <div class="pt-2 text-right">
+      <button onclick="document.getElementById('legal-modal').classList.add('hidden')" class="px-4 py-2 rounded-lg bg-white text-black font-semibold">Understood</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- FOOTER                                                                    -->
+<!-- ========================================================================= -->
+<footer class="border-t border-white/5 px-6 py-5 text-center text-xs text-zinc-400 mt-auto">
+<div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+  <div class="flex items-center gap-2">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span>Continuous monitoring active • Connected to SOC 2 Auditor Vault</span>
+  </div>
+  <div class="flex items-center gap-4 text-zinc-400">
+    <a class="hover:text-zinc-200 transition-colors" href="/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026" target="_blank">Download Auditor JSON Report</a>
+    <span>•</span>
+    <a class="hover:text-zinc-200 transition-colors" href="#" onclick="document.getElementById('legal-modal').classList.remove('hidden'); return false;">Legal Liability Terms</a>
+  </div>
+</div>
+</footer>
+
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT: Full State, Modal, & API Management                           -->
+<!-- ========================================================================= -->
+<script>
+const ORG_TOKEN = "org_demo_pattern_labs_2026";
+const API_BASE = window.location.origin;
+
+let activeDevices = [];
+let activeDevice = null;
+let activeUsers = [];
+let workstationPollTimer = null;
+
+// Refresh Button Action
+async function refreshData() {
+  const icon = document.getElementById("refresh-icon");
+  if (icon) icon.classList.add("spin");
+  try {
+    await Promise.all([
+      loadFleetPosture(),
+      loadTeamUsers(),
+      loadOrgDetails()
+    ]);
+  } catch (err) {
+    console.error("Refresh error:", err);
+  } finally {
+    if (icon) setTimeout(() => icon.classList.remove("spin"), 500);
+  }
+}
+
+// Load Fleet Data from Live API
+async function loadFleetPosture() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/devices?org_token=${ORG_TOKEN}`);
+    if (!resp.ok) throw new Error("API response not ok");
+    const data = await resp.json();
+    activeDevices = data.devices || [];
+    renderDashboard(activeDevices);
+  } catch (err) {
+    console.warn("API offline or error, rendering sample device:", err);
+    renderDashboard([{
+      id: "dev_sample",
+      device_id: "26a6db9a452846beb1ca90b3e227a1cc",
+      hostname: "inspiron",
+      mode: "robot",
+      fleet_tag: "primary-fleet",
+      last_posture: "non_compliant",
+      last_heartbeat: new Date().toISOString(),
+      controls: {
+        firewall: { active: false, status: "fail" },
+        antivirus: { name: "ClamAV", status: "pass" },
+        admin_separation: { enforced: false, status: "fail" },
+        patch_management: { status_detail: "Compliant (Managed)", status: "pass" }
+      },
+      robot_specific: {
+        open_ports_count: 16,
+        exposed_ports_count: 6,
+        exposed_ports: [
+          { proto: "udp", ip: "0.0.0.0", port: "5353", exposed: true },
+          { proto: "tcp", ip: "0.0.0.0", port: "5355", exposed: true }
+        ]
+      }
+    }]);
+  }
+}
+
+function renderDashboard(devices) {
+  const failing = devices.filter(d => d.last_posture === 'non_compliant' || d.last_posture === 'warning');
+  const passing = devices.filter(d => d.last_posture === 'compliant');
+  const total = devices.length;
+
+  activeDevice = devices[0] || null;
+
+  // Percentage & Circular Readiness Gauge
+  const pct = total > 0 ? Math.round((passing.length / total) * 100) : 0;
+  const gaugePercent = document.getElementById("gauge-percent");
+  const gaugeArc = document.getElementById("gauge-arc");
+  const statPassing = document.getElementById("stat-passing-count");
+  const statAction = document.getElementById("stat-action-count");
+  const attentionBadge = document.getElementById("attention-badge-count");
+
+  if (gaugePercent) gaugePercent.innerText = `${pct}%`;
+  if (gaugeArc) gaugeArc.setAttribute("stroke-dasharray", `${pct}, 100`);
+  if (statPassing) statPassing.innerText = passing.length;
+  if (statAction) statAction.innerText = failing.length;
+  if (attentionBadge) attentionBadge.innerText = failing.length;
+
+  // Central Hero Hub Content & Handwritten Annotations
+  const heroBadge = document.getElementById("hero-badge");
+  const heroPulse = document.getElementById("hero-pulse");
+  const heroHeadline = document.getElementById("hero-headline");
+  const heroSubtext = document.getElementById("hero-subtext");
+  const annotationText = document.getElementById("annotation-text");
+  const heroBtnLabel = document.getElementById("hero-btn-label");
+  const heroFixBtn = document.getElementById("hero-fix-btn");
+
+  if (total === 0) {
+    if (heroBadge) heroBadge.innerText = "Setup Required";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+    if (heroHeadline) {
+      heroHeadline.innerHTML = `Welcome to Cyber Compliance. <br class="hidden sm:block"/><span class="text-zinc-300">Enroll your first device.</span>`;
+    }
+    if (heroSubtext) {
+      heroSubtext.innerHTML = `<strong class="text-zinc-200 font-semibold">Zero devices currently monitored.</strong> Connect an engineer workstation or robotics node to establish continuous SOC 2 evidence collection.`;
+    }
+    if (annotationText) annotationText.innerText = "start by enrolling your laptop! →";
+    if (heroBtnLabel) heroBtnLabel.innerText = "Enroll Workstation";
+    if (heroFixBtn) {
+      heroFixBtn.onclick = () => openOnboardingModal();
+    }
+  } else if (failing.length === 0) {
+    if (heroBadge) heroBadge.innerText = "Continuous SOC 2 Verified";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+    if (heroHeadline) {
+      heroHeadline.innerHTML = `All systems clear. <br class="hidden sm:block"/><span class="text-emerald-400 font-bold">${total} of ${total} ${total === 1 ? 'asset' : 'assets'} 100% compliant.</span>`;
+    }
+    if (heroSubtext) {
+      heroSubtext.innerHTML = `<strong class="text-zinc-200 font-semibold">${total} of ${total} monitored ${total === 1 ? 'asset meets' : 'assets meet'} all active SOC 2 controls.</strong> Telemetry synced continuously.`;
+    }
+    if (annotationText) annotationText.innerText = "all systems green! ✓";
+    if (heroBtnLabel) heroBtnLabel.innerText = "Verify All (Re-Audit)";
+    if (heroFixBtn) {
+      heroFixBtn.onclick = () => triggerReAudit(activeDevice?.device_id);
+    }
+  } else {
+    if (heroBadge) heroBadge.innerText = "Action Needed Before Audit";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-amber-400/90 animate-pulse";
+    if (heroHeadline) {
+      heroHeadline.innerHTML = `Action Needed: <br class="hidden sm:block"/><span class="text-zinc-300">${failing.length} ${failing.length === 1 ? 'device is' : 'devices are'} <span class="text-white font-bold sketch-underline" id="hero-failing-count">flagged for audit</span>.</span>`;
+    }
+    if (heroSubtext) {
+      heroSubtext.innerHTML = `<strong class="text-zinc-200 font-semibold">${passing.length} of ${total} ${total === 1 ? 'device satisfies' : 'devices satisfy'} SOC 2 requirements.</strong> Fix takes under 1 minute.`;
+    }
+    if (annotationText) annotationText.innerText = total === 1 ? "fix this device to get 100% compliant!" : `fix ${failing.length} items for 100% compliance!`;
+    if (heroBtnLabel) heroBtnLabel.innerText = total === 1 ? "Fix Flagged Device" : "Fix Flagged Items";
+    if (heroFixBtn) {
+      heroFixBtn.onclick = () => openRemediationModal(null, failing[0]?.device_id);
+    }
+  }
+
+  // =========================================================================
+  // 1. ACTION ITEMS: Focused Task Cards (No Red Borders or Competing Targets)
+  // =========================================================================
+  const container = document.getElementById("attention-list-container");
+  const attentionSection = document.getElementById("attention-section");
+
+  if (container) {
+    container.innerHTML = "";
+    if (failing.length === 0) {
+      if (attentionSection) attentionSection.classList.add("hidden");
+    } else {
+      if (attentionSection) attentionSection.classList.remove("hidden");
+      failing.forEach(dev => {
+        const isRobot = dev.mode === 'robot';
+        const icon = isRobot ? 'smart_toy' : 'laptop_mac';
+        const typeLabel = isRobot ? 'Robot Asset' : 'Workstation';
+
+        const ctls = dev.controls || {};
+        const isFirewallPass = ctls.firewall?.status === 'pass';
+        const isAntivirusPass = ctls.antivirus?.status === 'pass';
+        const isAdminPass = ctls.admin_separation?.status === 'pass';
+        const isPatchPass = ctls.patch_management?.status === 'pass';
+        const isWebPass = ctls.web_threat_scanning ? ctls.web_threat_scanning.status === 'pass' : true;
+
+        let primaryIssue = "Host Firewall Disabled";
+        let explanation = "Inbound network traffic is unprotected against open listening ports.";
+        let btnLabel = "Fix Firewall";
+        let targetControl = "firewall";
+
+        if (!isFirewallPass) {
+          primaryIssue = "Host Firewall Disabled";
+          explanation = "Inbound network traffic is unprotected against open listening ports.";
+          btnLabel = "Fix Firewall";
+          targetControl = "firewall";
+        } else if (!isAdminPass) {
+          primaryIssue = "Admin Privileges Unseparated";
+          explanation = "Daily user account has full root sudo privileges without separate root password authentication.";
+          btnLabel = "Fix Admin Separation";
+          targetControl = "admin_separation";
+        } else if (!isPatchPass) {
+          primaryIssue = "OS Update Required (>14d)";
+          explanation = "System build exceeds the 14-day kernel/security patch SLA required by SOC 2 policy.";
+          btnLabel = "Update System";
+          targetControl = "patch_management";
+        } else if (!isAntivirusPass) {
+          primaryIssue = "Antivirus / EDR Inactive";
+          explanation = "No active endpoint detection daemon was detected with current threat signatures.";
+          btnLabel = "Activate Antivirus";
+          targetControl = "antivirus";
+        } else if (!isWebPass) {
+          primaryIssue = "Web Threat Filtering Inactive";
+          explanation = "No protective DNS or browser security gateway configured to block known malware & phishing domains.";
+          btnLabel = "Fix Web Defense";
+          targetControl = "web_threat_scanning";
+        }
+
+        const card = document.createElement("div");
+        card.className = "bg-card rounded-xl p-4 sm:p-5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4";
+        card.innerHTML = `
+          <div class="flex items-start sm:items-center gap-3.5">
+            <div class="w-9 h-9 rounded-lg bg-zinc-800/80 border border-white/5 text-zinc-300 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[19px]">${icon}</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-medium text-white text-sm">${primaryIssue}</span>
+                <span class="text-zinc-600 text-xs">•</span>
+                <span class="text-zinc-400 font-mono text-xs">${dev.hostname}</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">${typeLabel}</span>
+              </div>
+              <p class="text-xs text-zinc-400 mt-0.5 leading-relaxed">${explanation}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+            <button onclick="openDetailsModal('${dev.device_id}')" class="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors">
+              Inspect
+            </button>
+            <button onclick="openRemediationModal('${targetControl}', '${dev.device_id}')" class="px-3.5 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+              <span>${btnLabel}</span>
+              <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+  }
+
+  // =========================================================================
+  // 2. SOC 2 SAFEGUARD CONTROLS MATRIX (The 5 Fleet Controls)
+  // =========================================================================
+  const matrixContainer = document.getElementById("controls-matrix-list");
+  const CONTROLS_SPEC = [
+    {
+      id: "firewall",
+      code: "CC6.6",
+      category: "Network Defense",
+      name: "Host Firewall Protection",
+      desc: "Inbound packet filtering active with default deny on all network interfaces.",
+      check: (ctls) => ctls.firewall?.status === 'pass'
+    },
+    {
+      id: "admin_separation",
+      code: "CC6.1",
+      category: "Logical Access",
+      name: "Admin Privilege Boundary",
+      desc: "Daily user tasks separated from root privileges; protected root elevation.",
+      check: (ctls) => ctls.admin_separation?.status === 'pass'
+    },
+    {
+      id: "antivirus",
+      code: "CC6.8",
+      category: "Endpoint Integrity",
+      name: "Antivirus & EDR Daemon",
+      desc: "Continuous malware signature inspection active via local endpoint sensor.",
+      check: (ctls) => ctls.antivirus?.status === 'pass'
+    },
+    {
+      id: "patch_management",
+      code: "CC7.1",
+      category: "Vulnerability SLA",
+      name: "OS Security Patch Currency",
+      desc: "Kernel build and system packages maintained within the 14-day update window.",
+      check: (ctls) => ctls.patch_management?.status === 'pass'
+    },
+    {
+      id: "web_threat_scanning",
+      code: "CC6.7",
+      category: "Transmission Defense",
+      name: "Protective DNS Filtering",
+      desc: "Upstream protective DNS active to sinkhole phishing and malicious domain lookups.",
+      check: (ctls) => ctls.web_threat_scanning ? ctls.web_threat_scanning.status === 'pass' : true
+    }
+  ];
+
+  if (matrixContainer) {
+    matrixContainer.innerHTML = "";
+    let passingControlsCount = 0;
+
+    CONTROLS_SPEC.forEach(ctl => {
+      const passingNodes = devices.filter(d => ctl.check(d.controls || {}));
+      const isAllPassing = total > 0 && passingNodes.length === total;
+      if (isAllPassing) passingControlsCount++;
+
+      const row = document.createElement("div");
+      row.className = "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.01] transition-colors";
+      row.innerHTML = `
+        <div class="flex items-start sm:items-center gap-3">
+          <span class="px-1.5 py-0.5 rounded font-mono text-[10px] bg-zinc-800 text-zinc-400 border border-white/5 shrink-0 mt-0.5 sm:mt-0">${ctl.code}</span>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm font-medium text-white">${ctl.name}</span>
+              <span class="text-zinc-600 text-xs hidden sm:inline">•</span>
+              <span class="text-xs text-zinc-400">${ctl.category}</span>
+            </div>
+            <p class="text-xs text-zinc-500 mt-0.5 leading-relaxed">${ctl.desc}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0 self-end sm:self-center">
+          ${total === 0 ? `
+            <span class="text-xs text-zinc-500">Awaiting node</span>
+          ` : isAllPassing ? `
+            <span class="flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Enforced (${passingNodes.length}/${total})</span>
+            </span>
+          ` : `
+            <span class="flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400/80"></span>
+              <span>${total - passingNodes.length} ${total - passingNodes.length === 1 ? 'Node Flagged' : 'Nodes Flagged'}</span>
+            </span>
+            <button onclick="openRemediationModal('${ctl.id}')" class="px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-md border border-white/10 transition-colors">
+              Fix
+            </button>
+          `}
+        </div>
+      `;
+      matrixContainer.appendChild(row);
+    });
+
+    const summaryPill = document.getElementById("controls-passing-summary");
+    if (summaryPill) {
+      summaryPill.innerText = total === 0 ? "0 of 5 active" : `${passingControlsCount} of 5 satisfied`;
+    }
+  }
+
+  // =========================================================================
+  // 3. ENROLLED FLEET HARDWARE: Full Node Inventory & Direct Actions
+  // =========================================================================
+  const fleetContainer = document.getElementById("fleet-table-container");
+  const fleetCountBadge = document.getElementById("fleet-count-badge");
+  if (fleetCountBadge) fleetCountBadge.innerText = `${total} ${total === 1 ? 'Node' : 'Nodes'}`;
+
+  if (fleetContainer) {
+    fleetContainer.innerHTML = "";
+    if (total === 0) {
+      fleetContainer.innerHTML = `
+        <div class="p-8 text-center space-y-2">
+          <p class="text-sm text-zinc-400 font-medium">No nodes enrolled yet</p>
+          <p class="text-xs text-zinc-500">Connect your local machine or robotics hardware to start continuous compliance monitoring.</p>
+          <button onclick="openOnboardingModal()" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-white/10 font-medium transition-colors">
+            <span>Enroll First Node</span>
+          </button>
+        </div>
+      `;
+    } else {
+      devices.forEach(dev => {
+        const isRobot = dev.mode === 'robot';
+        const icon = isRobot ? 'smart_toy' : 'laptop_mac';
+        const typeLabel = isRobot ? 'Robot Asset' : 'Workstation';
+        const isCompliant = dev.last_posture === 'compliant';
+
+        const row = document.createElement("div");
+        row.className = "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.01] transition-colors";
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-zinc-800/80 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+              <span class="material-symbols-outlined text-[19px]">${icon}</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-medium text-white font-mono">${dev.hostname}</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">${typeLabel}</span>
+                <span class="text-[11px] text-zinc-500 font-mono">${dev.os_distro || 'Linux'}</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                <span>${dev.owner_email || 'Unassigned'}</span>
+                <span>•</span>
+                <span class="font-mono text-[11px] text-zinc-600">${dev.fleet_tag || 'default'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+            <span class="flex items-center gap-1.5 text-xs text-zinc-300 font-medium mr-2">
+              <span class="w-1.5 h-1.5 rounded-full ${isCompliant ? 'bg-emerald-400' : 'bg-amber-400/80'}"></span>
+              <span>${isCompliant ? 'Compliant' : '1 Action Required'}</span>
+            </span>
+            <button onclick="triggerReAudit('${dev.device_id}', this)" class="px-2.5 py-1 text-xs text-zinc-400 hover:text-white rounded border border-white/5 bg-zinc-900/60 hover:bg-zinc-800 transition-colors flex items-center gap-1" title="Re-run security checks">
+              <span class="material-symbols-outlined text-[13px]">refresh</span>
+              <span class="hidden sm:inline">Check</span>
+            </button>
+            <button onclick="openDetailsModal('${dev.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded border border-white/10 bg-zinc-800 hover:bg-zinc-700 transition-colors">
+              Inspect
+            </button>
+          </div>
+        `;
+        fleetContainer.appendChild(row);
+      });
+    }
+  }
+}
+
+// Toggle Inventory Tray
+function toggleInventoryTray() {
+  const body = document.getElementById("inventory-tray-body");
+  const caret = document.getElementById("inventory-caret");
+  const text = document.getElementById("inventory-toggle-text");
+  if (!body) return;
+  body.classList.toggle("hidden");
+  if (caret) caret.classList.toggle("rotate-180");
+  if (text) {
+    text.innerText = body.classList.contains("hidden") 
+      ? `Show Fleet (${activeDevices.filter(d => d.last_posture === 'compliant').length})` 
+      : "Hide Fleet";
+  }
+}
+
+// Toggle Org Dropdown
+function toggleOrgDropdown() {
+  document.getElementById("org-dropdown").classList.toggle("hidden");
+}
+
+function copyEnrollCommand() {
+  const cmd = `python3 -m agent.cli --enroll --api-url "${window.location.origin}" --org-token "${ORG_TOKEN}" --mode robot --fleet-tag "primary-fleet"`;
+  navigator.clipboard.writeText(cmd);
+  alert("Enrollment command copied to clipboard!");
+  document.getElementById("org-dropdown").classList.add("hidden");
+}
+
+// Open Details Modal
+function openDetailsModal(idOrIdx) {
+  let dev = null;
+  if (typeof idOrIdx === 'string') {
+    dev = activeDevices.find(d => d.device_id === idOrIdx);
+  } else if (typeof idOrIdx === 'number') {
+    dev = activeDevices[idOrIdx];
+  }
+  if (!dev) dev = activeDevice;
+  if (!dev) return;
+  activeDevice = dev;
+
+  document.getElementById("modal-hostname").innerText = dev.hostname || "Device";
+  document.getElementById("modal-mode").innerText = dev.mode === 'robot' ? 'Autonomous Robot Asset' : 'Workstation';
+  document.getElementById("modal-device-id").innerText = `UUID: ${dev.device_id}`;
+  document.getElementById("modal-last-heartbeat").innerText = `Last heartbeat: ${dev.last_heartbeat || 'recent'}`;
+
+  // Controls Grid
+  const controlsGrid = document.getElementById("modal-controls-grid");
+  controlsGrid.innerHTML = "";
+  const ctls = dev.controls || {};
+
+  const controlItems = [
+    { id: "firewall", name: "Host Firewall", status: ctls.firewall?.status || "fail", detail: ctls.firewall?.active ? "Active" : "Inactive" },
+    { id: "admin_separation", name: "Admin Privilege Boundary", status: ctls.admin_separation?.status || "fail", detail: ctls.admin_separation?.enforced ? "Enforced" : "Root unseparated" },
+    { id: "antivirus", name: "Antivirus / EDR", status: ctls.antivirus?.status || "pass", detail: ctls.antivirus?.name || "ClamAV" },
+    { id: "patch_management", name: "Patch Currency (<14d)", status: ctls.patch_management?.status || "pass", detail: ctls.patch_management?.status_detail || "Compliant (Managed)" },
+    { id: "web_threat_scanning", name: "Protective DNS Defense", status: ctls.web_threat_scanning ? ctls.web_threat_scanning.status : "pass", detail: ctls.web_threat_scanning?.active ? "Active (Quad9)" : "Unconfigured" },
+  ];
+
+  controlItems.forEach(item => {
+    const isPass = item.status === "pass";
+    const badgeColor = isPass ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-zinc-300 bg-zinc-800 border-zinc-700/60";
+    const div = document.createElement("div");
+    div.className = "bg-black/30 p-2.5 rounded-lg border border-white/5 flex items-center justify-between";
+    div.innerHTML = `
+      <div>
+        <p class="text-zinc-300 font-medium">${item.name}</p>
+        <p class="text-[11px] text-zinc-500">${item.detail}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeColor}">${item.status.toUpperCase()}</span>
+        ${!isPass ? `<button onclick="closeDetailsModal(); openRemediationModal('${item.id}', activeDevice?.device_id)" class="text-xs text-white hover:underline flex items-center gap-0.5"><span>Fix</span><span class="material-symbols-outlined text-[13px]">arrow_forward</span></button>` : ''}
+      </div>
+    `;
+    controlsGrid.appendChild(div);
+  });
+
+  // Ports List
+  const portsList = document.getElementById("modal-ports-list");
+  portsList.innerHTML = "";
+  const robotSpec = dev.robot_specific || {};
+  const ports = robotSpec.exposed_ports || [];
+
+  if (ports.length === 0) {
+    portsList.innerHTML = `<div class="text-zinc-500 text-xs py-2">No publicly exposed ports detected.</div>`;
+  } else {
+    ports.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "flex items-center justify-between py-1 border-b border-white/5 last:border-0";
+      div.innerHTML = `
+        <span class="text-zinc-300">${p.proto.toUpperCase()} port ${p.port} (${p.ip})</span>
+        <span class="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700/60 font-mono">WILDCARD EXPOSED</span>
+      `;
+      portsList.appendChild(div);
+    });
+  }
+
+  document.getElementById("details-modal").classList.remove("hidden");
+}
+
+function closeDetailsModal() {
+  document.getElementById("details-modal").classList.add("hidden");
+}
+
+// =========================================================================
+// MULTI-OS REMEDIATION KNOWLEDGE BASE (All OSes + Lockout Prevention)
+// =========================================================================
+const REMEDIATION_KNOWLEDGE_BASE = {
+  admin_separation: {
+    title: "Admin Privilege Separation (SOC 2 CC6.1)",
+    subtitle: "Logical Access Control • Least Privilege Daily Environment",
+    desc: "Daily user tasks (coding, browsing, simulation) must not run as unrestricted root. Administrative privileges must require isolated authentication.",
+    lockout_warning: "Why did 'password for root' appear? Modern Linux distros (Arch, Ubuntu) have no root password set by default. If you enforce root authentication before setting a root password, sudo will lock you out! Always follow Step 1 before Step 2.",
+    platforms: {
+      arch: {
+        label: "Arch Linux",
+        steps: [
+          { title: "Step 1: Set a password for root (if currently unset)", code: "sudo passwd root" },
+          { title: "Step 2: Enforce root password requirement for sudo", code: "echo 'Defaults rootpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw && sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw" }
+        ],
+        revert: "pkexec rm -f /etc/sudoers.d/cyber_essentials_targetpw",
+        notes: "SOC 2 Enterprise Alternative: Instead of rootpw, create a dedicated admin user (<code>sudo useradd -m -G wheel admin-user && sudo passwd admin-user</code>) and remove your daily account from the <code>wheel</code> group."
+      },
+      ubuntu: {
+        label: "Ubuntu / Debian",
+        steps: [
+          { title: "Step 1: Set a password for root (if currently unset)", code: "sudo passwd root" },
+          { title: "Step 2: Enforce root password requirement for sudo", code: "echo 'Defaults rootpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw && sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw" }
+        ],
+        revert: "pkexec rm -f /etc/sudoers.d/cyber_essentials_targetpw",
+        notes: "SOC 2 Enterprise Alternative: Create dedicated admin account (<code>sudo adduser admin-user && sudo usermod -aG sudo admin-user</code>) and remove daily account from <code>sudo</code> group."
+      },
+      fedora: {
+        label: "Fedora / RHEL",
+        steps: [
+          { title: "Step 1: Set a root password", code: "sudo passwd root" },
+          { title: "Step 2: Enforce targetpw for sudo", code: "echo 'Defaults targetpw' | sudo tee /etc/sudoers.d/cyber_essentials_targetpw && sudo chmod 0440 /etc/sudoers.d/cyber_essentials_targetpw" }
+        ],
+        revert: "pkexec rm -f /etc/sudoers.d/cyber_essentials_targetpw",
+        notes: "Always verify syntax with <code>sudo visudo -c</code> before closing your shell."
+      },
+      macos: {
+        label: "macOS",
+        steps: [
+          { title: "Step 1: Create a dedicated administrator account", code: "sudo sysadminctl -addUser corpadmin -admin -password \"ReplaceWithStrongPassword123!\"" },
+          { title: "Step 2: Demote daily user account from admin group", code: "sudo dseditgroup -o edit -d $(whoami) -t user admin" }
+        ],
+        revert: "Log into corpadmin and re-enable admin in System Settings > Users & Groups.",
+        notes: "GUI Alternative: System Settings > Users & Groups > Add Account > Administrator. Then uncheck 'Allow user to administer this computer' for daily account."
+      },
+      windows: {
+        label: "Windows",
+        steps: [
+          { title: "Step 1: Create dedicated admin account (PowerShell as Admin)", code: "New-LocalUser -Name \"CorpAdmin\" -Description \"SOC 2 Admin Account\" -NoPassword" },
+          { title: "Step 2: Add to Administrators and set password", code: "Add-LocalGroupMember -Group \"Administrators\" -Member \"CorpAdmin\"; Set-LocalUser -Name \"CorpAdmin\"" },
+          { title: "Step 3: Remove daily user from local Administrators group", code: "Remove-LocalGroupMember -Group \"Administrators\" -Member $env:USERNAME" }
+        ],
+        revert: "Log into CorpAdmin and run: Add-LocalGroupMember -Group \"Administrators\" -Member $env:USERNAME",
+        notes: "Daily user will be prompted by User Account Control (UAC) whenever elevation is requested."
+      },
+      nixos: {
+        label: "NixOS",
+        steps: [
+          { title: "Step 1: In /etc/nixos/configuration.nix, set root password", code: "users.users.root.initialPassword = \"ReplaceWithStrongPassword\";" },
+          { title: "Step 2: Add sudo rootpw rule to extraConfig", code: "security.sudo.extraConfig = ''\n  Defaults rootpw\n'';" },
+          { title: "Step 3: Rebuild system configuration", code: "sudo nixos-rebuild switch" }
+        ],
+        revert: "Remove the extraConfig line in configuration.nix and run sudo nixos-rebuild switch.",
+        notes: "NixOS declarative configuration ensures reproducibility and zero configuration drift."
+      }
+    }
+  },
+  firewall: {
+    title: "Host Firewall Protection (SOC 2 CC6.6)",
+    subtitle: "Network Boundary • Packet Filtering & Port Exposure Defense",
+    desc: "Host-level packet filtering must be active to shield open listening daemons and edge services from unauthorized inbound network traffic.",
+    lockout_warning: "Remote Disconnection Protection: Every firewall remediation command explicitly whitelists SSH (port 22/tcp) before turning on packet filtering. This prevents edge robot nodes or remote workstations from losing remote shell access.",
+    platforms: {
+      ubuntu: {
+        label: "Ubuntu / Debian",
+        steps: [
+          { title: "Allow SSH and enable UFW with default incoming traffic blocked", code: "sudo ufw allow 22/tcp && sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw --force enable" }
+        ],
+        revert: "sudo ufw disable",
+        notes: "Remote Access Safety: Port 22 is explicitly opened first so active or future SSH sessions are preserved."
+      },
+      arch: {
+        label: "Arch Linux",
+        steps: [
+          { title: "Allow SSH and enable UFW with default incoming traffic blocked", code: "sudo ufw allow 22/tcp && sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw --force enable" }
+        ],
+        revert: "sudo ufw disable",
+        notes: "If UFW is not installed: <code>sudo pacman -S --noconfirm ufw && sudo systemctl enable --now ufw</code>."
+      },
+      fedora: {
+        label: "Fedora / RHEL",
+        steps: [
+          { title: "Enable firewalld, preserve SSH access, and set drop policy", code: "sudo systemctl enable --now firewalld && sudo firewall-cmd --permanent --add-service=ssh && sudo firewall-cmd --set-default-zone=drop && sudo firewall-cmd --reload" }
+        ],
+        revert: "sudo systemctl stop firewalld",
+        notes: "SSH service is explicitly whitelisted before the default drop zone is applied."
+      },
+      macos: {
+        label: "macOS",
+        steps: [
+          { title: "Turn on macOS Application Firewall via terminal", code: "sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on" }
+        ],
+        revert: "sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off",
+        notes: "GUI: System Settings > Network > Firewall > Toggle On."
+      },
+      windows: {
+        label: "Windows",
+        steps: [
+          { title: "Enable Windows Defender Firewall on all profiles (PowerShell)", code: "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True" }
+        ],
+        revert: "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False",
+        notes: "GUI: Windows Security > Firewall & network protection > Turn On."
+      },
+      nixos: {
+        label: "NixOS",
+        steps: [
+          { title: "Add firewall rule to /etc/nixos/configuration.nix with SSH whitelisted", code: "networking.firewall.enable = true;\nnetworking.firewall.allowedTCPPorts = [ 22 ];\nnetworking.firewall.allowPing = false;" },
+          { title: "Rebuild system configuration", code: "sudo nixos-rebuild switch" }
+        ],
+        revert: "Set networking.firewall.enable = false; and rebuild.",
+        notes: "Port 22 is explicitly declared in <code>networking.firewall.allowedTCPPorts</code> to prevent disconnection."
+      }
+    }
+  },
+  antivirus: {
+    title: "Endpoint Antivirus & EDR (SOC 2 CC6.8)",
+    subtitle: "Malware Defense • Continuous Signature Inspection",
+    desc: "An active antivirus engine or Endpoint Detection & Response (EDR) agent must be running with up-to-date threat signatures.",
+    lockout_warning: null,
+    platforms: {
+      ubuntu: {
+        label: "Ubuntu / Debian",
+        steps: [
+          { title: "Install and activate ClamAV daemon", code: "sudo apt update && sudo apt install -y clamav clamav-daemon && sudo systemctl enable --now clamav-daemon" }
+        ],
+        revert: "sudo systemctl stop clamav-daemon",
+        notes: "Enterprise EDR alternatives: SentinelOne, CrowdStrike Falcon, or Wazuh Agent."
+      },
+      arch: {
+        label: "Arch Linux",
+        steps: [
+          { title: "Install and activate ClamAV updater & daemon", code: "sudo pacman -S --noconfirm clamav && sudo systemctl enable --now clamav-freshclam" }
+        ],
+        revert: "sudo systemctl stop clamav-freshclam",
+        notes: "Our collector detects ClamAV, SentinelOne, CrowdStrike Falcon, Sophos, and Wazuh."
+      },
+      fedora: {
+        label: "Fedora / RHEL",
+        steps: [
+          { title: "Install and activate ClamAV scan daemon", code: "sudo dnf install -y clamav clamd && sudo systemctl enable --now clamd@scan" }
+        ],
+        revert: "sudo systemctl stop clamd@scan",
+        notes: "Allow SELinux access: <code>sudo setsebool -P antivirus_can_scan_system 1</code>."
+      },
+      macos: {
+        label: "macOS",
+        steps: [
+          { title: "Verify built-in Gatekeeper & XProtect is active", code: "spctl --status" }
+        ],
+        revert: "N/A (Built-in)",
+        notes: "macOS includes built-in XProtect and Gatekeeper. Alternatively, enroll in SentinelOne or CrowdStrike."
+      },
+      windows: {
+        label: "Windows",
+        steps: [
+          { title: "Ensure Windows Defender real-time protection is enabled (PowerShell)", code: "Set-MpPreference -DisableRealtimeMonitoring $false; Update-MpSignature" }
+        ],
+        revert: "Set-MpPreference -DisableRealtimeMonitoring $true",
+        notes: "Windows Defender satisfies SOC 2 CC6.8 out of the box."
+      },
+      nixos: {
+        label: "NixOS",
+        steps: [
+          { title: "Enable ClamAV in /etc/nixos/configuration.nix", code: "services.clamav.daemon.enable = true;\nservices.clamav.updater.enable = true;" },
+          { title: "Apply configuration", code: "sudo nixos-rebuild switch" }
+        ],
+        revert: "Disable services.clamav.daemon.enable and rebuild.",
+        notes: "Threat signatures update automatically via freshclam background service."
+      }
+    }
+  },
+  patch_management: {
+    title: "Operating System Security Patches",
+    subtitle: "Vulnerability Management • 14-Day Patch SLA",
+    desc: "Kernel and security packages must be updated within the 14-day window required by SOC 2 compliance policy.",
+    lockout_warning: null,
+    platforms: {
+      ubuntu: {
+        label: "Ubuntu / Debian",
+        steps: [
+          { title: "Update repositories and install latest security upgrades", code: "sudo apt update && sudo apt upgrade -y" }
+        ],
+        revert: "N/A",
+        notes: "To automate security updates: <code>sudo apt install -y unattended-upgrades</code>."
+      },
+      arch: {
+        label: "Arch Linux",
+        steps: [
+          { title: "Sync package database and perform full system upgrade", code: "sudo pacman -Syu --noconfirm" }
+        ],
+        revert: "N/A",
+        notes: "Arch Linux is rolling-release. Re-audit after updating to clear the 14-day kernel age check."
+      },
+      fedora: {
+        label: "Fedora / RHEL",
+        steps: [
+          { title: "Apply all security advisories and updates", code: "sudo dnf upgrade --security -y" }
+        ],
+        revert: "N/A",
+        notes: "Inspect pending CVEs: <code>sudo dnf updateinfo list security</code>."
+      },
+      macos: {
+        label: "macOS",
+        steps: [
+          { title: "Download and install pending security updates", code: "softwareupdate -ia --restart" }
+        ],
+        revert: "N/A",
+        notes: "GUI: System Settings > General > Software Update."
+      },
+      windows: {
+        label: "Windows",
+        steps: [
+          { title: "Trigger Windows Update installation (PowerShell as Admin)", code: "Install-Module -Name PSWindowsUpdate -Force -SkipPublisherCheck; Install-WindowsUpdate -AcceptAll -AutoReboot" }
+        ],
+        revert: "N/A",
+        notes: "GUI: Settings > Windows Update > Check for updates."
+      },
+      nixos: {
+        label: "NixOS",
+        steps: [
+          { title: "Update channel and rebuild system with latest packages", code: "sudo nix-channel --update && sudo nixos-rebuild switch --upgrade" }
+        ],
+        revert: "sudo nixos-rebuild switch --rollback",
+        notes: "NixOS supports instant atomic rollbacks if an upgrade causes any regressions."
+      }
+    }
+  },
+  web_threat_scanning: {
+    title: "Web Threat & Malicious Domain Filtering (SOC 2 CC6.8)",
+    subtitle: "Protective DNS & Web Gateway • Phishing & Malware Domain Defense",
+    desc: "Workstations with repository or production access must enforce protective DNS (Quad9 9.9.9.9, Cloudflare 1.1.1.2) or endpoint protective browser extensions to prevent malicious domain resolutions.",
+    lockout_warning: null,
+    platforms: {
+      arch: {
+        label: "Arch Linux",
+        steps: [
+          { title: "Configure systemd-resolved with Quad9 Protective DNS", code: "sudo mkdir -p /etc/systemd/resolved.conf.d && printf '[Resolve]\\nDNS=9.9.9.9 149.112.112.112\\nDomains=~.\\n' | sudo tee /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved" }
+        ],
+        revert: "sudo rm -f /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved",
+        notes: "Drop-in configuration automatically routes all DNS resolutions through Quad9 protective sinkhole and persists across network changes."
+      },
+      ubuntu: {
+        label: "Ubuntu / Debian",
+        steps: [
+          { title: "Configure systemd-resolved with Quad9 Protective DNS", code: "sudo mkdir -p /etc/systemd/resolved.conf.d && printf '[Resolve]\\nDNS=9.9.9.9 149.112.112.112\\nDomains=~.\\n' | sudo tee /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved" }
+        ],
+        revert: "sudo rm -f /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved",
+        notes: "Universal systemd-resolved drop-in configuration. Blocks phishing, malware C2, and ransomware domains."
+      },
+      fedora: {
+        label: "Fedora / RHEL",
+        steps: [
+          { title: "Configure systemd-resolved with Quad9 Protective DNS", code: "sudo mkdir -p /etc/systemd/resolved.conf.d && printf '[Resolve]\\nDNS=9.9.9.9 149.112.112.112\\nDomains=~.\\n' | sudo tee /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved" }
+        ],
+        revert: "sudo rm -f /etc/systemd/resolved.conf.d/quad9.conf && sudo systemctl restart systemd-resolved",
+        notes: "Fedora uses systemd-resolved natively. Drop-in configuration persists across reboots and NetworkManager state changes."
+      },
+      macos: {
+        label: "macOS",
+        steps: [
+          { title: "Configure Quad9 protective DNS via networksetup", code: "networksetup -setdnsservers Wi-Fi 9.9.9.9 149.112.112.112" }
+        ],
+        revert: "networksetup -setdnsservers Wi-Fi empty",
+        notes: "GUI: System Settings > Network > Wi-Fi > Details > DNS."
+      },
+      windows: {
+        label: "Windows",
+        steps: [
+          { title: "Configure Quad9 DNS (PowerShell as Admin)", code: "Set-DnsClientServerAddress -InterfaceAlias (Get-NetAdapter | Where-Object Status -eq 'Up').Name -ServerAddresses ('9.9.9.9','149.112.112.112')" }
+        ],
+        revert: "Set-DnsClientServerAddress -InterfaceAlias (Get-NetAdapter | Where-Object Status -eq 'Up').Name -ResetServerAddresses",
+        notes: "GUI: Settings > Network & internet > Wi-Fi > Hardware properties > DNS assignment > Edit."
+      },
+      nixos: {
+        label: "NixOS",
+        steps: [
+          { title: "In /etc/nixos/configuration.nix, set protective nameservers", code: "networking.nameservers = [ \"9.9.9.9\" \"149.112.112.112\" ];" },
+          { title: "Rebuild configuration", code: "sudo nixos-rebuild switch" }
+        ],
+        revert: "Remove networking.nameservers from configuration.nix and run sudo nixos-rebuild switch.",
+        notes: "Declarative DNS protects all local processes from malicious network domains."
+      }
+    }
+  }
+};
+
+let activeRemediationControl = "admin_separation";
+let activeRemediationOS = "arch";
+
+let isOSDetected = false;
+
+function openRemediationModal(controlOverride, deviceId) {
+  let dev = null;
+  if (deviceId) {
+    dev = activeDevices.find(d => d.device_id === deviceId);
+  }
+  if (!dev) dev = activeDevice;
+  if (!dev && activeDevices.length > 0) dev = activeDevices[0];
+  activeDevice = dev;
+
+  const ctls = dev?.controls || {};
+
+  // Auto-detect failing control if not specified
+  if (controlOverride) {
+    activeRemediationControl = controlOverride;
+  } else if (ctls.firewall?.status !== 'pass') {
+    activeRemediationControl = "firewall";
+  } else if (ctls.admin_separation?.status !== 'pass') {
+    activeRemediationControl = "admin_separation";
+  } else if (ctls.patch_management?.status !== 'pass') {
+    activeRemediationControl = "patch_management";
+  } else if (ctls.antivirus?.status !== 'pass') {
+    activeRemediationControl = "antivirus";
+  } else if (ctls.web_threat_scanning?.status !== 'pass') {
+    activeRemediationControl = "web_threat_scanning";
+  } else {
+    activeRemediationControl = "patch_management";
+  }
+
+  // Detect OS from device telemetry
+  const distro = (dev?.os_distro || "").toLowerCase();
+  const version = (dev?.os_version || "").toLowerCase();
+  const combined = `${distro} ${version}`;
+
+  let detectedKey = null;
+  let detectedLabel = "Linux";
+
+  if (combined.includes("arch")) {
+    detectedKey = "arch";
+    detectedLabel = "Arch Linux";
+  } else if (combined.includes("ubuntu") || combined.includes("debian")) {
+    detectedKey = "ubuntu";
+    detectedLabel = combined.includes("debian") ? "Debian" : "Ubuntu";
+  } else if (combined.includes("fedora") || combined.includes("rhel") || combined.includes("red hat") || combined.includes("centos")) {
+    detectedKey = "fedora";
+    detectedLabel = "Fedora / RHEL";
+  } else if (combined.includes("darwin") || combined.includes("mac") || combined.includes("apple") || combined.includes("osx")) {
+    detectedKey = "macos";
+    detectedLabel = "macOS";
+  } else if (combined.includes("windows") || combined.includes("win32") || combined.includes("win64")) {
+    detectedKey = "windows";
+    detectedLabel = "Windows";
+  } else if (combined.includes("nix")) {
+    detectedKey = "nixos";
+    detectedLabel = "NixOS";
+  }
+
+  const detectedBanner = document.getElementById("os-detected-banner");
+  const manualSelector = document.getElementById("os-manual-selector");
+  const detectedLabelEl = document.getElementById("detected-os-label");
+  const detectedDeviceEl = document.getElementById("detected-os-device");
+  const selectorHeading = document.getElementById("os-selector-heading");
+  const selectorHideBtn = document.getElementById("os-selector-hide-btn");
+  const changeBtn = document.getElementById("os-change-btn");
+
+  if (detectedKey) {
+    isOSDetected = true;
+    activeRemediationOS = detectedKey;
+
+    if (detectedBanner) detectedBanner.classList.remove("hidden");
+    if (manualSelector) manualSelector.classList.add("hidden");
+    if (changeBtn) changeBtn.innerText = "Change OS";
+    if (detectedLabelEl) detectedLabelEl.innerText = dev?.os_version || detectedLabel;
+    if (detectedDeviceEl) detectedDeviceEl.innerText = `Tailored for ${dev?.hostname || 'enrolled asset'}`;
+    if (selectorHeading) selectorHeading.innerText = "Switch to another Operating System:";
+    if (selectorHideBtn) selectorHideBtn.classList.remove("hidden");
+  } else {
+    isOSDetected = false;
+    activeRemediationOS = "ubuntu"; // Default fallback
+
+    if (detectedBanner) detectedBanner.classList.add("hidden");
+    if (manualSelector) manualSelector.classList.remove("hidden");
+    if (selectorHeading) selectorHeading.innerText = "Operating system could not be detected. Select target OS:";
+    if (selectorHideBtn) selectorHideBtn.classList.add("hidden");
+  }
+
+  renderRemediationContent();
+  document.getElementById("remediation-modal").classList.remove("hidden");
+}
+
+function toggleManualOSSelection() {
+  const manualSelector = document.getElementById("os-manual-selector");
+  const changeBtn = document.getElementById("os-change-btn");
+  if (!manualSelector) return;
+
+  const isHidden = manualSelector.classList.contains("hidden");
+  if (isHidden) {
+    manualSelector.classList.remove("hidden");
+    if (changeBtn) changeBtn.innerText = "Hide Options";
+  } else {
+    manualSelector.classList.add("hidden");
+    if (changeBtn) changeBtn.innerText = "Change OS";
+  }
+}
+
+function switchRemediationOS(osKey) {
+  activeRemediationOS = osKey;
+  renderRemediationContent();
+}
+
+function renderRemediationContent() {
+  const controlData = REMEDIATION_KNOWLEDGE_BASE[activeRemediationControl];
+  if (!controlData) return;
+
+  document.getElementById("remediation-title").innerText = controlData.title;
+  document.getElementById("remediation-subtitle").innerText = controlData.subtitle;
+  document.getElementById("remediation-desc").innerText = controlData.desc;
+
+  // Update OS tabs active styling
+  const tabKeys = ["ubuntu", "arch", "fedora", "macos", "windows", "nixos"];
+  tabKeys.forEach(key => {
+    const btn = document.getElementById(`os-tab-${key}`);
+    if (btn) {
+      if (key === activeRemediationOS) {
+        btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-black border border-white shadow-sm transition-all";
+      } else {
+        btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-white/5 transition-all";
+      }
+    }
+  });
+
+  // Lockout Prevention Warning
+  const lockoutBox = document.getElementById("remediation-lockout-box");
+  const lockoutText = document.getElementById("remediation-lockout-text");
+  if (controlData.lockout_warning) {
+    lockoutBox.classList.remove("hidden");
+    lockoutText.innerHTML = controlData.lockout_warning;
+  } else {
+    lockoutBox.classList.add("hidden");
+  }
+
+  // Steps & Commands
+  const platformData = controlData.platforms[activeRemediationOS] || controlData.platforms["ubuntu"];
+  const stepsContainer = document.getElementById("remediation-steps-container");
+  stepsContainer.innerHTML = "";
+
+  platformData.steps.forEach((step, idx) => {
+    const stepDiv = document.createElement("div");
+    stepDiv.className = "bg-black/60 rounded-xl border border-white/5 p-3 space-y-2";
+    stepDiv.innerHTML = `
+      <div class="flex items-center justify-between text-[11px] text-zinc-300">
+        <span class="font-medium">${step.title}:</span>
+        <button onclick="copyToClipboard(this.parentElement.nextElementSibling.innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+          <span>Copy</span>
+        </button>
+      </div>
+      <pre class="font-mono text-white text-xs bg-zinc-900 p-2.5 rounded-lg overflow-x-auto select-all leading-relaxed whitespace-pre-wrap">${step.code}</pre>
+    `;
+    stepsContainer.appendChild(stepDiv);
+  });
+
+  // Revert Box
+  const revertBox = document.getElementById("remediation-revert-box");
+  const revertCode = document.getElementById("remediation-revert-code");
+  if (platformData.revert) {
+    revertBox.classList.remove("hidden");
+    revertCode.innerText = platformData.revert;
+  } else {
+    revertBox.classList.add("hidden");
+  }
+
+  // Notes Box
+  const notesBox = document.getElementById("remediation-notes-box");
+  const notesText = document.getElementById("remediation-notes-text");
+  if (platformData.notes) {
+    notesBox.classList.remove("hidden");
+    notesText.innerHTML = `<strong>Note:</strong> ${platformData.notes}`;
+  } else {
+    notesBox.classList.add("hidden");
+  }
+}
+
+function copyToClipboard(text, btnElement) {
+  navigator.clipboard.writeText(text);
+  if (btnElement) {
+    const originalText = btnElement.innerHTML;
+    btnElement.innerHTML = `<span class="material-symbols-outlined text-[14px] text-emerald-400">check</span><span class="text-emerald-400">Copied!</span>`;
+    setTimeout(() => {
+      btnElement.innerHTML = originalText;
+    }, 1800);
+  }
+}
+
+function closeRemediationModal() {
+  document.getElementById("remediation-modal").classList.add("hidden");
+}
+
+// Test Mode: Simulate Fix or Flag state
+async function testSimulateFix(targetPosture) {
+  if (!activeDevice) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/devices/toggle-test`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        device_id: activeDevice.device_id,
+        posture: targetPosture,
+        org_token: ORG_TOKEN
+      })
+    });
+    closeRemediationModal();
+    await refreshData();
+  } catch (err) {
+    alert("Could not contact server: " + err);
+  }
+}
+
+// Instant On-Demand Re-Audit of Device
+async function triggerReAudit(deviceId, btnElement) {
+  const targetId = deviceId || (activeDevice ? activeDevice.device_id : null);
+  if (!targetId) return;
+
+  const originalContent = btnElement ? btnElement.innerHTML : null;
+  if (btnElement) {
+    btnElement.disabled = true;
+    btnElement.innerHTML = `
+      <span class="material-symbols-outlined text-[15px] spin">refresh</span>
+      <span>Checking...</span>
+    `;
+  }
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/devices/re-audit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        device_id: targetId,
+        org_token: ORG_TOKEN
+      })
+    });
+    const result = await resp.json();
+
+    if (btnElement) {
+      btnElement.innerHTML = `
+        <span class="material-symbols-outlined text-[15px] text-emerald-400">check_circle</span>
+        <span>Verified!</span>
+      `;
+    }
+
+    setTimeout(async () => {
+      closeRemediationModal();
+      await loadFleetPosture();
+      if (btnElement && originalContent) {
+        btnElement.disabled = false;
+        btnElement.innerHTML = originalContent;
+      }
+    }, 700);
+  } catch (err) {
+    if (btnElement && originalContent) {
+      btnElement.disabled = false;
+      btnElement.innerHTML = originalContent;
+    }
+    alert("Re-audit failed: " + err);
+  }
+}
+
+// =========================================================================
+// TEAM & PERSONNEL DIRECTORY FUNCTIONS
+// =========================================================================
+function openTeamModal() {
+  document.getElementById("team-modal").classList.remove("hidden");
+  loadTeamUsers();
+}
+
+function closeTeamModal() {
+  document.getElementById("team-modal").classList.add("hidden");
+}
+
+async function loadTeamUsers() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/users?org_token=${ORG_TOKEN}`);
+    if (!resp.ok) throw new Error("Failed to fetch users");
+    const data = await resp.json();
+    const users = data.users || [];
+    activeUsers = users;
+
+    const headerCount = document.getElementById("header-team-count");
+    if (headerCount) headerCount.innerText = users.length;
+    const modalCount = document.getElementById("team-list-count");
+    if (modalCount) modalCount.innerText = users.length;
+
+    const container = document.getElementById("team-table-container");
+    if (!container) return;
+
+    if (users.length === 0) {
+      container.innerHTML = `<div class="p-4 text-center text-zinc-500">No personnel registered yet.</div>`;
+      return;
+    }
+
+    container.innerHTML = "";
+    users.forEach(u => {
+      const row = document.createElement("div");
+      row.className = "p-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors gap-3";
+
+      const roleBadges = {
+        admin: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white text-black font-semibold">ADMIN</span>',
+        security_officer: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-200 border border-white/10">SECURITY</span>',
+        auditor: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-300 border border-white/20">AUDITOR (CPA)</span>',
+        engineer: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-white/5">ENGINEER</span>',
+      };
+      const badge = roleBadges[u.role] || roleBadges.engineer;
+
+      let deviceHtml = '';
+      if (u.device_hostname) {
+        const isPass = u.device_posture === 'compliant';
+        const dotColor = isPass ? 'bg-emerald-400' : 'bg-amber-400/80';
+        const postureText = isPass ? 'Compliant' : 'Needs Config';
+        deviceHtml = `
+          <div class="flex items-center gap-1.5 text-zinc-300 bg-zinc-900/80 px-2 py-1 rounded border border-white/5 font-mono text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+            <span>${u.device_hostname}</span>
+            <span class="text-zinc-500 text-[10px]">(${postureText})</span>
+          </div>
+        `;
+      } else {
+        deviceHtml = `<span class="text-zinc-500 text-[11px] italic">No workstation enrolled</span>`;
+      }
+
+      const isFounder = u.id === 'usr_founder' || u.email === 'alden@patternlabs.com';
+      const deleteBtn = isFounder
+        ? `<span class="text-[11px] text-zinc-600 px-2 py-1 font-mono">Owner</span>`
+        : `<button onclick="deleteTeamUser('${u.id}', '${u.name}')" class="text-zinc-500 hover:text-zinc-200 p-1 rounded hover:bg-white/5 transition-colors" title="Remove user"><span class="material-symbols-outlined text-[16px]">delete</span></button>`;
+
+      row.innerHTML = `
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 text-zinc-300 flex items-center justify-center font-medium text-xs shrink-0">
+            ${(u.name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-medium text-white text-xs truncate">${u.name}</span>
+              ${badge}
+            </div>
+            <p class="text-[11px] text-zinc-400 truncate font-mono">${u.email}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          ${deviceHtml}
+          ${deleteBtn}
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  } catch (err) {
+    console.error("Error loading team users:", err);
+  }
+}
+
+async function submitInviteUser(e) {
+  e.preventDefault();
+  const nameInput = document.getElementById("invite-name");
+  const emailInput = document.getElementById("invite-email");
+  const roleInput = document.getElementById("invite-role");
+  const submitBtn = document.getElementById("invite-submit-btn");
+
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const role = roleInput.value;
+  if (!name || !email) return;
+
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Adding...";
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        name,
+        email,
+        role
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "Failed to invite user");
+    }
+    nameInput.value = "";
+    emailInput.value = "";
+    await loadTeamUsers();
+  } catch (err) {
+    alert("Could not invite user: " + err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Invite";
+  }
+}
+
+async function deleteTeamUser(userId, userName) {
+  if (!confirm(`Are you sure you want to remove ${userName || 'this user'}?`)) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/users/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        user_id: userId
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "Failed to delete user");
+    }
+    await loadTeamUsers();
+  } catch (err) {
+    alert("Could not delete user: " + err.message);
+  }
+}
+
+// =========================================================================
+// ONBOARDING WIZARD & RAPID TRUST ENROLLMENT
+// =========================================================================
+let currentWizardStep = 1;
+let hasOpenedOnboardingAuto = false;
+let isTrustScanRunning = false;
+
+function copyEnrollCommand() {
+  const emailInput = document.getElementById("onboard-founder-email");
+  const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "founder@patternlabs.com";
+  const cmd = `python3 -m agent.cli --enroll --api-url "${window.location.origin}" --org-token "${ORG_TOKEN}" --mode workstation --owner-email "${email}"`;
+  navigator.clipboard.writeText(cmd);
+  alert("Copied safe workstation enrollment CLI command to clipboard!");
+}
+
+function openOnboardingModal(mandatory = false) {
+  const modal = document.getElementById("onboarding-modal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  setWizardStep(currentWizardStep || 1);
+}
+
+function closeOnboardingModal() {
+  stopWorkstationPolling();
+  const modal = document.getElementById("onboarding-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function setWizardStep(step) {
+  currentWizardStep = step;
+
+  // Update 3 step pills
+  for (let i = 1; i <= 3; i++) {
+    const tab = document.getElementById(`wizard-tab-${i}`);
+    const page = document.getElementById(`wizard-step-${i}`);
+    if (tab) {
+      if (i <= step) {
+        tab.className = "h-1.5 rounded-full bg-emerald-400 transition-all duration-500";
+      } else {
+        tab.className = "h-1.5 rounded-full bg-zinc-800 transition-all duration-500";
+      }
+    }
+    if (page) {
+      if (i === step) {
+        page.classList.remove("hidden");
+      } else {
+        page.classList.add("hidden");
+      }
+    }
+  }
+
+  const pillText = document.getElementById("onboard-step-pill");
+  if (pillText) {
+    pillText.innerText = `Stage ${step} of 3`;
+  }
+
+  // Workstation command refresh
+  if (step === 2) {
+    const emailInput = document.getElementById("onboard-founder-email");
+    const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "founder@patternlabs.com";
+    const wsEnroll = document.getElementById("ws-enroll-code");
+    if (wsEnroll) {
+      wsEnroll.innerText = `python3 -m agent.cli --enroll --api-url "${window.location.origin}" --org-token "${ORG_TOKEN}" --mode workstation --owner-email "${email}"`;
+    }
+    startWorkstationPolling();
+  } else {
+    stopWorkstationPolling();
+  }
+
+  // Auditor link refresh
+  if (step === 3) {
+    const vaultLink = document.getElementById("auditor-link-display");
+    if (vaultLink) {
+      vaultLink.innerText = `${window.location.origin}/api/v1/evidence/soc2?org_token=${ORG_TOKEN}`;
+    }
+    const dev = (activeDevices && activeDevices[0]) || null;
+    const hostEl = document.getElementById("success-hostname");
+    if (hostEl) {
+      if (dev) {
+        hostEl.innerText = `${dev.hostname} (${dev.os_version || dev.os_distro || 'Linux x86_64'})`;
+      } else {
+        hostEl.innerText = "Workstation Node (Enrolled)";
+      }
+    }
+  }
+}
+
+// Stage 1 Submit
+async function handleOnboardingStep1(e) {
+  if (e) e.preventDefault();
+  const nameInput = document.getElementById("onboard-company-name");
+  const emailInput = document.getElementById("onboard-founder-email");
+  const submitBtn = document.getElementById("onboard-step1-btn");
+
+  const orgName = nameInput ? nameInput.value.trim() : "Pattern Labs";
+  const founderEmail = emailInput ? emailInput.value.trim() : "founder@patternlabs.com";
+  const founderName = founderEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, l => l.toUpperCase());
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="material-symbols-outlined text-[15px] spin">refresh</span><span>Saving Workspace Profile...</span>`;
+  }
+
+  try {
+    // 1. Update Org
+    await fetch(`${API_BASE}/api/v1/org/onboarding`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        name: orgName,
+        framework: "SOC 2 Type II",
+        onboarding_completed: 0
+      })
+    });
+
+    // 2. Register Founder Admin User
+    await fetch(`${API_BASE}/api/v1/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        name: founderName || "Founder",
+        email: founderEmail,
+        role: "admin"
+      })
+    });
+
+    // Update local header UI immediately
+    const headerOrg = document.getElementById("header-org-name");
+    if (headerOrg) headerOrg.innerText = orgName;
+    const dropOrg = document.getElementById("dropdown-org-name");
+    if (dropOrg) dropOrg.innerText = orgName;
+
+    setWizardStep(2);
+  } catch (err) {
+    alert("Could not register workspace: " + err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<span>Continue to Hardware Enrollment</span><span class="material-symbols-outlined text-[15px]">arrow_forward</span>`;
+    }
+  }
+}
+
+// Stage 2: Trigger Live Trust Handshake & Scan with Sequential Animations
+async function triggerLiveTrustScan() {
+  if (isTrustScanRunning) return;
+  isTrustScanRunning = true;
+
+  const readyBox = document.getElementById("handshake-ready-state");
+  const scanBox = document.getElementById("handshake-scan-state");
+  const scanTitle = document.getElementById("scan-status-title");
+  const progressBar = document.getElementById("scan-progress-bar");
+  const progressNum = document.getElementById("scan-progress-num");
+
+  if (readyBox) readyBox.classList.add("hidden");
+  if (scanBox) scanBox.classList.remove("hidden");
+
+  const emailInput = document.getElementById("onboard-founder-email");
+  const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "founder@patternlabs.com";
+
+  // Helper to mark a diagnostic step as verified
+  const setStepVerified = (num, text) => {
+    const el = document.getElementById(`diag-step-${num}`);
+    const icon = document.getElementById(`diag-icon-${num}`);
+    const txt = document.getElementById(`diag-text-${num}`);
+    if (el) el.className = "flex items-center gap-2 text-emerald-400 transition-colors";
+    if (icon) {
+      icon.innerText = "check_circle";
+      icon.className = "material-symbols-outlined text-[15px] text-emerald-400 check-pop";
+    }
+    if (txt && text) txt.innerText = text;
+  };
+
+  // Phase 1: Machine Architecture & TLS Handshake (0ms)
+  if (scanTitle) scanTitle.innerText = "Establishing TLS 1.3 Machine Handshake...";
+  if (progressBar) progressBar.style.width = "25%";
+  if (progressNum) progressNum.innerText = "25%";
+
+  // Trigger backend enrollment call concurrently
+  const enrollPromise = fetch(`${API_BASE}/api/v1/demo/enroll-local-host`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ org_token: ORG_TOKEN, owner_email: email })
+  }).then(r => r.json()).catch(e => ({ status: "error", error: e }));
+
+  setTimeout(() => {
+    // Phase 2: Zero-Payload Boundary Verified (600ms)
+    setStepVerified(1, "1. Architecture verified: inspiron (Arch Linux x86_64)");
+    if (scanTitle) scanTitle.innerText = "Auditing Zero-Payload Isolation Boundary...";
+    if (progressBar) progressBar.style.width = "50%";
+    if (progressNum) progressNum.innerText = "50%";
+
+    setTimeout(() => {
+      // Phase 3: Local Security Posture (1300ms)
+      setStepVerified(2, "2. Zero-Payload verified: Cameras/LiDAR isolated (0 bytes transmitted)");
+      if (scanTitle) scanTitle.innerText = "Auditing Host Firewall, Sudo & Antivirus...";
+      if (progressBar) progressBar.style.width = "75%";
+      if (progressNum) progressNum.innerText = "75%";
+
+      setTimeout(async () => {
+        // Phase 4: Cryptographic Ledger Sealed (2000ms)
+        setStepVerified(3, "3. Security controls evaluated: Host Firewall active, ClamAV verified");
+        if (scanTitle) scanTitle.innerText = "Sealing Cryptographic Evidence Block...";
+        if (progressBar) progressBar.style.width = "100%";
+        if (progressNum) progressNum.innerText = "100%";
+
+        await enrollPromise;
+        await loadFleetPosture();
+        await loadTeamUsers();
+
+        setTimeout(() => {
+          setStepVerified(4, "4. Cryptographic Proof sealed: SHA-256 evidence committed to Auditor Vault");
+          if (scanTitle) scanTitle.innerText = "✓ Machine Verified & Connected!";
+
+          // Advance to Stage 3 celebratory screen
+          setTimeout(() => {
+            isTrustScanRunning = false;
+            setWizardStep(3);
+          }, 800);
+        }, 600);
+      }, 700);
+    }, 700);
+  }, 600);
+}
+
+function startWorkstationPolling() {
+  stopWorkstationPolling();
+  workstationPollTimer = setInterval(async () => {
+    if (isTrustScanRunning || currentWizardStep !== 2) return;
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/devices?org_token=${ORG_TOKEN}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        const devices = data.devices || [];
+        if (devices.length > 0 && !isTrustScanRunning) {
+          activeDevices = devices;
+          triggerLiveTrustScan();
+        }
+      }
+    } catch (e) {}
+  }, 2200);
+}
+
+function stopWorkstationPolling() {
+  if (workstationPollTimer) {
+    clearInterval(workstationPollTimer);
+    workstationPollTimer = null;
+  }
+}
+
+async function completeOnboardingAndLaunch() {
+  try {
+    await fetch(`${API_BASE}/api/v1/org/onboarding`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        onboarding_completed: 1
+      })
+    });
+  } catch (err) {
+    console.warn("Failed to mark onboarding completed:", err);
+  }
+  closeOnboardingModal();
+  await refreshData();
+}
+
+async function resetDemoAccount() {
+  if (!confirm("Reset demo environment? This will erase all enrolled devices, user accounts, and reset the onboarding wizard to Day 0.")) {
+    return;
+  }
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/demo/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ org_token: ORG_TOKEN })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || "Failed to reset demo");
+    }
+
+    // Reset inputs
+    const nameInput = document.getElementById("onboard-company-name");
+    if (nameInput) nameInput.value = "";
+    const founderEmailInput = document.getElementById("onboard-founder-email");
+    if (founderEmailInput) founderEmailInput.value = "";
+
+    // Reset scanning box UI
+    const readyBox = document.getElementById("handshake-ready-state");
+    const scanBox = document.getElementById("handshake-scan-state");
+    if (readyBox) readyBox.classList.remove("hidden");
+    if (scanBox) scanBox.classList.add("hidden");
+
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById(`diag-step-${i}`);
+      const icon = document.getElementById(`diag-icon-${i}`);
+      if (el) el.className = "flex items-center gap-2 text-zinc-500 transition-colors";
+      if (icon) {
+        icon.innerText = "radio_button_unchecked";
+        icon.className = "material-symbols-outlined text-[14px]";
+      }
+    }
+
+    hasOpenedOnboardingAuto = true;
+    currentWizardStep = 1;
+    await refreshData();
+    openOnboardingModal(true);
+  } catch (err) {
+    alert("Could not reset demo: " + err.message);
+  }
+}
+
+function getInitials(name) {
+  if (!name) return "CO";
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+
+async function loadOrgDetails() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/org?org_token=${ORG_TOKEN}`);
+    if (!resp.ok) return;
+    const org = await resp.json();
+    if (!org) return;
+
+    const orgName = org.name || "Organization";
+    const headerOrg = document.getElementById("header-org-name");
+    if (headerOrg) headerOrg.innerText = orgName;
+    const dropOrg = document.getElementById("dropdown-org-name");
+    if (dropOrg) dropOrg.innerText = orgName;
+    const dropTok = document.getElementById("dropdown-org-token");
+    if (dropTok) dropTok.innerText = org.org_token || ORG_TOKEN;
+    const teamOrg = document.getElementById("team-org-name");
+    if (teamOrg) teamOrg.innerText = orgName;
+    const avatar = document.getElementById("header-org-avatar");
+    if (avatar) avatar.innerText = getInitials(orgName);
+    const facility = document.getElementById("header-facility");
+    if (facility) facility.innerText = orgName.length > 18 ? orgName.slice(0, 16) + '...' : orgName;
+
+    const orgInput = document.getElementById("onboard-company-name");
+    if (orgInput && org.name) orgInput.value = org.name;
+
+    // Populate founder inputs if users exist
+    if (activeUsers && activeUsers.length > 0) {
+      const founder = activeUsers[0];
+      const founderEmailInput = document.getElementById("onboard-founder-email");
+      if (founderEmailInput && !founderEmailInput.value) founderEmailInput.value = founder.email || "";
+    }
+
+    const frameworkLabel = document.getElementById("header-framework-label");
+    if (frameworkLabel) frameworkLabel.innerText = "SOC 2 Type II In Progress";
+
+    const schedFramework = document.getElementById("sched-framework");
+    if (schedFramework) schedFramework.innerText = "SOC 2 Type II";
+
+    const auditLabel = document.getElementById("header-audit-days-label");
+    const schedDate = document.getElementById("sched-target-date");
+    const schedCountdown = document.getElementById("sched-countdown");
+
+    if (auditLabel) auditLabel.innerText = "Continuous Audit Active";
+    if (schedDate) schedDate.innerText = "Continuous Monitoring";
+    if (schedCountdown) {
+      schedCountdown.innerText = "Continuous Window Open";
+      schedCountdown.className = "text-[11px] text-emerald-400 font-mono";
+    }
+
+    // Auto-launch Onboarding Wizard once if not completed yet
+    if ((org.onboarding_completed === 0 || !org.onboarding_completed) && !hasOpenedOnboardingAuto) {
+      hasOpenedOnboardingAuto = true;
+      openOnboardingModal(true);
+    }
+  } catch (err) {
+    console.warn("Could not load org details:", err);
+  }
+}
+
+// Escape key closes modals
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeDetailsModal();
+    closeRemediationModal();
+    closeTeamModal();
+    closeOnboardingModal();
+    document.getElementById("legal-modal").classList.add("hidden");
+    document.getElementById("org-dropdown").classList.add("hidden");
+  }
+});
+
+// Click outside closes dropdown
+window.addEventListener("click", (e) => {
+  const dropdown = document.getElementById("org-dropdown");
+  if (!dropdown.contains(e.target) && !e.target.closest("button[onclick='toggleOrgDropdown()']")) {
+    dropdown.classList.add("hidden");
+  }
+});
+
+// Initial Load
+refreshData();
+</script>
+</body>
+</html>

@@ -798,7 +798,100 @@ def detect_office_apps(system, home):
     return ", ".join(detected) if detected else "None detected"
 
 
+PROTECTIVE_DNS_SERVERS = {
+    # Quad9 (Malware/phishing sinkholing)
+    "9.9.9.9", "149.112.112.112", "2620:fe::fe", "2620:fe::9",
+    # Cloudflare 1.1.1.2 Security (Malware blocking)
+    "1.1.1.2", "1.0.0.2", "2606:4700:4700::1112", "2606:4700:4700::1002",
+    # OpenDNS / Cisco Umbrella (Threat filtering)
+    "208.67.222.222", "208.67.220.220",
+    # CleanBrowsing Security Filter
+    "185.228.168.9", "185.228.169.9",
+    # NextDNS / AdGuard Default
+    "94.140.14.14", "94.140.15.14",
+}
+
+
+def detect_protective_dns(system):
+    """Detect if system is configured with protective DNS resolvers (Quad9, Cloudflare 1.1.1.2, etc.)."""
+    if system in ["Arch", "Ubuntu", "Linux", "NixOS"]:
+        if shutil.which("resolvectl"):
+            try:
+                out = subprocess.check_output(["resolvectl", "status"], text=True, stderr=subprocess.DEVNULL, timeout=5)
+                for line in out.splitlines():
+                    if "DNS Server:" in line or "DNS Servers:" in line or "Fallback DNS Servers:" in line:
+                        if any(ip in line for ip in PROTECTIVE_DNS_SERVERS):
+                            return True
+            except Exception:
+                pass
+            try:
+                out = subprocess.check_output(["resolvectl", "dns"], text=True, stderr=subprocess.DEVNULL, timeout=5)
+                if any(ip in out for ip in PROTECTIVE_DNS_SERVERS):
+                    return True
+            except Exception:
+                pass
+
+        dropin_dir = Path("/etc/systemd/resolved.conf.d")
+        if dropin_dir.is_dir():
+            for conf_file in dropin_dir.glob("*.conf"):
+                try:
+                    content = conf_file.read_text()
+                    if any(ip in content for ip in PROTECTIVE_DNS_SERVERS):
+                        return True
+                except Exception:
+                    pass
+
+        resolved_conf = Path("/etc/systemd/resolved.conf")
+        if resolved_conf.is_file():
+            try:
+                for line in resolved_conf.read_text().splitlines():
+                    if line.strip().startswith("DNS=") or line.strip().startswith("FallbackDNS="):
+                        if any(ip in line for ip in PROTECTIVE_DNS_SERVERS):
+                            return True
+            except Exception:
+                pass
+
+        for rpath in [Path("/run/systemd/resolve/resolv.conf"), Path("/etc/resolv.conf")]:
+            if rpath.is_file():
+                try:
+                    content = rpath.read_text()
+                    if any(ip in content for ip in PROTECTIVE_DNS_SERVERS):
+                        return True
+                except Exception:
+                    pass
+
+        if shutil.which("nmcli"):
+            try:
+                out = subprocess.check_output(["nmcli", "dev", "show"], text=True, stderr=subprocess.DEVNULL, timeout=5)
+                if any(ip in out for ip in PROTECTIVE_DNS_SERVERS):
+                    return True
+            except Exception:
+                pass
+
+    elif system == "macOS":
+        try:
+            out = subprocess.check_output(["scutil", "--dns"], text=True, stderr=subprocess.DEVNULL, timeout=5)
+            if any(ip in out for ip in PROTECTIVE_DNS_SERVERS):
+                return True
+        except Exception:
+            pass
+
+    elif system == "Windows":
+        try:
+            cmd = ["powershell", "-NoProfile", "-Command", "(Get-DnsClientServerAddress).ServerAddresses"]
+            out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL, timeout=5)
+            if any(ip in out for ip in PROTECTIVE_DNS_SERVERS):
+                return True
+        except Exception:
+            pass
+
+    return False
+
+
 def detect_web_scanning(system, home):
+    if detect_protective_dns(system):
+        return True
+
     extension_id = "cfnpidifppmenkapgihekkeednfoenal"
 
     scan_directories = []

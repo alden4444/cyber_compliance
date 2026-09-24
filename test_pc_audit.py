@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import plistlib
 import subprocess
 import tempfile
@@ -8,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import Pattern_PC_Compliance_Audit as audit
+import pc_audit as audit
 
 
 class TestComplianceAudit(unittest.TestCase):
@@ -106,32 +105,34 @@ BUILTIN\\Administrators                 Alias            S-1-5-32-544 Group used
 
         # If dropin does not exist:
         with patch.object(Path, "exists", return_value=False):
-            # User in wheel -> No
-            with patch("subprocess.check_output", return_value="alden network wheel docker\n"):
-                self.assertEqual(audit.check_admin_separated("Arch"), "No")
+            with patch.object(audit, "is_sudo_prompting_for_root", return_value=False):
+                # User in wheel -> No
+                with patch("subprocess.check_output", return_value="alden network wheel docker\n"):
+                    self.assertEqual(audit.check_admin_separated("Arch"), "No")
 
-            # User in sudo -> No
-            with patch("subprocess.check_output", return_value="alden adm cdrom sudo dip\n"):
-                self.assertEqual(audit.check_admin_separated("Ubuntu"), "No")
+                # User in sudo -> No
+                with patch("subprocess.check_output", return_value="alden adm cdrom sudo dip\n"):
+                    self.assertEqual(audit.check_admin_separated("Ubuntu"), "No")
 
-            # Standard user (neither wheel nor sudo) -> Yes
-            with patch("subprocess.check_output", return_value="alden users audio video\n"):
-                self.assertEqual(audit.check_admin_separated("Arch"), "Yes")
-                self.assertEqual(audit.check_admin_separated("Ubuntu"), "Yes")
+                # Standard user (neither wheel nor sudo) -> Yes
+                with patch("subprocess.check_output", return_value="alden users audio video\n"):
+                    self.assertEqual(audit.check_admin_separated("Arch"), "Yes")
+                    self.assertEqual(audit.check_admin_separated("Ubuntu"), "Yes")
 
     def test_antivirus_detection(self):
         # Windows Defender
-        with patch("Pattern_PC_Compliance_Audit._run_powershell", return_value="Windows Defender - Active (1.417.432.0)"):
-            self.assertEqual(audit.detect_antivirus("Windows"), "Windows Defender - Active (1.417.432.0)")
+        with patch("pc_audit.query_windows_system", return_value="Active (1.417.432.0)"):
+            self.assertEqual(audit.inspect_antivirus("Windows"), "Windows Defender - Active (1.417.432.0)")
 
         # macOS XProtect
         with patch.object(Path, "is_dir", return_value=False):
-            self.assertEqual(audit.detect_antivirus("macOS"), "XProtect (macOS) - Active")
+            self.assertEqual(audit.inspect_antivirus("macOS"), "XProtect (macOS) - Active")
 
         # Linux ClamAV
-        with patch("shutil.which", side_effect=lambda x: "/usr/bin/clamscan" if x == "clamscan" else None):
-            with patch("subprocess.check_output", return_value="ClamAV 1.5.4/28113\n"):
-                self.assertEqual(audit.detect_antivirus("Arch"), "ClamAV - 1.5.4")
+        with patch("shutil.which", side_effect=lambda x: "/usr/bin/" + x if x in ["clamscan", "systemctl"] else None):
+            with patch.object(audit, "get_binary_version", return_value="1.5.4"):
+                with patch("subprocess.run", return_value=MagicMock(stdout="active")):
+                    self.assertEqual(audit.inspect_antivirus("Arch"), "ClamAV - 1.5.4")
 
     def test_web_scanning_detection(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -151,22 +152,58 @@ BUILTIN\\Administrators                 Alias            S-1-5-32-544 Group used
             prof_dir = ff_dir / "default-release"
             prof_dir.mkdir()
             ext_json = prof_dir / "extensions.json"
-            ext_json.write_text('{"addons":[{"id":"trafficlight@bitdefender.com","name":"TrafficLight"}]}')
+            ext_json.write_text('{"addons":[{"id":"trafficlight@bitdefender.com","name":"TrafficLight","active":true}]}')
 
             self.assertTrue(audit.firefox_has_trafficlight(home))
 
     def test_hardware_uuid(self):
         # Test reading DMI or machine-id
         with patch("subprocess.check_output", return_value="12345-67890-UUID\n"):
-            val = audit.get_hardware_uuid("Arch")
+            val = audit.get_hardware_serial("Arch")
             self.assertTrue(val != "Unknown")
+
+    def test_office_apps_detection_linux(self):
+        with patch.object(audit, "get_binary_version", side_effect=lambda x: "24.8.1.2" if x == "libreoffice" else None):
+            result = audit.detect_office_apps("Arch", Path("/tmp"))
+            self.assertEqual(result, "LibreOffice 24.8.1.2")
+
+    def test_office_apps_detection_macos(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            home = Path(tmpdir)
+            app_dir = home / "Applications" / "Microsoft Excel.app" / "Contents"
+            app_dir.mkdir(parents=True)
+            plist_file = app_dir / "Info.plist"
+            with plist_file.open("wb") as f:
+                plistlib.dump({"CFBundleShortVersionString": "16.89.1"}, f)
+
+            result = audit.detect_office_apps("macOS", home)
+            self.assertIn("Microsoft Excel 16.89.1", result)
+
+
+    def test_office_apps_detection_windows(self):
+        with patch("pc_audit.Path.is_file", autospec=True) as mock_is_file:
+            def is_file_side_effect(path_self):
+                if "EXCEL.EXE" in str(path_self).upper():
+                    return True
+                return False
+            mock_is_file.side_effect = is_file_side_effect
+            with patch.object(audit, "query_windows_system", return_value="16.0.17928.20114"):
+                result = audit.detect_office_apps("Windows", Path("/tmp"))
+                self.assertIn("Microsoft Excel 16.0.17928.20114", result)
+
+    def test_office_apps_none_detected_never_google_workspace(self):
+        with patch.object(audit, "get_binary_version", return_value=None):
+            with patch.object(audit, "get_flatpak_version", return_value=None):
+                with patch.object(audit, "get_snap_version", return_value=None):
+                    result = audit.detect_office_apps("Arch", Path("/tmp"))
+                    self.assertEqual(result, "None detected")
+                    self.assertNotIn("Google Workspace", result)
 
     def test_run_audit_structure(self):
         data = audit.run_audit(audit.get_os())
         required_keys = [
             "os_distro",
             "auto_updates",
-            "unsupported_removed",
             "browsers",
             "email_apps",
             "office_apps",
@@ -179,6 +216,38 @@ BUILTIN\\Administrators                 Alias            S-1-5-32-544 Group used
         ]
         for k in required_keys:
             self.assertIn(k, data, f"Missing key: {k}")
+        self.assertNotEqual(data["office_apps"], "Google Workspace")
+
+    def test_is_admin_posix_root(self):
+        with patch("platform.system", return_value="Linux"):
+            with patch("os.geteuid", return_value=0):
+                self.assertTrue(audit.is_admin())
+
+    def test_is_admin_posix_non_root(self):
+        with patch("platform.system", return_value="Linux"):
+            with patch("os.geteuid", return_value=1000):
+                self.assertFalse(audit.is_admin())
+
+    def test_is_admin_windows_admin(self):
+        mock_windll = MagicMock()
+        mock_windll.shell32.IsUserAnAdmin.return_value = 1
+        with patch("platform.system", return_value="Windows"):
+            with patch.object(audit.ctypes, "windll", mock_windll, create=True):
+                self.assertTrue(audit.is_admin())
+
+    def test_is_admin_windows_non_admin(self):
+        mock_windll = MagicMock()
+        mock_windll.shell32.IsUserAnAdmin.return_value = 0
+        with patch("platform.system", return_value="Windows"):
+            with patch.object(audit.ctypes, "windll", mock_windll, create=True):
+                self.assertFalse(audit.is_admin())
+
+    def test_main_stops_when_not_admin(self):
+        with patch.object(audit, "is_admin", return_value=False):
+            with patch("sys.argv", ["pc_audit.py"]):
+                with self.assertRaises(SystemExit) as cm:
+                    audit.main()
+                self.assertEqual(cm.exception.code, 1)
 
 
 if __name__ == "__main__":

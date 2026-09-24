@@ -5,7 +5,6 @@ from pathlib import Path
 import platform
 import subprocess
 import time
-import urllib.request
 
 def get_data():
     data = {

@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+*.db
+*.log
+compliance.db
+server.log
+.DS_Store
