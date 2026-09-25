@@ -432,7 +432,13 @@
           <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Attributed Personnel</span>
           <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-white/10" id="team-list-count">--</span>
         </div>
-        <span class="text-[11px] text-zinc-500">Logical access linked to verified device telemetry</span>
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] text-zinc-500 hidden sm:inline">Logical access linked to verified device telemetry</span>
+          <button onclick="resetTeamMembers()" class="text-[11px] text-zinc-400 hover:text-red-400 px-2.5 py-1 rounded-lg border border-white/5 hover:border-red-500/20 bg-zinc-900/60 transition-colors flex items-center gap-1.5" title="Purge test members and retain primary lead">
+            <span class="material-symbols-outlined text-[14px]">restart_alt</span>
+            <span>Reset Team</span>
+          </button>
+        </div>
       </div>
       <div class="bg-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="team-table-container">
         <!-- Injected dynamically via loadTeamUsers() -->
@@ -714,7 +720,7 @@
 <!-- ========================================================================= -->
 <!-- MODAL: Guided 3-Stage Onboarding Wizard                                   -->
 <!-- ========================================================================= -->
-<div id="onboarding-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 transition-all duration-200">
+<div id="onboarding-modal" class="hidden fixed inset-0 z-50 bg-[#09090b] flex items-center justify-center p-4 sm:p-6 transition-all duration-200">
   <div class="bg-card w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-7 space-y-6 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/5 pb-4">
       <div class="flex items-center gap-2.5">
@@ -1810,10 +1816,10 @@ async function loadTeamUsers() {
         deviceHtml = `<span class="text-zinc-500 text-[11px] italic">No machine linked</span>`;
       }
 
-      const isFounder = u.id === 'usr_founder' || u.role === 'admin' || u.email === 'admin@roamcompliance.com';
-      const deleteBtn = isFounder
-        ? `<span class="text-[11px] text-zinc-600 px-2 py-1 font-mono">Owner</span>`
-        : `<button onclick="deleteTeamUser('${u.id}', '${u.name}')" class="text-zinc-500 hover:text-zinc-200 p-1 rounded hover:bg-white/5 transition-colors" title="Remove user"><span class="material-symbols-outlined text-[16px]">delete</span></button>`;
+      const isCurrent = currentSessionUser && u.email && u.email.toLowerCase() === currentSessionUser.email.toLowerCase();
+      const deleteBtn = isCurrent
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">You</span>`
+        : `<button onclick="deleteTeamUser('${u.id}', '${(u.name || u.email).replace(/'/g, "\\'")}')" class="text-zinc-500 hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/10 transition-colors flex items-center gap-1 text-[11px]" title="Remove member"><span class="material-symbols-outlined text-[15px]">delete</span><span>Remove</span></button>`;
 
       row.innerHTML = `
         <div class="flex items-center gap-3.5 min-w-0">
@@ -1895,6 +1901,29 @@ async function deleteTeamUser(userId, userName) {
     if (resp.ok) await loadTeamUsers();
   } catch (err) {
     alert("Could not delete user: " + err.message);
+  }
+}
+
+async function resetTeamMembers() {
+  const keepEmail = (currentSessionUser && currentSessionUser.email) || "aldentmcqueen@gmail.com";
+  if (!confirm(`Are you sure you want to reset the team roster? This will remove all other members and keep only ${keepEmail}.`)) return;
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/users/reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        keep_email: keepEmail
+      })
+    });
+    if (resp.ok) {
+      await loadTeamUsers();
+    } else {
+      const err = await resp.json();
+      alert("Could not reset team: " + (err.error || "Failed"));
+    }
+  } catch (err) {
+    alert("Could not reset team: " + err.message);
   }
 }
 
@@ -2398,6 +2427,18 @@ function closeOnboardingModal() {
   stopWorkstationPolling();
   const modal = document.getElementById("onboarding-modal");
   if (modal) modal.classList.add("hidden");
+  try {
+    const orgKey = (typeof currentOrgId !== "undefined" && currentOrgId) || "org_roam_compliance";
+    localStorage.setItem("roam_onboarded_" + orgKey, "1");
+    fetch(`${API_BASE}/api/v1/org/onboarding`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        onboarding_completed: 1
+      })
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 function setWizardStep(step) {
@@ -2419,7 +2460,7 @@ function setWizardStep(step) {
 
   if (step === 2) {
     const emailInput = document.getElementById("onboard-founder-email");
-    const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "admin@roamcompliance.com";
+    const email = (emailInput && emailInput.value.trim()) || (currentSessionUser && currentSessionUser.email) || (activeUsers && activeUsers[0]?.email) || "aldentmcqueen@gmail.com";
     const wsEnroll = document.getElementById("ws-enroll-code");
     if (wsEnroll) {
       wsEnroll.innerText = `curl -sSL "${window.location.origin}/install.sh?token=${ORG_TOKEN}&mode=workstation&owner=${email}" | sudo bash`;
@@ -2445,7 +2486,7 @@ async function handleOnboardingStep1(e) {
   const frameworkInput = document.getElementById("onboard-framework");
 
   const orgName = nameInput ? nameInput.value.trim() : "Roam Robotics";
-  const founderEmail = emailInput ? emailInput.value.trim() : "admin@roamcompliance.com";
+  const founderEmail = (emailInput && emailInput.value.trim()) || (currentSessionUser && currentSessionUser.email) || "aldentmcqueen@gmail.com";
   const framework = frameworkInput ? frameworkInput.value : "SOC 2 Type II";
   const founderName = founderEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, l => l.toUpperCase());
 
@@ -2494,7 +2535,7 @@ async function triggerLiveTrustScan() {
   if (scanBox) scanBox.classList.remove("hidden");
 
   const emailInput = document.getElementById("onboard-founder-email");
-  const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "admin@roamcompliance.com";
+  const email = (emailInput && emailInput.value.trim()) || (currentSessionUser && currentSessionUser.email) || (activeUsers && activeUsers[0]?.email) || "aldentmcqueen@gmail.com";
 
   if (scanTitle) scanTitle.innerText = "Connecting to device...";
   if (progressBar) progressBar.style.width = "30%";
@@ -2555,6 +2596,8 @@ function stopWorkstationPolling() {
 
 async function completeOnboardingAndLaunch() {
   try {
+    const orgKey = (typeof currentOrgId !== "undefined" && currentOrgId) || "org_roam_compliance";
+    localStorage.setItem("roam_onboarded_" + orgKey, "1");
     await fetch(`${API_BASE}/api/v1/org/onboarding`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2750,7 +2793,9 @@ async function loadOrgDetails() {
       addnodeSpan.innerText = `curl -sSL "${window.location.origin}/install.sh?token=${ORG_TOKEN}&mode=workstation" | sudo bash`;
     }
 
-    if ((org.onboarding_completed === 0 || !org.onboarding_completed) && !hasOpenedOnboardingAuto) {
+    const orgKey = (org && org.id) || "org_roam_compliance";
+    const isLocalOnboarded = localStorage.getItem("roam_onboarded_" + orgKey) === "1";
+    if (org.onboarding_completed !== 1 && !isLocalOnboarded && !hasOpenedOnboardingAuto) {
       hasOpenedOnboardingAuto = true;
       openOnboardingModal(true);
     }
@@ -2816,12 +2861,15 @@ async function signOut() {
   window.location.href = "/";
 }
 
+let currentSessionUser = null;
+
 async function loadAuthSession() {
   try {
     const res = await fetch("/api/v1/auth/me");
     if (res.ok) {
       const data = await res.json();
       if (data.authenticated && data.user) {
+        currentSessionUser = data.user;
         if (data.user.org_token) {
           ORG_TOKEN = data.user.org_token;
         }

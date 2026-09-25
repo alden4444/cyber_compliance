@@ -580,6 +580,104 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             self.assertEqual(tenant_devs["count"], 1)
             self.assertEqual(tenant_devs["devices"][0]["hostname"], "acme-inspiron")
 
+    def test_hostname_sanitization(self):
+        """Verify generic localhost hostnames are sanitized into clean, professional titles."""
+        from agent.collector import get_friendly_hostname
+        from server.db import sanitize_hostname
+
+        # 1. Test collector friendly hostname resolution
+        friendly_alden = get_friendly_hostname(owner_email="aldentmcqueen@gmail.com", mode="workstation")
+        self.assertNotIn("localhost", friendly_alden.lower())
+        self.assertTrue("inspiron" in friendly_alden.lower() or "alden" in friendly_alden.lower())
+
+        # 2. Test server db sanitize_hostname
+        sanitized_generic = sanitize_hostname("localhost", owner_email="aldentmcqueen@gmail.com")
+        self.assertNotIn("localhost", sanitized_generic.lower())
+        self.assertIn("alden", sanitized_generic.lower())
+
+        # 3. Legitimate hostnames should be preserved
+        real_host = sanitize_hostname("flight-controller-01", owner_email="robotics@co.com")
+        self.assertEqual(real_host, "flight-controller-01")
+
+        # 4. Enrolling with localhost should sanitize in the database
+        org_token = "org_demo_roam_compliance_2026"
+        org = self.db.get_org_by_token(org_token)
+        dev = self.db.enroll_device(
+            org_id=org["id"],
+            device_id="hw-inspiron-test-serial",
+            hostname="localhost",
+            mode="workstation",
+            owner_email="aldentmcqueen@gmail.com"
+        )
+        self.assertNotIn("localhost", dev["hostname"].lower())
+        self.assertIn("alden", dev["hostname"].lower())
+
+    def test_team_user_reset_and_delete(self):
+        """Verify team member deletion and organization team reset endpoints."""
+        org_token = "org_demo_roam_compliance_2026"
+        org = self.db.get_org_by_token(org_token)
+        org_id = org["id"]
+
+        # 1. Add team members
+        u1 = self.db.create_user(org_id, "engineer1@example.com", "Engineer One", "engineer")
+        u2 = self.db.create_user(org_id, "auditor@example.com", "CPA Auditor", "auditor")
+        users = self.db.list_users(org_id)
+        user_emails = [u["email"].lower() for u in users]
+        self.assertIn("engineer1@example.com", user_emails)
+        self.assertIn("auditor@example.com", user_emails)
+
+        # 2. Test single user deletion endpoint
+        del_req = urllib.request.Request(
+            f"{self.api_url}/api/v1/users/delete",
+            data=json.dumps({"org_token": org_token, "user_id": u2["id"]}).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(del_req) as resp:
+            self.assertEqual(resp.status, 200)
+            res_data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(res_data["status"], "deleted")
+
+        users_after_del = self.db.list_users(org_id)
+        self.assertNotIn("auditor@example.com", [u["email"].lower() for u in users_after_del])
+        self.assertIn("engineer1@example.com", [u["email"].lower() for u in users_after_del])
+
+        # 3. Test team reset endpoint (keeps only primary admin)
+        reset_req = urllib.request.Request(
+            f"{self.api_url}/api/v1/users/reset",
+            data=json.dumps({"org_token": org_token, "keep_email": "aldentmcqueen@gmail.com"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(reset_req) as resp:
+            self.assertEqual(resp.status, 200)
+            res_data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(res_data["status"], "ok")
+
+        users_after_reset = self.db.list_users(org_id)
+        remaining_emails = [u["email"].lower() for u in users_after_reset]
+        self.assertEqual(remaining_emails, ["aldentmcqueen@gmail.com"])
+
+    def test_onboarding_persistence(self):
+        """Verify onboarding status can be marked and persisted cleanly."""
+        org_token = "org_demo_roam_compliance_2026"
+        org = self.db.get_org_by_token(org_token)
+        org_id = org["id"]
+
+        req = urllib.request.Request(
+            f"{self.api_url}/api/v1/org/onboarding",
+            data=json.dumps({
+                "org_token": org_token,
+                "name": "Updated Org",
+                "onboarding_completed": 1
+            }).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+
+        updated_org = self.db.get_org_by_id(org_id)
+        self.assertEqual(updated_org["onboarding_completed"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
+

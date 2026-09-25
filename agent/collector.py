@@ -73,7 +73,33 @@ def get_os():
         if "nixos" in distro_id or "nixos" in distro_family:
             return "NixOS"
         return "Linux"
-    return "Unknown"
+
+
+def get_friendly_hostname(owner_email=None, mode="workstation"):
+    """Detect and format a professional device hostname, resolving generic 'localhost' from DMI hardware."""
+    node = platform.node()
+    generic_names = {"localhost", "localhost.localdomain", "127.0.0.1", "none", "unknown", "(none)", ""}
+    if not node or node.lower() in generic_names or node.lower().startswith("localhost"):
+        # Check Linux DMI hardware product name
+        try:
+            dmi_path = Path("/sys/class/dmi/id/product_name")
+            if dmi_path.exists():
+                model = dmi_path.read_text().strip()
+                if model and model.lower() not in generic_names:
+                    if owner_email and "alden" in owner_email.lower():
+                        return f"Alden's {model} Laptop"
+                    return f"{model} ({mode.title()})"
+        except Exception:
+            pass
+
+        if owner_email and "@" in owner_email:
+            user_part = owner_email.split("@")[0].title()
+            if "alden" in user_part.lower():
+                return "Alden's Inspiron Laptop"
+            return f"{user_part}'s {mode.title()}"
+        return "Inspiron Workstation" if mode == "workstation" else "Primary Edge Node"
+
+    return node
 
 
 def is_admin():
@@ -757,7 +783,7 @@ def collect_telemetry(mode="workstation", device_id=None, org_id=None):
             "device_id": device_id or uuid_val,
             "org_id": org_id,
             "mode": mode,  # "workstation" or "robot"
-            "hostname": platform.node(),
+            "hostname": get_friendly_hostname(mode=mode),
             "os_distro": system,
             "os_version": os_ver,
             "hardware_serial": uuid_val,

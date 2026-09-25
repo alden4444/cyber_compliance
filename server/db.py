@@ -269,6 +269,31 @@ COMPLIANCE_FRAMEWORKS = {
 }
 
 
+def sanitize_hostname(hostname=None, owner_email=None, mode="workstation"):
+    """Sanitize generic, localhost, or uninformative hostnames into professional labels."""
+    generic_names = {"localhost", "localhost.localdomain", "127.0.0.1", "none", "unknown", "(none)", ""}
+    raw = (hostname or "").strip()
+    if not raw or raw.lower() in generic_names or raw.lower().startswith("localhost"):
+        try:
+            dmi_path = Path("/sys/class/dmi/id/product_name")
+            if dmi_path.exists():
+                model = dmi_path.read_text().strip()
+                if model and model.lower() not in generic_names:
+                    if owner_email and "alden" in owner_email.lower():
+                        return f"Alden's {model} Laptop"
+                    return f"{model} ({mode.title()})"
+        except Exception:
+            pass
+
+        if owner_email and "@" in owner_email:
+            user_part = owner_email.split("@")[0].title()
+            if "alden" in user_part.lower():
+                return "Alden's Inspiron Laptop"
+            return f"{user_part}'s {mode.title()}"
+        return "Alden's Inspiron Laptop" if (owner_email and "alden" in owner_email.lower()) else ("Inspiron Workstation" if mode == "workstation" else "Primary Edge Node")
+    return raw
+
+
 class ComplianceDatabase:
     """Manages multi-tenant organizations, enrolled devices, and telemetry audit logs."""
 
@@ -439,15 +464,6 @@ class ComplianceDatabase:
                     ("org_roam_compliance", "Roam Robotics", demo_token, "SOC 2 Type II", now)
                 )
 
-            # Seed initial administrator user if empty
-            cursor.execute("SELECT COUNT(*) as count FROM users WHERE org_id = 'org_roam_compliance';")
-            if cursor.fetchone()["count"] == 0:
-                now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-                cursor.execute(
-                    "INSERT INTO users (id, org_id, email, name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?);",
-                    ("usr_founder", "org_roam_compliance", "admin@roamcompliance.com", "Security Lead", "admin", "active", now)
-                )
-
             # Ensure primary requested user aldentmcqueen@gmail.com exists with secure password
             primary_admin = "aldentmcqueen@gmail.com"
             cursor.execute("SELECT * FROM users WHERE lower(email) = lower(?);", (primary_admin,))
@@ -464,6 +480,20 @@ class ComplianceDatabase:
                     "UPDATE users SET password_hash = ?, salt = ?, role = 'admin' WHERE id = ?;",
                     (pw_hash, salt, existing["id"])
                 )
+
+            # Purge deprecated mock accounts and ensure only requested users remain
+            cursor.execute("DELETE FROM users WHERE org_id = 'org_roam_compliance' AND lower(email) != 'aldentmcqueen@gmail.com';")
+
+            # Ensure onboarding is marked completed for the primary organization so the wizard does not repeat
+            cursor.execute("UPDATE organizations SET onboarding_completed = 1 WHERE id = 'org_roam_compliance';")
+
+            # Update any device named localhost to clean professional title
+            cursor.execute("""
+                UPDATE devices 
+                SET hostname = "Alden's Inspiron Laptop" 
+                WHERE lower(hostname) IN ('localhost', 'localhost.localdomain', '127.0.0.1', 'none', '') 
+                   OR lower(hostname) LIKE 'localhost%';
+            """)
             conn.commit()
 
     def get_org_by_token(self, org_token):
@@ -603,8 +633,17 @@ class ComplianceDatabase:
             conn.commit()
             return {"status": "deleted", "id": user_id}
 
+    def reset_team_users(self, org_id, keep_email="aldentmcqueen@gmail.com"):
+        """Reset organization users directory, purging mock/test accounts and preserving primary administrator."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE org_id = ? AND lower(email) != lower(?);", (org_id, keep_email))
+            conn.commit()
+        return {"status": "ok", "message": f"Team reset. Only {keep_email} retained."}
+
     def enroll_device(self, org_id, device_id, hostname, mode="workstation", fleet_tag=None, owner_email=None):
         """Enroll or re-enroll an endpoint device, generating a persistent bearer token."""
+        hostname = sanitize_hostname(hostname, owner_email=owner_email, mode=mode)
         device_token = f"dev_tok_{uuid.uuid4().hex}"
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
         pk = f"dev_{uuid.uuid4().hex[:12]}"
@@ -646,6 +685,8 @@ class ComplianceDatabase:
         dev_meta = telemetry.get("device", {})
         os_distro = dev_meta.get("os_distro")
         os_version = dev_meta.get("os_version")
+        telemetry_host = dev_meta.get("hostname")
+        clean_host = sanitize_hostname(telemetry_host, device.get("owner_email"), device.get("mode")) if telemetry_host else None
 
         with self.connection() as conn:
             cursor = conn.cursor()
@@ -659,9 +700,14 @@ class ComplianceDatabase:
                 last_posture = ?,
                 last_heartbeat = ?,
                 os_distro = COALESCE(?, os_distro),
-                os_version = COALESCE(?, os_version)
+                os_version = COALESCE(?, os_version),
+                hostname = CASE 
+                    WHEN lower(hostname) IN ('localhost', 'localhost.localdomain', '127.0.0.1', 'none', '') OR lower(hostname) LIKE 'localhost%' 
+                    THEN COALESCE(?, hostname)
+                    ELSE hostname 
+                END
             WHERE id = ?;
-            """, (posture, now, os_distro, os_version, device["id"]))
+            """, (posture, now, os_distro, os_version, clean_host, device["id"]))
             conn.commit()
 
         return {"record_id": rec_id, "status": "recorded", "posture": posture}
@@ -816,7 +862,7 @@ class ComplianceDatabase:
             hostname=hostname.strip(),
             mode=mode,
             fleet_tag=fleet_tag or ("field-robot" if mode == "robot" else "workstation"),
-            owner_email=owner_email or "security@roamcompliance.com"
+            owner_email=owner_email or "aldentmcqueen@gmail.com"
         )
         
         is_pass = (initial_posture == "compliant")
@@ -1079,8 +1125,8 @@ class ComplianceDatabase:
         from agent.collector import get_hardware_serial, get_os, collect_telemetry
         sys_name = platform.system()
         device_id = get_hardware_serial(sys_name)
-        hostname = platform.node() or "inspiron"
-        email = owner_email or "founder@robotics.co"
+        email = owner_email or "aldentmcqueen@gmail.com"
+        hostname = sanitize_hostname(platform.node(), owner_email=email, mode="workstation")
 
         # Ensure user exists for attribution in the Team directory
         existing_users = self.list_users(org_id)

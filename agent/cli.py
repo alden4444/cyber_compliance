@@ -14,6 +14,7 @@ import sys
 from agent.client import ComplianceClient
 from agent.collector import (
     collect_telemetry,
+    get_friendly_hostname,
     get_hardware_serial,
     get_os,
     is_admin,
@@ -110,7 +111,7 @@ def main():
             sys.exit(1)
         client = ComplianceClient(api_url=args.api_url)
         device_id = get_hardware_serial(system)
-        hostname = platform.node()
+        hostname = get_friendly_hostname(owner_email=args.owner_email, mode=args.mode)
         print(f"Enrolling device '{hostname}' ({device_id}) with {args.api_url}...")
         result = client.enroll(
             api_url=args.api_url,

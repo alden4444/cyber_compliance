@@ -83,13 +83,13 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     # Build Workstations rows
     workstation_rows = ""
     for w in workstations:
-        w_posture = w.get("last_posture", "unknown")
+        w_posture = w.get("last_posture") or "unknown"
         p_badge = '<span class="badge badge-pass">COMPLIANT</span>' if w_posture == "compliant" else '<span class="badge badge-fail">NON-COMPLIANT</span>'
         workstation_rows += f"""
         <tr>
-            <td><strong>{html.escape(w.get('hostname', 'unknown'))}</strong></td>
+            <td><strong>{html.escape(w.get('hostname') or 'unknown')}</strong></td>
             <td>{html.escape(w.get('owner_email') or 'Attributed Engineer')}</td>
-            <td>{html.escape(w.get('os_distro', 'Linux'))} {html.escape(w.get('os_version', ''))}</td>
+            <td>{html.escape(w.get('os_distro') or 'Linux')} {html.escape(w.get('os_version') or '')}</td>
             <td>{html.escape(w.get('fleet_tag') or 'Workstation')}</td>
             <td class="text-right">{p_badge}</td>
         </tr>
@@ -98,14 +98,14 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     # Build Hardware / Robotics rows
     robot_rows = ""
     for r in hardware_inventory:
-        bot_posture = r.get("last_posture", "compliant")
+        bot_posture = r.get("last_posture") or "compliant"
         bot_badge = '<span class="badge badge-pass">INVENTORY VERIFIED</span>' if bot_posture == "compliant" else '<span class="badge badge-draft">FLAGGED EXPOSURE</span>'
         robot_rows += f"""
         <tr>
-            <td><strong>{html.escape(r.get('hostname', 'node'))}</strong></td>
-            <td>{html.escape(r.get('fleet_tag', 'Facility'))}</td>
-            <td>{html.escape(r.get('os_distro', 'Linux'))} ({html.escape(r.get('os_version', 'Edge RT'))})</td>
-            <td class="desc font-mono">{html.escape(r.get('device_id', '')[:16])}...</td>
+            <td><strong>{html.escape(r.get('hostname') or 'node')}</strong></td>
+            <td>{html.escape(r.get('fleet_tag') or 'Facility')}</td>
+            <td>{html.escape(r.get('os_distro') or 'Linux')} ({html.escape(r.get('os_version') or 'Edge RT')})</td>
+            <td class="desc font-mono">{html.escape((r.get('device_id') or '')[:16])}...</td>
             <td class="text-right">{bot_badge}</td>
         </tr>
         """

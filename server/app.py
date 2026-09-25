@@ -978,6 +978,18 @@ echo "===================================================================="
             self._send_json(HTTPStatus.OK, result)
             return
 
+        if path == "/api/v1/users/reset":
+            try:
+                body = self._read_json_body()
+            except Exception:
+                body = {}
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
+            keep_email = body.get("keep_email", "aldentmcqueen@gmail.com")
+            result = self.db.reset_team_users(org_id, keep_email=keep_email)
+            self._send_json(HTTPStatus.OK, result)
+            return
+
         if path == "/api/v1/org/onboarding":
             try:
                 body = self._read_json_body()
