@@ -458,6 +458,64 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             urllib.request.urlopen(req_me_after)
         self.assertEqual(ctx.exception.code, 401)
 
+    def test_add_and_remove_node(self):
+        org_token = "org_demo_roam_compliance_2026"
+
+        # 1. Add a new robot node
+        add_body = json.dumps({
+            "org_token": org_token,
+            "hostname": "husky-rover-test-01",
+            "mode": "robot",
+            "fleet_tag": "field-testing",
+            "owner_email": "robotics-lead@roamcompliance.com",
+            "initial_posture": "compliant",
+            "os_distro": "Ubuntu 22.04 LTS"
+        }).encode("utf-8")
+        req_add = urllib.request.Request(
+            f"{self.api_url}/api/v1/devices/add",
+            data=add_body,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_add) as resp:
+            self.assertEqual(resp.status, 201)
+            add_res = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(add_res["status"], "created")
+            new_dev = add_res["device"]
+            dev_id = new_dev["device_id"]
+            self.assertIn("husky-rover-test-01", dev_id)
+
+        # 2. Verify it is returned in list_devices
+        req_devs = urllib.request.Request(f"{self.api_url}/api/v1/devices?org_token={org_token}")
+        with urllib.request.urlopen(req_devs) as resp:
+            self.assertEqual(resp.status, 200)
+            devs_data = json.loads(resp.read().decode("utf-8"))
+            device_ids = [d["device_id"] for d in devs_data["devices"]]
+            self.assertIn(dev_id, device_ids)
+
+        # 3. Delete the node
+        del_body = json.dumps({
+            "org_token": org_token,
+            "device_id": dev_id
+        }).encode("utf-8")
+        req_del = urllib.request.Request(
+            f"{self.api_url}/api/v1/devices/delete",
+            data=del_body,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_del) as resp:
+            self.assertEqual(resp.status, 200)
+            del_res = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(del_res["status"], "deleted")
+            self.assertEqual(del_res["device_id"], dev_id)
+
+        # 4. Verify it is no longer in list_devices
+        with urllib.request.urlopen(req_devs) as resp:
+            devs_data_after = json.loads(resp.read().decode("utf-8"))
+            device_ids_after = [d["device_id"] for d in devs_data_after["devices"]]
+            self.assertNotIn(dev_id, device_ids_after)
+
 
 if __name__ == "__main__":
     unittest.main()

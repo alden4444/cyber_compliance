@@ -855,6 +855,67 @@ echo "===================================================================="
             })
             return
 
+        if path in ["/api/v1/devices/add", "/api/v1/devices/create"]:
+            try:
+                body = self._read_json_body()
+            except Exception as e:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Invalid JSON body: {str(e)}"})
+                return
+
+            hostname = body.get("hostname")
+            if not hostname:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'hostname'"})
+                return
+
+            org_token = body.get("org_token") or self._get_bearer_token()
+            org = self.db.get_org_by_token(org_token) if org_token else None
+            org_id = org["id"] if org else "org_roam_compliance"
+
+            device = self.db.add_node(
+                org_id=org_id,
+                hostname=hostname,
+                mode=body.get("mode", "workstation"),
+                fleet_tag=body.get("fleet_tag"),
+                owner_email=body.get("owner_email"),
+                initial_posture=body.get("initial_posture", "compliant"),
+                os_distro=body.get("os_distro", "Ubuntu 22.04 LTS")
+            )
+
+            self._send_json(HTTPStatus.CREATED, {
+                "status": "created",
+                "device": device,
+                "message": f"Node {hostname} enrolled successfully."
+            })
+            return
+
+        if path in ["/api/v1/devices/delete", "/api/v1/devices/remove"]:
+            try:
+                body = self._read_json_body()
+            except Exception as e:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Invalid JSON body: {str(e)}"})
+                return
+
+            device_id = body.get("device_id")
+            if not device_id:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'device_id'"})
+                return
+
+            org_token = body.get("org_token") or self._get_bearer_token()
+            org = self.db.get_org_by_token(org_token) if org_token else None
+            org_id = org["id"] if org else "org_roam_compliance"
+
+            deleted = self.db.delete_device(org_id, device_id)
+            if not deleted:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": f"Device {device_id} not found."})
+                return
+
+            self._send_json(HTTPStatus.OK, {
+                "status": "deleted",
+                "device_id": device_id,
+                "message": f"Device {device_id} removed from fleet successfully."
+            })
+            return
+
         if path == "/api/v1/fleet/seed-demo":
             try:
                 body = self._read_json_body()

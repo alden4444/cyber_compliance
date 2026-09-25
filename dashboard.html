@@ -404,9 +404,9 @@
         <button onclick="clearDemoFleet()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-400 hover:text-zinc-200 border border-white/5 transition-colors">
           Clear Fleet
         </button>
-        <button onclick="openOnboardingModal()" class="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold flex items-center gap-1 transition-colors">
+        <button onclick="openAddNodeModal()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
           <span class="material-symbols-outlined text-[15px]">add</span>
-          <span>Enroll Node</span>
+          <span>Add Node</span>
         </button>
       </div>
     </div>
@@ -945,6 +945,106 @@
       <button onclick="completeOnboardingAndLaunch()" class="w-full max-w-sm mx-auto py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
         <span>Go to Dashboard</span>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: Add / Register Node Modal                                          -->
+<!-- ========================================================================= -->
+<div id="add-node-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-200">
+  <div class="bg-card w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6 space-y-5 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-white/5 pb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-white">Add Hardware Node to Fleet</h3>
+          <p class="text-xs text-zinc-400">Register workstations, edge computers, or autonomous robotics nodes</p>
+        </div>
+      </div>
+      <button onclick="closeAddNodeModal()" class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="flex rounded-xl bg-zinc-900 p-1 border border-white/5 text-xs">
+      <button type="button" onclick="switchAddNodeTab('manual')" id="addnode-tab-manual" class="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors">
+        Manual Quick-Add
+      </button>
+      <button type="button" onclick="switchAddNodeTab('terminal')" id="addnode-tab-terminal" class="flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors">
+        1-Line Terminal Setup
+      </button>
+    </div>
+
+    <!-- Tab 1: Manual Form -->
+    <form id="addnode-form" onsubmit="submitAddNode(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-zinc-300 mb-1">Hostname / Machine Name</label>
+        <input type="text" id="addnode-hostname" required placeholder="e.g. amr-boulder-05 or dev-thinkpad-x1" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1">Node Type</label>
+          <select id="addnode-mode" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
+            <option value="workstation">Developer Workstation</option>
+            <option value="robot">Robot / Edge Node (ROS 2)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1">Facility / Fleet Tag</label>
+          <input type="text" id="addnode-tag" placeholder="e.g. warehouse-amr, dev-laptops" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1">Assigned Owner Email</label>
+          <input type="email" id="addnode-email" placeholder="aldentmcqueen@gmail.com" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-300 mb-1">Initial Compliance Posture</label>
+          <select id="addnode-posture" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
+            <option value="compliant">Compliant (All Controls Passing)</option>
+            <option value="non_compliant">Requires Action (Simulate Flagged Control)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2 border-t border-white/5">
+        <button type="button" onclick="closeAddNodeModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" id="addnode-submit-btn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">save</span>
+          <span>Register Node</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Tab 2: Terminal 1-Liner -->
+    <div id="addnode-terminal-pane" class="hidden space-y-3">
+      <p class="text-xs text-zinc-400">Run this on any physical workstation or robot edge terminal. Zero external pip packages required:</p>
+      
+      <div class="space-y-1.5">
+        <div class="text-[11px] text-zinc-400 font-mono">Option A: Quick 1-Shot Audit (Read-Only)</div>
+        <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-emerald-400 flex items-center justify-between gap-2">
+          <span class="select-all overflow-x-auto">curl -sSL https://roamcompliance.com/audit.py | python3</span>
+          <button onclick="copyToClipboard('curl -sSL https://roamcompliance.com/audit.py | python3', this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 pt-2">
+        <div class="text-[11px] text-zinc-400 font-mono">Option B: Continuous Background Agent (systemd service)</div>
+        <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2" id="addnode-continuous-cmd">
+          <span class="select-all overflow-x-auto">curl -sSL "https://roamcompliance.com/install.sh?token=org_demo_roam_compliance_2026&mode=workstation" | sudo bash</span>
+          <button onclick="copyToClipboard(document.querySelector('#addnode-continuous-cmd span').innerText, this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1665,6 +1765,10 @@ function renderFilteredDevicesTables(workstations, robots) {
             <button onclick="openDetailsModal('${w.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded border border-white/10 bg-zinc-800 hover:bg-zinc-700 transition-colors">
               Inspect
             </button>
+            <button onclick="deleteNode('${w.device_id}', '${w.hostname}')" class="px-2 py-1 text-xs text-rose-400 hover:text-rose-200 rounded border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex items-center gap-1" title="Remove workstation from fleet">
+              <span class="material-symbols-outlined text-[13px]">delete</span>
+              <span class="hidden sm:inline">Remove</span>
+            </button>
           </div>
         `;
         wsContainer.appendChild(row);
@@ -1712,6 +1816,10 @@ function renderFilteredDevicesTables(workstations, robots) {
             </span>
             <button onclick="openDetailsModal('${r.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded border border-white/10 bg-zinc-800 hover:bg-zinc-700 transition-colors">
               Inspect
+            </button>
+            <button onclick="deleteNode('${r.device_id}', '${r.hostname}')" class="px-2 py-1 text-xs text-rose-400 hover:text-rose-200 rounded border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-colors flex items-center gap-1" title="Remove robot from fleet">
+              <span class="material-symbols-outlined text-[13px]">delete</span>
+              <span class="hidden sm:inline">Remove</span>
             </button>
           </div>
         `;
@@ -2730,6 +2838,120 @@ async function completeOnboardingAndLaunch() {
   await refreshData();
 }
 
+// =========================================================================
+// ADD / REMOVE FLEET NODES
+// =========================================================================
+function openAddNodeModal() {
+  const modal = document.getElementById("add-node-modal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  switchAddNodeTab("manual");
+  const hostInput = document.getElementById("addnode-hostname");
+  if (hostInput) setTimeout(() => hostInput.focus(), 50);
+}
+
+function closeAddNodeModal() {
+  const modal = document.getElementById("add-node-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function switchAddNodeTab(tab) {
+  const manualBtn = document.getElementById("addnode-tab-manual");
+  const terminalBtn = document.getElementById("addnode-tab-terminal");
+  const form = document.getElementById("addnode-form");
+  const terminal = document.getElementById("addnode-terminal-pane");
+
+  if (tab === "manual") {
+    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors";
+    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors";
+    if (form) form.classList.remove("hidden");
+    if (terminal) terminal.classList.add("hidden");
+  } else {
+    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors";
+    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors";
+    if (form) form.classList.add("hidden");
+    if (terminal) terminal.classList.remove("hidden");
+  }
+}
+
+async function submitAddNode(e) {
+  if (e) e.preventDefault();
+  const hostInput = document.getElementById("addnode-hostname");
+  const modeInput = document.getElementById("addnode-mode");
+  const tagInput = document.getElementById("addnode-tag");
+  const emailInput = document.getElementById("addnode-email");
+  const postureInput = document.getElementById("addnode-posture");
+  const btn = document.getElementById("addnode-submit-btn");
+
+  const hostname = hostInput ? hostInput.value.trim() : "";
+  if (!hostname) return;
+
+  const mode = modeInput ? modeInput.value : "workstation";
+  const fleet_tag = tagInput && tagInput.value.trim() ? tagInput.value.trim() : undefined;
+  const owner_email = emailInput && emailInput.value.trim() ? emailInput.value.trim() : undefined;
+  const initial_posture = postureInput ? postureInput.value : "compliant";
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-symbols-outlined spin text-[16px]">progress_activity</span><span>Registering...</span>`;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/devices/add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        org_token: ORG_TOKEN,
+        hostname,
+        mode,
+        fleet_tag,
+        owner_email,
+        initial_posture
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert("Error registering node: " + (data.error || "Unknown server error"));
+    } else {
+      closeAddNodeModal();
+      const form = document.getElementById("addnode-form");
+      if (form) form.reset();
+      await refreshData();
+    }
+  } catch (err) {
+    alert("Connection error: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">save</span><span>Register Node</span>`;
+    }
+  }
+}
+
+async function deleteNode(deviceId, hostname) {
+  if (!confirm(`Are you sure you want to remove node "${hostname || deviceId}" from fleet inventory?\n\nThis will permanently delete this hardware node and its audit telemetry records.`)) {
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/devices/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        device_id: deviceId,
+        org_token: ORG_TOKEN
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert("Could not remove device: " + (data.error || "Unknown error"));
+      return;
+    }
+    await refreshData();
+  } catch (e) {
+    alert("Error removing device: " + e.message);
+  }
+}
+
 async function resetDemoAccount() {
   if (!confirm("Reset demo environment? This will erase all enrolled devices, user accounts, and reset the onboarding wizard.")) {
     return;
@@ -2845,6 +3067,7 @@ window.addEventListener("keydown", (e) => {
     closeRemediationModal();
     closePolicyModal();
     closeOnboardingModal();
+    closeAddNodeModal();
     document.getElementById("org-dropdown").classList.add("hidden");
   }
 });

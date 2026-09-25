@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 from pathlib import Path
+import re
 import secrets
 import sqlite3
 import time
@@ -720,6 +721,66 @@ class ComplianceDatabase:
             VALUES (?, ?, ?, ?, ?, ?, ?);
             """, (rec_id, device_id, org_id, now, posture, json.dumps(sim_ctls), now))
             conn.commit()
+
+    def delete_device(self, org_id, device_id):
+        """Remove a device and its telemetry records permanently from the organization fleet."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM telemetry_records WHERE org_id = ? AND device_id = ?;", (org_id, device_id))
+            cursor.execute("DELETE FROM devices WHERE org_id = ? AND device_id = ?;", (org_id, device_id))
+            deleted = cursor.rowcount > 0
+            conn.commit()
+            return deleted
+
+    def add_node(self, org_id, hostname, mode="workstation", fleet_tag=None, owner_email=None, initial_posture="compliant", os_distro="Ubuntu 22.04 LTS"):
+        """Register a new node with immediate baseline telemetry for easy fleet expansion."""
+        clean_name = re.sub(r'[^a-zA-Z0-9_-]', '-', hostname.lower().strip())
+        device_id = f"{'robot' if mode == 'robot' else 'node'}-{clean_name}-{uuid.uuid4().hex[:6]}"
+        
+        device = self.enroll_device(
+            org_id=org_id,
+            device_id=device_id,
+            hostname=hostname.strip(),
+            mode=mode,
+            fleet_tag=fleet_tag or ("field-robot" if mode == "robot" else "workstation"),
+            owner_email=owner_email or "security@roamcompliance.com"
+        )
+        
+        is_pass = (initial_posture == "compliant")
+        controls = {
+            "firewall": {"active": is_pass, "status": "pass" if is_pass else "fail", "type": "ufw"},
+            "antivirus": {"name": "ClamAV", "active": True, "status": "pass"},
+            "admin_separation": {"enforced": is_pass, "status": "pass" if is_pass else "fail"},
+            "patch_management": {"status": "pass", "status_detail": "Current (Managed)"}
+        }
+        
+        robot_specific = {}
+        if mode == "robot":
+            robot_specific = {
+                "ros_distro": "ros2-humble",
+                "open_ports_count": 4 if is_pass else 14,
+                "exposed_ports_count": 0 if is_pass else 3,
+                "isolated_dds_subnet": is_pass,
+                "unencrypted_dds_detected": not is_pass
+            }
+        
+        telemetry = {
+            "device": {
+                "device_id": device_id,
+                "hostname": hostname.strip(),
+                "mode": mode,
+                "os_distro": os_distro,
+                "os_version": "Linux 6.8",
+                "fleet_tag": device["fleet_tag"],
+                "owner_email": device["owner_email"]
+            },
+            "posture": "compliant" if is_pass else "non_compliant",
+            "controls": controls,
+            "robot_specific": robot_specific
+        }
+        
+        self.record_telemetry(device, telemetry)
+        return self.get_device_by_token(device["device_token"])
 
     def list_frameworks(self):
         """Return metadata for all supported compliance frameworks."""
