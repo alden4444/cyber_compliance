@@ -393,20 +393,20 @@ class ComplianceDatabase:
             # Seed a default demo organization for instant testing if empty
             cursor.execute("SELECT COUNT(*) as count FROM organizations;")
             if cursor.fetchone()["count"] == 0:
-                demo_token = "org_demo_pattern_labs_2026"
+                demo_token = "org_demo_roam_compliance_2026"
                 now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                 cursor.execute(
                     "INSERT INTO organizations (id, name, org_token, framework, created_at) VALUES (?, ?, ?, ?, ?);",
-                    ("org_pattern_labs", "Pattern Labs", demo_token, "SOC 2 Type II", now)
+                    ("org_roam_compliance", "Roam Robotics", demo_token, "SOC 2 Type II", now)
                 )
 
-            # Seed initial founder user if empty
-            cursor.execute("SELECT COUNT(*) as count FROM users WHERE org_id = 'org_pattern_labs';")
+            # Seed initial administrator user if empty
+            cursor.execute("SELECT COUNT(*) as count FROM users WHERE org_id = 'org_roam_compliance';")
             if cursor.fetchone()["count"] == 0:
                 now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                 cursor.execute(
                     "INSERT INTO users (id, org_id, email, name, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?);",
-                    ("usr_founder", "org_pattern_labs", "alden@patternlabs.com", "Alden", "admin", "active", now)
+                    ("usr_founder", "org_roam_compliance", "admin@roamcompliance.com", "Security Lead", "admin", "active", now)
                 )
 
             conn.commit()
@@ -416,6 +416,9 @@ class ComplianceDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM organizations WHERE org_token = ?;", (org_token,))
             row = cursor.fetchone()
+            if not row and org_token in ("org_demo_pattern_labs_2026", "org_pattern_labs"):
+                cursor.execute("SELECT * FROM organizations WHERE id = 'org_roam_compliance' OR org_token = 'org_demo_roam_compliance_2026';")
+                row = cursor.fetchone()
             return dict(row) if row else None
 
     def get_org_by_id(self, org_id):
@@ -423,6 +426,9 @@ class ComplianceDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM organizations WHERE id = ?;", (org_id,))
             row = cursor.fetchone()
+            if not row and org_id in ("org_pattern_labs", "org_demo_pattern_labs_2026"):
+                cursor.execute("SELECT * FROM organizations WHERE id = 'org_roam_compliance';")
+                row = cursor.fetchone()
             return dict(row) if row else None
 
     def update_org_onboarding(self, org_id, name=None, framework=None, target_audit_date=None, onboarding_completed=1):
@@ -450,7 +456,7 @@ class ComplianceDatabase:
             conn.commit()
             return self.get_org_by_id(org_id)
 
-    def seed_default_policies(self, org_id="org_pattern_labs"):
+    def seed_default_policies(self, org_id="org_roam_compliance"):
         """Seed the 4 mandatory SOC 2 compliance policies for an organization if not present."""
         with self.connection() as conn:
             cursor = conn.cursor()
@@ -751,7 +757,7 @@ class ComplianceDatabase:
             "organization_id": org_id,
             "organization_name": org_name,
             "fleet_scope": fleet_scope,
-            "fleet_scope_label": "Workstations Only (Pattern Labs Mode)" if fleet_scope == "workstations_only" else "Full Robotics Fleet Mode",
+            "fleet_scope_label": "Workstations Only (Standard Scope)" if fleet_scope == "workstations_only" else "Full Robotics Fleet Mode",
             "asset_summary": {
                 "total_devices": len(devices),
                 "workstations": len(workstations),
@@ -779,7 +785,7 @@ class ComplianceDatabase:
         """Compile structured compliance criteria mapping (defaults to SOC 2 or org's target)."""
         return self.get_framework_evidence(org_id, framework_id=framework_id)
 
-    def seed_demo_fleet(self, org_id="org_pattern_labs"):
+    def seed_demo_fleet(self, org_id="org_roam_compliance"):
         """Populate realistic multi-facility robotics fleet (AMRs, drones, arms, rovers, and laptops)."""
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -811,11 +817,11 @@ class ComplianceDatabase:
             {"id": "rover-02", "name": "yard-rover-02", "mode": "robot", "tag": "saltlake-proving-grounds", "distro": "NixOS", "ver": "NixOS 24.05", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}}, "bot": {"open_ports_count": 7, "exposed_ports_count": 0, "exposed_ports": []}},
 
             # Developer Workstations
-            {"id": "ws-sarah", "name": "sarah-m3-max", "mode": "workstation", "tag": "engineering-laptops", "owner": "sarah.dev@patternlabs.com", "distro": "macOS", "ver": "macOS 15.1 Sonoma", "posture": "non_compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "XProtect", "status": "pass"}, "admin_separation": {"enforced": False, "status": "fail"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
-            {"id": "ws-marcus", "name": "marcus-thinkpad", "mode": "workstation", "tag": "engineering-laptops", "owner": "marcus.robotics@patternlabs.com", "distro": "Ubuntu", "ver": "Ubuntu 24.04 LTS", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
-            {"id": "ws-elena", "name": "elena-framework", "mode": "workstation", "tag": "engineering-laptops", "owner": "elena.firmware@patternlabs.com", "distro": "Fedora", "ver": "Fedora 40", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
-            {"id": "ws-chen", "name": "chen-cad-rig", "mode": "workstation", "tag": "hardware-lab", "owner": "chen.meche@patternlabs.com", "distro": "Windows", "ver": "Windows 11 Pro", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "Windows Defender", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
-            {"id": "ws-ci", "name": "ci-runner-edge", "mode": "workstation", "tag": "boulder-warehouse-amr", "owner": "ops@patternlabs.com", "distro": "Ubuntu", "ver": "Ubuntu 22.04 LTS", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
+            {"id": "ws-sarah", "name": "sarah-m3-max", "mode": "workstation", "tag": "engineering-laptops", "owner": "sarah.dev@company.internal", "distro": "macOS", "ver": "macOS 15.1 Sonoma", "posture": "non_compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "XProtect", "status": "pass"}, "admin_separation": {"enforced": False, "status": "fail"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
+            {"id": "ws-marcus", "name": "marcus-thinkpad", "mode": "workstation", "tag": "engineering-laptops", "owner": "marcus.robotics@company.internal", "distro": "Ubuntu", "ver": "Ubuntu 24.04 LTS", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
+            {"id": "ws-elena", "name": "elena-framework", "mode": "workstation", "tag": "engineering-laptops", "owner": "elena.firmware@company.internal", "distro": "Fedora", "ver": "Fedora 40", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
+            {"id": "ws-chen", "name": "chen-cad-rig", "mode": "workstation", "tag": "hardware-lab", "owner": "chen.meche@company.internal", "distro": "Windows", "ver": "Windows 11 Pro", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "Windows Defender", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
+            {"id": "ws-ci", "name": "ci-runner-edge", "mode": "workstation", "tag": "boulder-warehouse-amr", "owner": "ops@company.internal", "distro": "Ubuntu", "ver": "Ubuntu 22.04 LTS", "posture": "compliant", "ctls": {"firewall": {"active": True, "status": "pass"}, "antivirus": {"name": "ClamAV", "status": "pass"}, "admin_separation": {"enforced": True, "status": "pass"}, "patch_management": {"status_detail": "Compliant (Managed)", "status": "pass"}, "web_threat_scanning": {"active": True, "status": "pass"}}},
         ]
 
         with self.connection() as conn:
@@ -851,7 +857,7 @@ class ComplianceDatabase:
 
         return {"status": "seeded", "count": len(demo_assets)}
 
-    def clear_demo_fleet(self, org_id="org_pattern_labs"):
+    def clear_demo_fleet(self, org_id="org_roam_compliance"):
         """Remove all simulated fleet devices, preserving real hardware nodes."""
         with self.connection() as conn:
             cursor = conn.cursor()
@@ -860,7 +866,7 @@ class ComplianceDatabase:
             conn.commit()
         return {"status": "cleared"}
 
-    def reset_account_for_demo(self, org_id="org_pattern_labs"):
+    def reset_account_for_demo(self, org_id="org_roam_compliance"):
         """Erase user accounts, devices, telemetry and reset onboarding for a clean demo."""
         with self.connection() as conn:
             cursor = conn.cursor()
@@ -878,7 +884,7 @@ class ComplianceDatabase:
             conn.commit()
             return self.get_org_by_id(org_id)
 
-    def enroll_local_host(self, org_id="org_pattern_labs", owner_email=None):
+    def enroll_local_host(self, org_id="org_roam_compliance", owner_email=None):
         """Quick-enroll current host machine with real security telemetry for interactive demos."""
         import platform
         from agent.collector import get_hardware_serial, get_os, collect_telemetry

@@ -63,12 +63,12 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         client = ComplianceClient(config_path=cfg_file, queue_path=queue_file)
 
         # 1. Device Enrollment
-        org_token = "org_demo_pattern_labs_2026"
+        org_token = "org_demo_roam_compliance_2026"
         enroll_res = client.enroll(
             api_url=self.api_url,
             org_token=org_token,
             device_id="robot-unit-boulder-42",
-            hostname="pattern-bot-01",
+            hostname="roam-bot-01",
             mode="robot",
             fleet_tag="boulder-depot-fleet",
         )
@@ -129,7 +129,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
     def test_zero_payload_enforcement_on_server(self):
         """Server must strictly reject payloads containing camera or proprietary sensor streams."""
         device = self.db.enroll_device(
-            org_id="org_pattern_labs",
+            org_id="org_roam_compliance",
             device_id="violation-test-robot",
             hostname="test-bot",
             mode="robot"
@@ -155,12 +155,12 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         ctx.exception.close()
 
     def test_user_management_and_onboarding(self):
-        org_token = "org_demo_pattern_labs_2026"
+        org_token = "org_demo_roam_compliance_2026"
 
         # 1. Invite a new engineer
         user_data = json.dumps({
             "org_token": org_token,
-            "email": "test.engineer@patternlabs.com",
+            "email": "test.engineer@company.internal",
             "name": "Test Engineer",
             "role": "engineer"
         }).encode("utf-8")
@@ -173,7 +173,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         with urllib.request.urlopen(req_add) as resp:
             self.assertEqual(resp.status, 200)
             created_data = json.loads(resp.read().decode("utf-8"))
-            self.assertEqual(created_data["user"]["email"], "test.engineer@patternlabs.com")
+            self.assertEqual(created_data["user"]["email"], "test.engineer@company.internal")
             user_id = created_data["user"]["id"]
 
         # 2. List users
@@ -182,7 +182,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             self.assertEqual(resp.status, 200)
             data = json.loads(resp.read().decode("utf-8"))
             emails = [u["email"] for u in data["users"]]
-            self.assertIn("test.engineer@patternlabs.com", emails)
+            self.assertIn("test.engineer@company.internal", emails)
 
         # 3. Update Org Onboarding
         onboarding_data = json.dumps({
@@ -226,7 +226,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             self.assertEqual(del_res["status"], "deleted")
 
     def test_policies_and_scope_and_installer(self):
-        org_token = "org_demo_pattern_labs_2026"
+        org_token = "org_demo_roam_compliance_2026"
 
         # 1. Dynamic 1-line installer endpoint
         req_sh = urllib.request.Request(f"{self.api_url}/install.sh?token={org_token}&mode=workstation")
@@ -256,7 +256,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         adopt_data = json.dumps({
             "org_token": org_token,
             "policy_key": "infosec",
-            "user_name": "Alden"
+            "user_name": "Security Officer"
         }).encode("utf-8")
         req_adopt = urllib.request.Request(
             f"{self.api_url}/api/v1/policies/adopt",
@@ -269,7 +269,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             adopt_res = json.loads(resp.read().decode("utf-8"))
             self.assertEqual(adopt_res["status"], "adopted")
             self.assertEqual(adopt_res["policy"]["status"], "adopted")
-            self.assertEqual(adopt_res["policy"]["adopted_by"], "Alden")
+            self.assertEqual(adopt_res["policy"]["adopted_by"], "Security Officer")
 
         # 5. Toggle Fleet Scope
         scope_data = json.dumps({

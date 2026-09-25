@@ -14,7 +14,7 @@ import time
 def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:8000"):
     """Generate high-fidelity, printable executive SOC 2 audit report."""
     org_name = html.escape(evidence.get("organization_name") or org.get("name") or "Organization")
-    org_token = html.escape(org.get("org_token") or "org_demo_pattern_labs_2026")
+    org_token = html.escape(org.get("org_token") or "org_demo_roam_compliance_2026")
     framework = html.escape(evidence.get("framework") or "SOC 2 Type II")
     fleet_scope = evidence.get("fleet_scope", "workstations_only")
     fleet_scope_label = html.escape(evidence.get("fleet_scope_label", "Workstations Only"))
@@ -129,7 +129,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     """
 
     scope_explanation = (
-        "Under <strong>Workstations Only (Pattern Labs Mode)</strong>, developer laptops and engineering machines with cloud infrastructure access constitute the primary SOC 2 system boundary. Physical robotics edge units and lab hardware are cataloged under <strong>CC6.1 Physical Hardware Asset Inventory</strong>."
+        "Under <strong>Workstations Only (Standard Scope)</strong>, developer laptops and engineering machines with cloud infrastructure access constitute the primary SOC 2 system boundary. Physical robotics edge units and lab hardware are cataloged under <strong>CC6.1 Physical Hardware Asset Inventory</strong>."
         if fleet_scope == "workstations_only"
         else "Under <strong>Full Robotics Fleet Mode</strong>, both developer workstations and physical edge robotics hardware (AMRs, drones, arms, rovers) are fully evaluated against continuous host firewall, port segregation, and vulnerability management controls."
     )

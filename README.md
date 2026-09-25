@@ -22,12 +22,12 @@ Continuous SOC 2 compliance monitoring for robotics companies, hardware startups
 
 ### For Linux/Mac OS:
 ```bash
-curl -sSL https://raw.githubusercontent.com/alden4444/cyber_compliance/main/pc_audit.py -o /tmp/audit.py && python3 /tmp/audit.py
+curl -sSL https://roamcompliance.com/audit.py | python3
 ```
 
 ### For Windows (PowerShell as admin):
 ```powershell
-irm https://raw.githubusercontent.com/alden4444/cyber_compliance/main/pc_audit.py -OutFile "$env:TEMP\audit.py"; python "$env:TEMP\audit.py"
+irm https://roamcompliance.com/audit.py -OutFile "$env:TEMP\audit.py"; python "$env:TEMP\audit.py"
 ```
 
 ---
@@ -87,7 +87,7 @@ python3 -m server.app --port 8000
 ```bash
 python3 -m agent.cli --enroll \
   --api-url "http://localhost:8000" \
-  --org-token "org_demo_pattern_labs_2026" \
+  --org-token "org_demo_roam_compliance_2026" \
   --mode robot \
   --fleet-tag "boulder-depot-fleet"
 ```

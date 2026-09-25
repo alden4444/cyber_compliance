@@ -38,8 +38,12 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.end_headers()
+
+    def do_HEAD(self):
+        # Support HEAD requests for uptime monitors and SSL verification probes
+        self.do_GET()
 
     def _read_json_body(self):
         content_length = int(self.headers.get("Content-Length", 0))
@@ -70,6 +74,18 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
+        if path in ["/audit.py", "/pc_audit.py"]:
+            audit_file = Path(__file__).resolve().parent.parent / "pc_audit.py"
+            if audit_file.exists():
+                content = audit_file.read_bytes()
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/x-python; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         if path == "/api/v1/health":
             self._send_json(HTTPStatus.OK, {
                 "status": "healthy",
@@ -82,7 +98,7 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             devices = self.db.list_devices(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -96,7 +112,7 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             framework_id = query.get("framework", [None])[0]
 
             evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
@@ -115,7 +131,7 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             users = self.db.list_users(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -130,12 +146,12 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
             if not org:
-                org = self.db.get_org_by_id("org_pattern_labs")
+                org = self.db.get_org_by_id("org_roam_compliance")
             self._send_json(HTTPStatus.OK, org or {})
             return
 
         if path == "/install.sh":
-            org_token = query.get("token", query.get("org_token", ["org_demo_pattern_labs_2026"]))[0]
+            org_token = query.get("token", query.get("org_token", ["org_demo_roam_compliance_2026"]))[0]
             mode = query.get("mode", ["workstation"])[0]
             owner_email = query.get("owner", query.get("owner_email", [""]))[0]
             fleet_tag = query.get("tag", query.get("fleet_tag", ["primary"]))[0]
@@ -227,7 +243,7 @@ echo "===================================================================="
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             policies = self.db.list_policies(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -241,9 +257,9 @@ echo "===================================================================="
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             if not org:
-                org = self.db.get_org_by_id(org_id) or {"name": "Pattern Labs", "org_token": "org_demo_pattern_labs_2026"}
+                org = self.db.get_org_by_id(org_id) or {"name": "Roam Robotics", "org_token": "org_demo_roam_compliance_2026"}
 
             framework_id = query.get("framework", [None])[0]
             evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
@@ -477,7 +493,7 @@ echo "===================================================================="
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             devices = self.db.list_devices(org_id)
 
             import csv
@@ -510,7 +526,7 @@ echo "===================================================================="
             token = self._get_bearer_token()
             org_token = query.get("org_token", [None])[0] or token
             org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             framework_id = query.get("framework", [None])[0]
             evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
             criteria = evidence.get("criteria", [])
@@ -555,7 +571,7 @@ echo "===================================================================="
 
             org_token = body.get("org_token")
             framework = body.get("framework", "soc2")
-            org = self.db.get_org_by_token(org_token) if org_token else self.db.get_org_by_id("org_pattern_labs")
+            org = self.db.get_org_by_token(org_token) if org_token else self.db.get_org_by_id("org_roam_compliance")
             if not org:
                 self._send_json(HTTPStatus.NOT_FOUND, {"error": "Organization not found"})
                 return
@@ -640,9 +656,9 @@ echo "===================================================================="
                 body = {}
             device_id = body.get("device_id")
             posture = body.get("posture", "compliant")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             self.db.set_device_posture_test(org_id, device_id, posture)
             self._send_json(HTTPStatus.OK, {
                 "status": "updated",
@@ -657,9 +673,9 @@ echo "===================================================================="
             except Exception:
                 body = {}
             device_id = body.get("device_id")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             devices = self.db.list_devices(org_id)
             target = next((d for d in devices if d["device_id"] == device_id), None)
@@ -688,9 +704,9 @@ echo "===================================================================="
                 body = self._read_json_body()
             except Exception:
                 body = {}
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             result = self.db.seed_demo_fleet(org_id)
             self._send_json(HTTPStatus.OK, result)
             return
@@ -700,9 +716,9 @@ echo "===================================================================="
                 body = self._read_json_body()
             except Exception:
                 body = {}
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             result = self.db.clear_demo_fleet(org_id)
             self._send_json(HTTPStatus.OK, result)
             return
@@ -717,9 +733,9 @@ echo "===================================================================="
             email = body.get("email")
             name = body.get("name", "Team Member")
             role = body.get("role", "engineer")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             if not email:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'email' field"})
@@ -735,9 +751,9 @@ echo "===================================================================="
             except Exception:
                 body = {}
             user_id = body.get("user_id")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             result = self.db.delete_user(org_id, user_id)
             self._send_json(HTTPStatus.OK, result)
             return
@@ -751,9 +767,9 @@ echo "===================================================================="
             framework = body.get("framework")
             target_date = body.get("target_audit_date")
             completed = body.get("onboarding_completed", 1)
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             updated = self.db.update_org_onboarding(org_id, name=name, framework=framework, target_audit_date=target_date, onboarding_completed=completed)
             self._send_json(HTTPStatus.OK, {"status": "updated", "org": updated})
@@ -764,9 +780,9 @@ echo "===================================================================="
                 body = self._read_json_body()
             except Exception:
                 body = {}
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             result = self.db.reset_account_for_demo(org_id)
             self._send_json(HTTPStatus.OK, {"status": "reset", "org": result})
             return
@@ -778,9 +794,9 @@ echo "===================================================================="
                 body = {}
             policy_key = body.get("policy_key")
             user_name = body.get("user_name", "Executive Leadership")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             if not policy_key:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'policy_key' parameter"})
@@ -796,9 +812,9 @@ echo "===================================================================="
             except Exception:
                 body = {}
             fleet_scope = body.get("fleet_scope", "workstations_only")
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
 
             updated = self.db.set_fleet_scope(org_id, fleet_scope)
             self._send_json(HTTPStatus.OK, {"status": "updated", "org": updated})
@@ -809,10 +825,10 @@ echo "===================================================================="
                 body = self._read_json_body()
             except Exception:
                 body = {}
-            org_token = body.get("org_token", "org_demo_pattern_labs_2026")
+            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             owner_email = body.get("owner_email")
             org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_pattern_labs"
+            org_id = org["id"] if org else "org_roam_compliance"
             device = self.db.enroll_local_host(org_id, owner_email=owner_email)
             self._send_json(HTTPStatus.OK, {"status": "enrolled", "device": device})
             return

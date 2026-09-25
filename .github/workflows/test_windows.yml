@@ -9,6 +9,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run Unit Tests
-        run: python -m unittest -v test_compliance_audit.py
+        run: python -m unittest -v test_pc_audit.py
       - name: Run Audit Script
-        run: python Pattern_PC_Compliance_Audit.py
+        run: python pc_audit.py

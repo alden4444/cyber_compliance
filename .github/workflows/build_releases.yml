@@ -18,17 +18,17 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            bin_name: PatternComplianceAudit-windows.exe
-            dist_path: dist/PatternComplianceAudit-windows.exe
-            pyinstaller_cmd: pyinstaller --onefile --name PatternComplianceAudit-windows Pattern_PC_Compliance_Audit.py
+            bin_name: RoamComplianceAudit-windows.exe
+            dist_path: dist/RoamComplianceAudit-windows.exe
+            pyinstaller_cmd: pyinstaller --onefile --name RoamComplianceAudit-windows pc_audit.py
           - os: macos-latest
-            bin_name: PatternComplianceAudit-macos
-            dist_path: dist/PatternComplianceAudit-macos
-            pyinstaller_cmd: pyinstaller --onefile --name PatternComplianceAudit-macos Pattern_PC_Compliance_Audit.py
+            bin_name: RoamComplianceAudit-macos
+            dist_path: dist/RoamComplianceAudit-macos
+            pyinstaller_cmd: pyinstaller --onefile --name RoamComplianceAudit-macos pc_audit.py
           - os: ubuntu-latest
-            bin_name: PatternComplianceAudit-linux
-            dist_path: dist/PatternComplianceAudit-linux
-            pyinstaller_cmd: pyinstaller --onefile --name PatternComplianceAudit-linux Pattern_PC_Compliance_Audit.py
+            bin_name: RoamComplianceAudit-linux
+            dist_path: dist/RoamComplianceAudit-linux
+            pyinstaller_cmd: pyinstaller --onefile --name RoamComplianceAudit-linux pc_audit.py
 
     steps:
       - name: Checkout Code

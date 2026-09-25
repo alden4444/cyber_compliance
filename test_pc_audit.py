@@ -107,15 +107,15 @@ BUILTIN\\Administrators                 Alias            S-1-5-32-544 Group used
         with patch.object(Path, "exists", return_value=False):
             with patch.object(audit, "is_sudo_prompting_for_root", return_value=False):
                 # User in wheel -> No
-                with patch("subprocess.check_output", return_value="alden network wheel docker\n"):
+                with patch("subprocess.check_output", return_value="developer network wheel docker\n"):
                     self.assertEqual(audit.check_admin_separated("Arch"), "No")
 
                 # User in sudo -> No
-                with patch("subprocess.check_output", return_value="alden adm cdrom sudo dip\n"):
+                with patch("subprocess.check_output", return_value="developer adm cdrom sudo dip\n"):
                     self.assertEqual(audit.check_admin_separated("Ubuntu"), "No")
 
                 # Standard user (neither wheel nor sudo) -> Yes
-                with patch("subprocess.check_output", return_value="alden users audio video\n"):
+                with patch("subprocess.check_output", return_value="developer users audio video\n"):
                     self.assertEqual(audit.check_admin_separated("Arch"), "Yes")
                     self.assertEqual(audit.check_admin_separated("Ubuntu"), "Yes")
 

@@ -82,7 +82,7 @@
     <button onclick="toggleFleetScope()" id="scope-pill-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 text-xs text-zinc-300 transition-all shadow-sm group" title="Toggle SOC 2 compliance scope between Workstations Only and Full Robotics Fleet">
       <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:scale-110 transition-transform" id="scope-indicator-dot"></span>
       <span class="text-zinc-500 font-medium text-[11px]">Scope:</span>
-      <span class="font-semibold text-white" id="header-scope-label">Workstations Only (Pattern Labs Mode)</span>
+      <span class="font-semibold text-white" id="header-scope-label">Workstations Only (Standard Scope)</span>
       <span class="material-symbols-outlined text-[14px] text-zinc-500 group-hover:text-zinc-300 transition-colors">sync_alt</span>
     </button>
   </div>
@@ -135,7 +135,7 @@
             <span>Export Devices (.csv)</span>
             <span class="material-symbols-outlined text-[14px]">download</span>
           </a>
-          <a href="/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <a href="/api/v1/evidence/soc2?org_token=org_demo_roam_compliance_2026" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Auditor JSON Stream</span>
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
           </a>
@@ -350,7 +350,7 @@
         </button>
       </div>
       <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-zinc-300 overflow-x-auto select-all" id="installer-command-display">
-        curl -sSL "http://127.0.0.1:8000/install.sh?token=org_demo_pattern_labs_2026&mode=workstation" | sudo bash
+        curl -sSL "http://127.0.0.1:8000/install.sh?token=org_demo_roam_compliance_2026&mode=workstation" | sudo bash
       </div>
     </div>
 
@@ -543,7 +543,7 @@
           </button>
         </div>
         <code class="block font-mono text-zinc-400 text-xs overflow-x-auto select-all" id="cpa-url-display">
-          http://127.0.0.1:8000/audit-packet?org_token=org_demo_pattern_labs_2026
+          http://127.0.0.1:8000/audit-packet?org_token=org_demo_roam_compliance_2026
         </code>
       </div>
     </div>
@@ -574,7 +574,7 @@
       <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Raw SOC 2 Evidence JSON</span>
         <p class="text-xs text-zinc-400">Timestamped cryptographic proof payload for automated CPA auditing tools.</p>
-        <a href="/api/v1/evidence/soc2?org_token=org_demo_pattern_labs_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
+        <a href="/api/v1/evidence/soc2?org_token=org_demo_roam_compliance_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
           <span>View JSON Stream</span>
           <span class="material-symbols-outlined text-[13px]">open_in_new</span>
         </a>
@@ -583,7 +583,7 @@
       <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Hardware Asset Export (CC6.1)</span>
         <p class="text-xs text-zinc-400">Structured serial number, OS, and facility location inventory list.</p>
-        <a href="/api/v1/devices?org_token=org_demo_pattern_labs_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
+        <a href="/api/v1/devices?org_token=org_demo_roam_compliance_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
           <span>Download Devices JSON</span>
           <span class="material-symbols-outlined text-[13px]">open_in_new</span>
         </a>
@@ -836,7 +836,7 @@
       <form onsubmit="handleOnboardingStep1(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1.5">Company or Project Name</label>
-          <input type="text" id="onboard-company-name" required placeholder="Pattern Labs" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+          <input type="text" id="onboard-company-name" required placeholder="Acme Robotics" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1.5">Admin / Founder Email</label>
@@ -939,7 +939,7 @@
 <!-- JAVASCRIPT: Full State, Tab Switching, Scope Management & API Calls       -->
 <!-- ========================================================================= -->
 <script>
-const ORG_TOKEN = "org_demo_pattern_labs_2026";
+const ORG_TOKEN = "org_demo_roam_compliance_2026";
 const API_BASE = window.location.origin;
 
 let activeDevices = [];
@@ -1126,7 +1126,7 @@ function updateScopeUI(scope) {
   const checkScope = document.getElementById("checklist-scope-indicator");
 
   if (scope === "workstations_only") {
-    if (label) label.innerText = "Workstations Only (Pattern Labs Mode)";
+    if (label) label.innerText = "Workstations Only (Standard Scope)";
     if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400";
     if (checkScope) checkScope.innerText = "Scope: Workstations Only";
     if (badge) {
@@ -1184,7 +1184,7 @@ function renderDashboard(devices) {
   const workstations = devices.filter(d => d.mode === 'workstation');
   const robots = devices.filter(d => d.mode === 'robot');
 
-  // Under "workstations_only" scope (Pattern Labs Mode), only workstations affect SOC 2 pass/fail.
+  // Under "workstations_only" scope (Standard Scope), only workstations affect SOC 2 pass/fail.
   const inScopeDevices = scope === "workstations_only" ? workstations : devices;
   const failing = inScopeDevices.filter(d => d.last_posture === 'non_compliant' || d.last_posture === 'warning');
   const passing = inScopeDevices.filter(d => d.last_posture === 'compliant');
@@ -1907,7 +1907,7 @@ async function loadTeamUsers() {
         deviceHtml = `<span class="text-zinc-500 text-[11px] italic">No machine linked</span>`;
       }
 
-      const isFounder = u.id === 'usr_founder' || u.email === 'alden@patternlabs.com';
+      const isFounder = u.id === 'usr_founder' || u.role === 'admin' || u.email === 'admin@roamcompliance.com';
       const deleteBtn = isFounder
         ? `<span class="text-[11px] text-zinc-600 px-2 py-1 font-mono">Owner</span>`
         : `<button onclick="deleteTeamUser('${u.id}', '${u.name}')" class="text-zinc-500 hover:text-zinc-200 p-1 rounded hover:bg-white/5 transition-colors" title="Remove user"><span class="material-symbols-outlined text-[16px]">delete</span></button>`;
@@ -2567,7 +2567,7 @@ function setWizardStep(step) {
 
   if (step === 2) {
     const emailInput = document.getElementById("onboard-founder-email");
-    const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "founder@patternlabs.com";
+    const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "admin@roamcompliance.com";
     const wsEnroll = document.getElementById("ws-enroll-code");
     if (wsEnroll) {
       wsEnroll.innerText = `curl -sSL "${window.location.origin}/install.sh?token=${ORG_TOKEN}&mode=workstation&owner=${email}" | sudo bash`;
@@ -2592,8 +2592,8 @@ async function handleOnboardingStep1(e) {
   const emailInput = document.getElementById("onboard-founder-email");
   const frameworkInput = document.getElementById("onboard-framework");
 
-  const orgName = nameInput ? nameInput.value.trim() : "Pattern Labs";
-  const founderEmail = emailInput ? emailInput.value.trim() : "founder@patternlabs.com";
+  const orgName = nameInput ? nameInput.value.trim() : "Roam Robotics";
+  const founderEmail = emailInput ? emailInput.value.trim() : "admin@roamcompliance.com";
   const framework = frameworkInput ? frameworkInput.value : "SOC 2 Type II";
   const founderName = founderEmail.split("@")[0].replace(".", " ").replace(/\b\w/g, l => l.toUpperCase());
 
@@ -2642,7 +2642,7 @@ async function triggerLiveTrustScan() {
   if (scanBox) scanBox.classList.remove("hidden");
 
   const emailInput = document.getElementById("onboard-founder-email");
-  const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "founder@patternlabs.com";
+  const email = (emailInput && emailInput.value.trim()) || (activeUsers && activeUsers[0]?.email) || "admin@roamcompliance.com";
 
   if (scanTitle) scanTitle.innerText = "Connecting to device...";
   if (progressBar) progressBar.style.width = "30%";
