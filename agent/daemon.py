@@ -68,6 +68,7 @@ ExecStart={py} {script} --daemon --mode {mode}
 Restart=always
 RestartSec=60
 Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONPATH=/opt/roam-compliance:$PYTHONPATH"
 
 [Install]
 WantedBy=multi-user.target

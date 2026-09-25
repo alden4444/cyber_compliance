@@ -516,6 +516,70 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             device_ids_after = [d["device_id"] for d in devs_data_after["devices"]]
             self.assertNotIn(dev_id, device_ids_after)
 
+    def test_tenant_company_provisioning_and_installer(self):
+        """Test complete company tenant onboarding, custom installer generation, and node enrollment."""
+        # 1. Pilot access request submission
+        req_res = self.db.create_access_request(
+            email="founder@robotics-pilot.com",
+            name="Pilot Founder",
+            company="Acme Autonomous Robots",
+            fleet_size="10-50",
+            goal="SOC 2 Type II"
+        )
+        self.assertEqual(req_res["status"], "pending")
+        req_id = req_res["id"]
+
+        # 2. Admin approval provisions isolated tenant organization
+        approval = self.db.approve_access_request(req_id)
+        self.assertIsNotNone(approval)
+        new_org = approval["organization"]
+        new_token = new_org["org_token"]
+        self.assertTrue(new_token.startswith("org_tok_"))
+        self.assertEqual(new_org["name"], "Acme Autonomous Robots")
+
+        # Verify tenant policies were automatically seeded
+        policies = self.db.list_policies(new_org["id"])
+        self.assertEqual(len(policies), 4)
+
+        # 3. Verify customized 1-line installer script generation
+        install_url = f"{self.api_url}/install.sh?token={new_token}&mode=workstation&owner=engineer@acme.com"
+        with urllib.request.urlopen(install_url) as resp:
+            self.assertEqual(resp.status, 200)
+            script_text = resp.read().decode("utf-8")
+            self.assertIn(f'ORG_TOKEN="{new_token}"', script_text)
+            self.assertIn('OWNER_EMAIL="engineer@acme.com"', script_text)
+            self.assertIn('/usr/local/bin/cyber-compliance', script_text)
+            self.assertIn('install_dir = "/opt/roam-compliance"', script_text)
+
+        # 4. Verify customized remediation fix.sh script generation
+        fix_url = f"{self.api_url}/fix.sh?token={new_token}&control=firewall&device_id=inspiron-15"
+        with urllib.request.urlopen(fix_url) as resp:
+            self.assertEqual(resp.status, 200)
+            fix_text = resp.read().decode("utf-8")
+            self.assertIn(f'ORG_TOKEN="{new_token}"', fix_text)
+            self.assertIn('DEVICE_ID="inspiron-15"', fix_text)
+            self.assertIn("'org_token': org_token", fix_text)
+
+        # 5. Enroll device for this new company tenant
+        client = ComplianceClient(api_url=self.api_url)
+        enroll_res = client.enroll(
+            api_url=self.api_url,
+            org_token=new_token,
+            device_id="acme-workstation-inspiron",
+            hostname="acme-inspiron",
+            mode="workstation",
+            owner_email="engineer@acme.com"
+        )
+        self.assertEqual(enroll_res["status"], "enrolled")
+        self.assertEqual(enroll_res["org_id"], new_org["id"])
+
+        # 6. Verify tenant isolation: newly enrolled device only appears in this tenant's inventory
+        devs_url = f"{self.api_url}/api/v1/devices?org_token={new_token}"
+        with urllib.request.urlopen(devs_url) as resp:
+            tenant_devs = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(tenant_devs["count"], 1)
+            self.assertEqual(tenant_devs["devices"][0]["hostname"], "acme-inspiron")
+
 
 if __name__ == "__main__":
     unittest.main()

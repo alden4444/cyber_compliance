@@ -83,6 +83,29 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return None
         return self.db.get_session(token)
 
+    def _resolve_org(self, body=None, query=None):
+        """Resolve current organization from authenticated session, bearer token, query, or body."""
+        session = self._get_authenticated_user()
+        if session and session.get("org_id"):
+            org = self.db.get_org_by_id(session["org_id"])
+            if org:
+                return org
+
+        token = None
+        if body and isinstance(body, dict):
+            token = body.get("org_token")
+        if not token and query:
+            token = query.get("org_token", query.get("token", [None]))[0]
+        if not token:
+            token = self._get_bearer_token()
+
+        if token:
+            org = self.db.get_org_by_token(token)
+            if org:
+                return org
+
+        return self.db.get_org_by_id("org_roam_compliance") or {"id": "org_roam_compliance", "org_token": "org_demo_roam_compliance_2026"}
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
@@ -160,10 +183,8 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/devices":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
 
             devices = self.db.list_devices(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -174,10 +195,8 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path in ["/api/v1/evidence", "/api/v1/evidence/soc2"]:
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
             framework_id = query.get("framework", [None])[0]
 
             evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
@@ -193,10 +212,8 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/users":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
 
             users = self.db.list_users(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -207,16 +224,13 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/org":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            if not org:
-                org = self.db.get_org_by_id("org_roam_compliance")
+            org = self._resolve_org(query=query)
             self._send_json(HTTPStatus.OK, org or {})
             return
 
         if path == "/install.sh":
-            org_token = query.get("token", query.get("org_token", ["org_demo_roam_compliance_2026"]))[0]
+            org = self._resolve_org(query=query)
+            org_token = query.get("token", query.get("org_token", [org.get("org_token", "org_demo_roam_compliance_2026")]))[0]
             mode = query.get("mode", ["workstation"])[0]
             owner_email = query.get("owner", query.get("owner_email", [""]))[0]
             fleet_tag = query.get("tag", query.get("fleet_tag", ["primary"]))[0]
@@ -264,6 +278,19 @@ python3 -m agent.cli --enroll \\
     --fleet-tag "$FLEET_TAG" \\
     --owner-email "$OWNER_EMAIL"
 
+echo "[*] Creating system launcher wrapper at /usr/local/bin/cyber-compliance..."
+cat << 'EOF' > /usr/local/bin/cyber-compliance
+#!/usr/bin/env python3
+import sys
+install_dir = "/opt/roam-compliance"
+if install_dir not in sys.path:
+    sys.path.insert(0, install_dir)
+from agent.cli import main
+if __name__ == "__main__":
+    main()
+EOF
+chmod +x /usr/local/bin/cyber-compliance 2>/dev/null || true
+
 echo "[*] Executing initial automated compliance audit..."
 python3 -m agent.cli --fast --mode "$MODE" --api-url "$API_URL"
 
@@ -305,10 +332,8 @@ echo "===================================================================="
             return
 
         if path == "/api/v1/policies":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
 
             policies = self.db.list_policies(org_id)
             self._send_json(HTTPStatus.OK, {
@@ -343,6 +368,8 @@ echo "===================================================================="
             return
 
         if path == "/fix.sh":
+            org = self._resolve_org(query=query)
+            org_token = query.get("token", query.get("org_token", [org.get("org_token", "org_demo_roam_compliance_2026")]))[0]
             control = query.get("control", ["firewall"])[0]
             device_id = query.get("device_id", [""])[0]
             host = self.headers.get("Host", "127.0.0.1:8000")
@@ -359,6 +386,7 @@ set -e
 CONTROL="{control}"
 API_URL="{api_url}"
 DEVICE_ID="{device_id}"
+ORG_TOKEN="{org_token}"
 
 echo "===================================================================="
 echo "    ROAM COMPLIANCE // Automated Remediation: $CONTROL"
@@ -539,7 +567,8 @@ import urllib.request, json, os, platform
 api_url = '$API_URL'.rstrip('/')
 device_id = '$DEVICE_ID' or platform.node() or 'inspiron'
 control = '$CONTROL' or 'firewall'
-payload = json.dumps({{'device_id': device_id, 'hostname': device_id, 'control': control, 'posture': 'compliant'}}).encode('utf-8')
+org_token = '$ORG_TOKEN'
+payload = json.dumps({{'device_id': device_id, 'hostname': device_id, 'control': control, 'posture': 'compliant', 'org_token': org_token}}).encode('utf-8')
 for ep in ['/api/v1/devices/verify-fix', '/api/v1/devices/re-audit', '/api/v1/devices/toggle-test']:
     try:
         req = urllib.request.Request(api_url + ep, data=payload, headers={{'Content-Type': 'application/json'}}, method='POST')
@@ -552,7 +581,7 @@ for ep in ['/api/v1/devices/verify-fix', '/api/v1/devices/re-audit', '/api/v1/de
 " 2>/dev/null || true
 
 if [ -d "/opt/roam-compliance" ] && [ -f "/opt/roam-compliance/agent/cli.py" ]; then
-    python3 -m agent.cli --fast --api-url "$API_URL" 2>/dev/null || true
+    (cd /opt/roam-compliance && python3 -m agent.cli --fast --api-url "$API_URL" 2>/dev/null || true)
 fi
 
 echo "===================================================================="
@@ -569,10 +598,8 @@ echo "===================================================================="
             return
 
         if path == "/api/v1/export/devices.csv":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
             devices = self.db.list_devices(org_id)
 
             import csv
@@ -602,10 +629,8 @@ echo "===================================================================="
             return
 
         if path == "/api/v1/export/controls.csv":
-            token = self._get_bearer_token()
-            org_token = query.get("org_token", [None])[0] or token
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(query=query)
+            org_id = org["id"]
             framework_id = query.get("framework", [None])[0]
             evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
             criteria = evidence.get("criteria", [])
@@ -843,9 +868,8 @@ echo "===================================================================="
             except Exception:
                 body = {}
             device_id = body.get("device_id")
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             updated = self.db.verify_and_set_device_compliant(org_id, device_id)
             if not updated:
@@ -874,9 +898,8 @@ echo "===================================================================="
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'hostname'"})
                 return
 
-            org_token = body.get("org_token") or self._get_bearer_token()
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             device = self.db.add_node(
                 org_id=org_id,
@@ -907,9 +930,8 @@ echo "===================================================================="
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'device_id'"})
                 return
 
-            org_token = body.get("org_token") or self._get_bearer_token()
-            org = self.db.get_org_by_token(org_token) if org_token else None
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             deleted = self.db.delete_device(org_id, device_id)
             if not deleted:
@@ -923,30 +945,6 @@ echo "===================================================================="
             })
             return
 
-        if path == "/api/v1/fleet/seed-demo":
-            try:
-                body = self._read_json_body()
-            except Exception:
-                body = {}
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
-            result = self.db.seed_demo_fleet(org_id)
-            self._send_json(HTTPStatus.OK, result)
-            return
-
-        if path == "/api/v1/fleet/reset":
-            try:
-                body = self._read_json_body()
-            except Exception:
-                body = {}
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
-            result = self.db.clear_demo_fleet(org_id)
-            self._send_json(HTTPStatus.OK, result)
-            return
-
         if path == "/api/v1/users":
             try:
                 body = self._read_json_body()
@@ -957,9 +955,8 @@ echo "===================================================================="
             email = body.get("email")
             name = body.get("name", "Team Member")
             role = body.get("role", "engineer")
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             if not email:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'email' field"})
@@ -975,9 +972,8 @@ echo "===================================================================="
             except Exception:
                 body = {}
             user_id = body.get("user_id")
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
             result = self.db.delete_user(org_id, user_id)
             self._send_json(HTTPStatus.OK, result)
             return
@@ -991,24 +987,11 @@ echo "===================================================================="
             framework = body.get("framework")
             target_date = body.get("target_audit_date")
             completed = body.get("onboarding_completed", 1)
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             updated = self.db.update_org_onboarding(org_id, name=name, framework=framework, target_audit_date=target_date, onboarding_completed=completed)
             self._send_json(HTTPStatus.OK, {"status": "updated", "org": updated})
-            return
-
-        if path == "/api/v1/demo/reset":
-            try:
-                body = self._read_json_body()
-            except Exception:
-                body = {}
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
-            result = self.db.reset_account_for_demo(org_id)
-            self._send_json(HTTPStatus.OK, {"status": "reset", "org": result})
             return
 
         if path == "/api/v1/policies/adopt":
@@ -1018,9 +1001,8 @@ echo "===================================================================="
                 body = {}
             policy_key = body.get("policy_key")
             user_name = body.get("user_name", "Executive Leadership")
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             if not policy_key:
                 self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'policy_key' parameter"})
@@ -1036,25 +1018,43 @@ echo "===================================================================="
             except Exception:
                 body = {}
             fleet_scope = body.get("fleet_scope", "workstations_only")
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
 
             updated = self.db.set_fleet_scope(org_id, fleet_scope)
             self._send_json(HTTPStatus.OK, {"status": "updated", "org": updated})
             return
 
-        if path == "/api/v1/demo/enroll-local-host":
+        if path in ["/api/v1/devices/enroll-host", "/api/v1/devices/quick-enroll", "/api/v1/demo/enroll-local-host"]:
             try:
                 body = self._read_json_body()
             except Exception:
                 body = {}
-            org_token = body.get("org_token", "org_demo_roam_compliance_2026")
             owner_email = body.get("owner_email")
-            org = self.db.get_org_by_token(org_token)
-            org_id = org["id"] if org else "org_roam_compliance"
+            org = self._resolve_org(body=body)
+            org_id = org["id"]
             device = self.db.enroll_local_host(org_id, owner_email=owner_email)
             self._send_json(HTTPStatus.OK, {"status": "enrolled", "device": device})
+            return
+
+        if path == "/api/v1/access-requests/approve":
+            user_session = self._get_authenticated_user()
+            if not user_session or user_session.get("role") != "admin":
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Administrator privilege required"})
+                return
+            try:
+                body = self._read_json_body()
+            except Exception:
+                body = {}
+            req_id = body.get("request_id")
+            if not req_id:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'request_id'"})
+                return
+            res = self.db.approve_access_request(req_id, initial_password=body.get("password"))
+            if not res:
+                self._send_json(HTTPStatus.NOT_FOUND, {"error": "Access request not found"})
+                return
+            self._send_json(HTTPStatus.OK, res)
             return
 
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Endpoint not found"})

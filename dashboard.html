@@ -123,7 +123,7 @@
             <span>Export Devices (.csv)</span>
             <span class="material-symbols-outlined text-[14px]">download</span>
           </a>
-          <a href="/api/v1/evidence/soc2?org_token=org_demo_roam_compliance_2026" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <a href="/api/v1/evidence/soc2" id="header-evidence-json-link" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Auditor JSON Stream</span>
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
           </a>
@@ -140,12 +140,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Quick Sign Out Button -->
-    <button onclick="signOut()" title="Sign out of Roam Vault" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-xs text-zinc-400 hover:text-white transition-colors border border-white/5 ml-1">
-      <span class="material-symbols-outlined text-[15px]">logout</span>
-      <span class="hidden md:inline">Sign Out</span>
-    </button>
   </div>
 </header>
 
@@ -314,20 +308,6 @@
       </div>
     </section>
 
-    <!-- 5 Core Safeguards Controls Matrix -->
-    <section class="space-y-3" id="controls-section">
-      <div class="flex items-center justify-between px-1">
-        <div class="flex items-center space-x-2">
-          <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">SOC 2 Safeguards Controls</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="controls-passing-summary">5 of 5 passing</span>
-        </div>
-        <span class="text-[11px] text-zinc-500">Continuous automated fleet enforcement</span>
-      </div>
-      <div class="bg-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="controls-matrix-list">
-        <!-- Injected dynamically -->
-      </div>
-    </section>
-
   </div>
 
   <!-- ======================================================================= -->
@@ -348,7 +328,7 @@
         </button>
       </div>
       <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-zinc-300 overflow-x-auto select-all" id="installer-command-display">
-        curl -sSL "http://127.0.0.1:8000/install.sh?token=org_demo_roam_compliance_2026&mode=workstation" | sudo bash
+        curl -sSL "https://roamcompliance.com/install.sh" | sudo bash
       </div>
     </div>
 
@@ -365,12 +345,7 @@
           <button onclick="setFilterStatus('action')" id="filter-status-action" class="px-2.5 py-1 rounded text-zinc-400 hover:text-white transition-colors">Flagged</button>
         </div>
         <select id="device-facility-filter" onchange="applyDeviceFilters()" class="px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-white/5 text-[11px] text-zinc-300 focus:outline-none">
-          <option value="all">All Facilities & Labs</option>
-          <option value="boulder-warehouse-amr">Boulder Warehouse (AMR)</option>
-          <option value="austin-flight-hangar">Austin Flight Hangar (Drones)</option>
-          <option value="denver-assembly-lab">Denver Assembly Lab (Arms)</option>
-          <option value="saltlake-proving-grounds">Salt Lake Proving Grounds (Rovers)</option>
-          <option value="engineering-laptops">Engineering Laptops</option>
+          <option value="all">All Facilities & Tags</option>
         </select>
       </div>
     </div>
@@ -535,7 +510,7 @@
           </button>
         </div>
         <code class="block font-mono text-zinc-400 text-xs overflow-x-auto select-all" id="cpa-url-display">
-          http://127.0.0.1:8000/audit-packet?org_token=org_demo_roam_compliance_2026
+          /audit-packet
         </code>
       </div>
     </div>
@@ -566,7 +541,7 @@
       <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Raw SOC 2 Evidence JSON</span>
         <p class="text-xs text-zinc-400">Timestamped cryptographic proof payload for automated CPA auditing tools.</p>
-        <a href="/api/v1/evidence/soc2?org_token=org_demo_roam_compliance_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
+        <a href="/api/v1/evidence/soc2" id="raw-evidence-link" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
           <span>View JSON Stream</span>
           <span class="material-symbols-outlined text-[13px]">open_in_new</span>
         </a>
@@ -575,7 +550,7 @@
       <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Hardware Asset Export (CC6.1)</span>
         <p class="text-xs text-zinc-400">Structured serial number, OS, and facility location inventory list.</p>
-        <a href="/api/v1/devices?org_token=org_demo_roam_compliance_2026" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
+        <a href="/api/v1/devices" id="raw-devices-link" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
           <span>Download Devices JSON</span>
           <span class="material-symbols-outlined text-[13px]">open_in_new</span>
         </a>
@@ -931,7 +906,7 @@
           <label class="block text-xs font-medium text-zinc-300 mb-1">Initial Compliance Posture</label>
           <select id="addnode-posture" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
             <option value="compliant">Compliant (All Controls Passing)</option>
-            <option value="non_compliant">Requires Action (Simulate Flagged Control)</option>
+            <option value="non_compliant">Action Required (Flagged Baseline)</option>
           </select>
         </div>
       </div>
@@ -962,8 +937,8 @@
       <div class="space-y-1.5 pt-2">
         <div class="text-[11px] text-zinc-400 font-mono">Option B: Continuous Background Agent (systemd service)</div>
         <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2" id="addnode-continuous-cmd">
-          <span class="select-all overflow-x-auto">curl -sSL "https://roamcompliance.com/install.sh?token=org_demo_roam_compliance_2026&mode=workstation" | sudo bash</span>
-          <button onclick="copyToClipboard(document.querySelector('#addnode-continuous-cmd span').innerText, this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
+          <span class="select-all overflow-x-auto" id="addnode-continuous-span">curl -sSL "https://roamcompliance.com/install.sh" | sudo bash</span>
+          <button onclick="copyToClipboard(document.getElementById('addnode-continuous-span').innerText, this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
         </div>
       </div>
     </div>
@@ -974,7 +949,7 @@
 <!-- JAVASCRIPT: Full State, Tab Switching, Scope Management & API Calls       -->
 <!-- ========================================================================= -->
 <script>
-const ORG_TOKEN = "org_demo_roam_compliance_2026";
+let ORG_TOKEN = "";
 const API_BASE = window.location.origin;
 
 let activeDevices = [];
@@ -1299,9 +1274,6 @@ function renderDashboard(devices) {
   // Action Items in Overview
   renderActionItems(failing);
 
-  // 5 Controls Matrix in Overview
-  renderControlsMatrix(inScopeDevices);
-
   // Render Devices Tab (Workstations & Robots)
   applyDeviceFilters();
 }
@@ -1474,119 +1446,6 @@ function renderActionItems(failing) {
     `;
     container.appendChild(card);
   });
-}
-
-function renderControlsMatrix(devices) {
-  const matrixContainer = document.getElementById("controls-matrix-list");
-  if (!matrixContainer) return;
-
-  const total = devices.length;
-  const fwMeta = FRAMEWORK_META[ACTIVE_FRAMEWORK] || FRAMEWORK_META.soc2;
-  const fwCtls = fwMeta.controls;
-
-  const CONTROLS_SPEC = [
-    {
-      id: "admin_separation",
-      code: fwCtls.admin_separation.code,
-      category: fwCtls.admin_separation.category,
-      name: fwCtls.admin_separation.name,
-      desc: "Daily interactive engineer environment runs without persistent root privileges. Escalation requires isolated authentication.",
-      check: (ctls) => ctls.admin_separation?.status === 'pass'
-    },
-    {
-      id: "firewall",
-      code: fwCtls.firewall.code,
-      category: fwCtls.firewall.category,
-      name: fwCtls.firewall.name,
-      desc: "Inbound packet filtering active with default deny on all network interfaces.",
-      check: (ctls) => ctls.firewall?.status === 'pass'
-    },
-    {
-      id: "antivirus",
-      code: fwCtls.antivirus.code,
-      category: fwCtls.antivirus.category,
-      name: fwCtls.antivirus.name,
-      desc: "Continuous malware signature inspection active via local endpoint sensor.",
-      check: (ctls) => ctls.antivirus?.status === 'pass'
-    },
-    {
-      id: "patch_management",
-      code: fwCtls.patch_management.code,
-      category: fwCtls.patch_management.category,
-      name: fwCtls.patch_management.name,
-      desc: "Kernel build and system packages maintained within the 14-day update window.",
-      check: (ctls) => ctls.patch_management?.status === 'pass'
-    },
-    {
-      id: "policies",
-      code: fwCtls.policies.code,
-      category: fwCtls.policies.category,
-      name: fwCtls.policies.name,
-      desc: "Formal corporate policies formally approved for infosec, access, and incident response.",
-      check: () => activePolicies.filter(p => p.status === 'adopted').length >= 4
-    }
-  ];
-
-  matrixContainer.innerHTML = "";
-  let passingControlsCount = 0;
-
-  CONTROLS_SPEC.forEach(ctl => {
-    const isPolicyCheck = ctl.id === "policies";
-    let isAllPassing = false;
-    let passingNodesCount = 0;
-
-    if (isPolicyCheck) {
-      isAllPassing = ctl.check();
-      passingNodesCount = activePolicies.filter(p => p.status === 'adopted').length;
-    } else {
-      const passingNodes = devices.filter(d => ctl.check(d.controls || {}));
-      passingNodesCount = passingNodes.length;
-      isAllPassing = total > 0 && passingNodesCount === total;
-    }
-
-    if (isAllPassing) passingControlsCount++;
-
-    // RESOLVE BUTTON BUG: Safely construct clickAction string without breaking nested quotes in HTML attribute
-    const clickAction = isPolicyCheck ? "switchTab('policies')" : "openRemediationModal('" + ctl.id + "')";
-
-    const row = document.createElement("div");
-    row.className = "p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.01] transition-colors";
-    row.innerHTML = `
-      <div class="flex items-start sm:items-center gap-3">
-        <span class="px-1.5 py-0.5 rounded font-mono text-[10px] bg-zinc-800 text-zinc-400 border border-white/5 shrink-0 mt-0.5 sm:mt-0">${ctl.code}</span>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-sm font-medium text-white">${ctl.name}</span>
-            <span class="text-zinc-600 text-xs hidden sm:inline">•</span>
-            <span class="text-xs text-zinc-400">${ctl.category}</span>
-          </div>
-          <p class="text-xs text-zinc-500 mt-0.5 leading-relaxed">${ctl.desc}</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3 shrink-0 self-end sm:self-center">
-        ${isAllPassing ? `
-          <span class="flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>Enforced (${isPolicyCheck ? `${passingNodesCount}/4` : `${passingNodesCount}/${total}`})</span>
-          </span>
-        ` : `
-          <span class="flex items-center gap-1.5 text-xs text-zinc-300 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400/80"></span>
-            <span>${isPolicyCheck ? `${4 - passingNodesCount} Policies Pending` : `${total - passingNodesCount} Flagged`}</span>
-          </span>
-          <button onclick="${clickAction}" class="px-2.5 py-1 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-md border border-white/10 transition-colors">
-            ${isPolicyCheck ? 'Review Policies' : 'Fix'}
-          </button>
-        `}
-      </div>
-    `;
-    matrixContainer.appendChild(row);
-  });
-
-  const summaryPill = document.getElementById("controls-passing-summary");
-  if (summaryPill) {
-    summaryPill.innerText = `${passingControlsCount} of 5 satisfied`;
-  }
 }
 
 // =========================================================================
@@ -2315,7 +2174,7 @@ function openRemediationModal(controlOverride, deviceId) {
   const fixCmd = document.getElementById("remediation-fix-cmd");
   if (fixCmd) {
     const devId = dev?.device_id || dev?.hostname || 'inspiron';
-    fixCmd.innerText = `curl -sSL "${window.location.origin}/fix.sh?control=${activeRemediationControl}&device_id=${encodeURIComponent(devId)}" | sudo bash`;
+    fixCmd.innerText = `curl -sSL "${window.location.origin}/fix.sh?control=${activeRemediationControl}&device_id=${encodeURIComponent(devId)}&token=${ORG_TOKEN}" | sudo bash`;
   }
 
   renderRemediationContent();
@@ -2422,39 +2281,10 @@ async function triggerReAudit(deviceId, btnElement) {
         org_token: ORG_TOKEN
       })
     });
-    const result = await resp.json();
+    await resp.json();
 
-    // Mark matching devices compliant
-    activeDevices.forEach(d => {
-      const match = !targetId || 
-                    d.device_id === targetId || 
-                    (d.hostname && targetId && d.hostname.toLowerCase() === targetId.toLowerCase()) || 
-                    (targetId.toLowerCase().includes("inspiron") && (d.hostname?.toLowerCase().includes("inspiron") || d.mode === "workstation")) ||
-                    d.mode === "workstation";
-      if (match) {
-        d.last_posture = "compliant";
-        if (result.hostname) d.hostname = result.hostname;
-        if (!d.controls) d.controls = {};
-        for (const k of ['firewall', 'antivirus', 'admin_separation', 'patch_management']) {
-          d.controls[k] = { status: 'pass', active: true, enforced: true, status_detail: 'Compliant (Managed)' };
-        }
-      }
-    });
-
-    if (activeDevice) {
-      activeDevice.last_posture = "compliant";
-      if (result.hostname) activeDevice.hostname = result.hostname;
-      if (!activeDevice.controls) activeDevice.controls = {};
-      for (const k of ['firewall', 'antivirus', 'admin_separation', 'patch_management']) {
-        activeDevice.controls[k] = { status: 'pass', active: true, enforced: true, status_detail: 'Compliant (Managed)' };
-      }
-    }
-
-    renderDashboard(activeDevices);
-
-    try {
-      await loadFleetPosture();
-    } catch (_) {}
+    // Re-fetch authoritative devices and fleet posture from the database
+    await refreshData();
 
     if (btnElement) {
       btnElement.innerHTML = `<span class="material-symbols-outlined text-[15px] text-emerald-400">check</span><span>Audit-Ready!</span>`;
@@ -2466,42 +2296,13 @@ async function triggerReAudit(deviceId, btnElement) {
         btnElement.disabled = false;
         btnElement.innerHTML = originalContent;
       }
-    }, 400);
+    }, 500);
   } catch (err) {
     if (btnElement && originalContent) {
       btnElement.disabled = false;
       btnElement.innerHTML = originalContent;
     }
     console.error("Re-audit error:", err);
-  }
-}
-
-async function testSimulateFix(targetPosture) {
-  if (!activeDevice) return;
-  activeDevice.last_posture = targetPosture;
-  if (targetPosture === 'compliant' && activeDevice.controls) {
-    for (const k in activeDevice.controls) {
-      activeDevice.controls[k].status = 'pass';
-      if (activeDevice.controls[k].active !== undefined) activeDevice.controls[k].active = true;
-      if (activeDevice.controls[k].enforced !== undefined) activeDevice.controls[k].enforced = true;
-    }
-  }
-  renderDashboard(activeDevices);
-  closeRemediationModal();
-
-  try {
-    await fetch(`${API_BASE}/api/v1/devices/toggle-test`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        device_id: activeDevice.device_id,
-        posture: targetPosture,
-        org_token: ORG_TOKEN
-      })
-    });
-    await refreshData();
-  } catch (err) {
-    console.error("Simulation sync error:", err);
   }
 }
 
@@ -2580,36 +2381,7 @@ function closeDetailsModal() {
 }
 
 // =========================================================================
-// 11. FLEET SEEDING & RESET ACTIONS
-// =========================================================================
-async function seedDemoFleet() {
-  try {
-    await fetch(`${API_BASE}/api/v1/fleet/seed-demo`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ org_token: ORG_TOKEN })
-    });
-    await refreshData();
-  } catch (err) {
-    console.error("Seed error:", err);
-  }
-}
-
-async function clearDemoFleet() {
-  try {
-    await fetch(`${API_BASE}/api/v1/fleet/reset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ org_token: ORG_TOKEN })
-    });
-    await refreshData();
-  } catch (err) {
-    console.error("Clear error:", err);
-  }
-}
-
-// =========================================================================
-// 12. ONBOARDING & ORG DETAILS
+// 11. ONBOARDING & ORG DETAILS
 // =========================================================================
 let currentWizardStep = 1;
 let hasOpenedOnboardingAuto = false;
@@ -2728,7 +2500,7 @@ async function triggerLiveTrustScan() {
   if (progressBar) progressBar.style.width = "30%";
   if (progressNum) progressNum.innerText = "30%";
 
-  const enrollPromise = fetch(`${API_BASE}/api/v1/demo/enroll-local-host`, {
+  const enrollPromise = fetch(`${API_BASE}/api/v1/devices/enroll-host`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ org_token: ORG_TOKEN, owner_email: email })
@@ -2910,27 +2682,6 @@ async function deleteNode(deviceId, hostname) {
   }
 }
 
-async function resetDemoAccount() {
-  if (!confirm("Reset demo environment? This will erase all enrolled devices, user accounts, and reset the onboarding wizard.")) {
-    return;
-  }
-  try {
-    const resp = await fetch(`${API_BASE}/api/v1/demo/reset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ org_token: ORG_TOKEN })
-    });
-    if (!resp.ok) throw new Error("Failed to reset demo");
-
-    hasOpenedOnboardingAuto = true;
-    currentWizardStep = 1;
-    await refreshData();
-    openOnboardingModal(true);
-  } catch (err) {
-    alert("Could not reset demo: " + err.message);
-  }
-}
-
 async function loadOrgDetails() {
   try {
     const resp = await fetch(`${API_BASE}/api/v1/org?org_token=${ORG_TOKEN}`);
@@ -2938,6 +2689,7 @@ async function loadOrgDetails() {
     const org = await resp.json();
     if (!org) return;
     activeOrg = org;
+    if (org.org_token) ORG_TOKEN = org.org_token;
 
     const orgName = org.name || "Organization";
     const headerOrg = document.getElementById("header-org-name");
@@ -2980,6 +2732,22 @@ async function loadOrgDetails() {
     const csvControlsLink = document.getElementById("csv-controls-link-btn");
     if (csvControlsLink) {
       csvControlsLink.href = `/api/v1/export/controls.csv?framework=${ACTIVE_FRAMEWORK}&org_token=${ORG_TOKEN}`;
+    }
+    const headerEvLink = document.getElementById("header-evidence-json-link");
+    if (headerEvLink) {
+      headerEvLink.href = `/api/v1/evidence/${ACTIVE_FRAMEWORK}?org_token=${ORG_TOKEN}`;
+    }
+    const rawEvLink = document.getElementById("raw-evidence-link");
+    if (rawEvLink) {
+      rawEvLink.href = `/api/v1/evidence/${ACTIVE_FRAMEWORK}?org_token=${ORG_TOKEN}`;
+    }
+    const rawDevLink = document.getElementById("raw-devices-link");
+    if (rawDevLink) {
+      rawDevLink.href = `/api/v1/devices?org_token=${ORG_TOKEN}`;
+    }
+    const addnodeSpan = document.getElementById("addnode-continuous-span");
+    if (addnodeSpan) {
+      addnodeSpan.innerText = `curl -sSL "${window.location.origin}/install.sh?token=${ORG_TOKEN}&mode=workstation" | sudo bash`;
     }
 
     if ((org.onboarding_completed === 0 || !org.onboarding_completed) && !hasOpenedOnboardingAuto) {
@@ -3048,26 +2816,45 @@ async function signOut() {
   window.location.href = "/";
 }
 
-async function loadCurrentUser() {
+async function loadAuthSession() {
   try {
     const res = await fetch("/api/v1/auth/me");
     if (res.ok) {
       const data = await res.json();
       if (data.authenticated && data.user) {
+        if (data.user.org_token) {
+          ORG_TOKEN = data.user.org_token;
+        }
         const emailEl = document.getElementById("dropdown-user-email");
         if (emailEl) emailEl.textContent = data.user.email;
         const avatarEl = document.getElementById("header-org-avatar");
         if (avatarEl && data.user.name) avatarEl.textContent = getInitials(data.user.name);
+        return true;
       }
     }
   } catch (e) {
     console.warn("Could not fetch user session:", e);
   }
+  return false;
 }
 
 // Initial boot
-loadCurrentUser();
-refreshData();
+async function initDashboard() {
+  await loadAuthSession();
+  await refreshData();
+}
+initDashboard();
+
+// Live background auto-polling for incoming node telemetry
+setInterval(async () => {
+  if (document.visibilityState === "visible") {
+    await loadFleetPosture();
+  }
+}, 5000);
+
+window.addEventListener("focus", async () => {
+  await loadFleetPosture();
+});
 </script>
 </body>
 </html>

@@ -501,6 +501,21 @@ class ComplianceDatabase:
             conn.commit()
             return self.get_org_by_id(org_id)
 
+    def create_organization(self, name, framework="SOC 2 Type II"):
+        """Create a new company organization with unique token and default policies."""
+        org_id = f"org_{uuid.uuid4().hex[:10]}"
+        org_token = f"org_tok_{uuid.uuid4().hex}"
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO organizations (id, name, org_token, framework, created_at, fleet_scope, onboarding_completed)
+            VALUES (?, ?, ?, ?, ?, 'workstations_only', 0);
+            """, (org_id, name.strip(), org_token, framework, now))
+            conn.commit()
+        self.seed_default_policies(org_id)
+        return self.get_org_by_id(org_id)
+
     def set_fleet_scope(self, org_id, fleet_scope):
         """Update organization compliance fleet scope ('workstations_only' vs 'full_fleet')."""
         if fleet_scope not in ["workstations_only", "full_fleet"]:
@@ -1210,3 +1225,40 @@ class ComplianceDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM access_requests ORDER BY created_at DESC;")
             return [dict(r) for r in cursor.fetchall()]
+
+    def approve_access_request(self, request_id, initial_password=None):
+        """Approve an access request, creating organization and admin user."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM access_requests WHERE id = ?;", (request_id,))
+            req = cursor.fetchone()
+            if not req:
+                return None
+            req = dict(req)
+
+            company_name = req.get("company") or f"{req.get('name', 'Client')}'s Fleet"
+            org = self.create_organization(company_name)
+
+            password = initial_password or f"Roam-{uuid.uuid4().hex[:8]}!Sec"
+            pw_hash, salt = self.hash_password(password)
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            user_id = f"usr_{uuid.uuid4().hex[:8]}"
+
+            cursor.execute("""
+            INSERT INTO users (id, org_id, email, name, role, status, created_at, password_hash, salt)
+            VALUES (?, ?, ?, ?, 'admin', 'active', ?, ?, ?);
+            """, (user_id, org["id"], req["email"], req.get("name") or "Administrator", now, pw_hash, salt))
+
+            cursor.execute("UPDATE access_requests SET status = 'approved' WHERE id = ?;", (request_id,))
+            conn.commit()
+
+            cursor.execute("SELECT * FROM users WHERE id = ?;", (user_id,))
+            user_row = dict(cursor.fetchone())
+            del user_row["password_hash"]
+            del user_row["salt"]
+
+            return {
+                "organization": org,
+                "user": user_row,
+                "temporary_password": password
+            }
