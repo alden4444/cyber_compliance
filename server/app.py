@@ -6,6 +6,7 @@ Zero external dependencies required.
 
 import argparse
 from http import HTTPStatus
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 import io
 import json
@@ -58,12 +59,56 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             return auth.split(" ", 1)[1].strip()
         return None
 
+    def _get_session_token(self):
+        # 1. Check HTTP Cookie
+        cookie_header = self.headers.get("Cookie", "")
+        if "roam_session=" in cookie_header:
+            cookie = SimpleCookie()
+            try:
+                cookie.load(cookie_header)
+                if "roam_session" in cookie:
+                    return cookie["roam_session"].value
+            except Exception:
+                pass
+
+        # 2. Check Bearer token
+        bearer = self._get_bearer_token()
+        if bearer and bearer.startswith("sess_"):
+            return bearer
+        return None
+
+    def _get_authenticated_user(self):
+        token = self._get_session_token()
+        if not token:
+            return None
+        return self.db.get_session(token)
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
-        if path in ["/", "/dashboard"]:
+        if path == "/":
+            landing_file = Path(__file__).resolve().parent.parent / "landing.html"
+            if landing_file.exists():
+                content = landing_file.read_bytes()
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+        if path in ["/dashboard", "/app"]:
+            # Gate console dashboard behind active authentication
+            session = self._get_authenticated_user()
+            if not session:
+                # Redirect unauthenticated visitors to signin modal on landing page
+                self.send_response(HTTPStatus.FOUND)
+                self.send_header("Location", "/?signin=1")
+                self.end_headers()
+                return
+
             dashboard_file = Path(__file__).resolve().parent.parent / "dashboard.html"
             if dashboard_file.exists():
                 content = dashboard_file.read_bytes()
@@ -92,6 +137,26 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
                 "service": "CyberComplianceAPI",
                 "version": "1.0.0"
             })
+            return
+
+        if path == "/api/v1/auth/me":
+            user_session = self._get_authenticated_user()
+            if not user_session:
+                self._send_json(HTTPStatus.UNAUTHORIZED, {"authenticated": False, "error": "Not authenticated"})
+                return
+            self._send_json(HTTPStatus.OK, {
+                "authenticated": True,
+                "user": user_session
+            })
+            return
+
+        if path == "/api/v1/access-requests":
+            user_session = self._get_authenticated_user()
+            if not user_session or user_session.get("role") != "admin":
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Administrator privilege required"})
+                return
+            requests = self.db.list_access_requests()
+            self._send_json(HTTPStatus.OK, {"count": len(requests), "requests": requests})
             return
 
         if path == "/api/v1/devices":
@@ -561,6 +626,97 @@ echo "===================================================================="
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+
+        if path == "/api/v1/auth/login":
+            try:
+                body = self._read_json_body()
+            except Exception as e:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Invalid JSON body: {str(e)}"})
+                return
+
+            email = body.get("email")
+            password = body.get("password")
+            if not email or not password:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'email' or 'password'"})
+                return
+
+            session = self.db.authenticate_user(email, password)
+            if not session:
+                self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "Invalid email or password"})
+                return
+
+            token = session["token"]
+            cookie = SimpleCookie()
+            cookie["roam_session"] = token
+            cookie["roam_session"]["path"] = "/"
+            cookie["roam_session"]["httponly"] = True
+            cookie["roam_session"]["max-age"] = 2592000  # 30 days
+            cookie["roam_session"]["samesite"] = "Lax"
+
+            data = json.dumps({
+                "status": "ok",
+                "token": token,
+                "user": session["user"],
+                "org_id": session["org_id"]
+            }, indent=2).encode("utf-8")
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Set-Cookie", cookie["roam_session"].OutputString())
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        if path == "/api/v1/auth/logout":
+            token = self._get_session_token()
+            if token:
+                self.db.delete_session(token)
+
+            cookie = SimpleCookie()
+            cookie["roam_session"] = ""
+            cookie["roam_session"]["path"] = "/"
+            cookie["roam_session"]["max-age"] = 0
+
+            data = json.dumps({"status": "logged_out"}, indent=2).encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Set-Cookie", cookie["roam_session"].OutputString())
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        if path == "/api/v1/auth/request-access":
+            try:
+                body = self._read_json_body()
+            except Exception as e:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Invalid JSON body: {str(e)}"})
+                return
+
+            email = body.get("email")
+            if not email:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'email' field"})
+                return
+
+            try:
+                req = self.db.create_access_request(
+                    email=email,
+                    name=body.get("name"),
+                    company=body.get("company"),
+                    fleet_size=body.get("fleet_size"),
+                    goal=body.get("goal")
+                )
+                self._send_json(HTTPStatus.OK, {
+                    "status": "received",
+                    "message": "Access request received. Our security team will review your application within 24 hours.",
+                    "request": req
+                })
+            except Exception as e:
+                self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(e)})
+            return
 
         if path == "/api/v1/org/framework":
             try:

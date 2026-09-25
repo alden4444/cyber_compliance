@@ -18,6 +18,7 @@ COPY agent/ /app/agent/
 COPY server/ /app/server/
 COPY legal/ /app/legal/
 COPY dashboard.html /app/dashboard.html
+COPY landing.html /app/landing.html
 COPY pc_audit.py /app/pc_audit.py
 COPY setup_firewall.sh /app/setup_firewall.sh
 

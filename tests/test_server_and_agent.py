@@ -359,6 +359,105 @@ class TestServerAndAgentIntegration(unittest.TestCase):
             crit_ids = [c["criteria_id"] for c in hipaa_ev["criteria"]]
             self.assertIn("§ 164.312(e)(1)", crit_ids)
 
+    def test_authentication_and_gatekeeping(self):
+        # 1. Unauthenticated /dashboard redirects to /?signin=1
+        class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+
+        opener = urllib.request.build_opener(NoRedirect())
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            opener.open(f"{self.api_url}/dashboard")
+        self.assertEqual(ctx.exception.code, 302)
+        self.assertIn("/?signin=1", ctx.exception.headers.get("Location"))
+
+        # 2. Login with bad credentials -> 401
+        bad_login = json.dumps({"email": "aldentmcqueen@gmail.com", "password": "WrongPassword!"}).encode("utf-8")
+        req_bad = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/login",
+            data=bad_login,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            urllib.request.urlopen(req_bad)
+        self.assertEqual(ctx.exception.code, 401)
+
+        # 3. Login with valid credentials -> 200, returns token and sets cookie
+        good_login = json.dumps({"email": "aldentmcqueen@gmail.com", "password": "Roam-Vault-2026!Security"}).encode("utf-8")
+        req_good = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/login",
+            data=good_login,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_good) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("token", data)
+            self.assertEqual(data["user"]["email"], "aldentmcqueen@gmail.com")
+            token = data["token"]
+            set_cookie = resp.headers.get("Set-Cookie")
+            self.assertIn("roam_session=", set_cookie)
+
+        # 4. Check /api/v1/auth/me with Bearer token
+        req_me = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        with urllib.request.urlopen(req_me) as resp:
+            self.assertEqual(resp.status, 200)
+            me_data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(me_data["authenticated"])
+            self.assertEqual(me_data["user"]["email"], "aldentmcqueen@gmail.com")
+
+        # 5. Access /dashboard with cookie -> 200
+        req_auth_dash = urllib.request.Request(
+            f"{self.api_url}/dashboard",
+            headers={"Cookie": f"roam_session={token}"}
+        )
+        with urllib.request.urlopen(req_auth_dash) as resp:
+            self.assertEqual(resp.status, 200)
+            html = resp.read().decode("utf-8")
+            self.assertIn("ROAM", html)
+
+        # 6. Request access endpoint
+        req_access_data = json.dumps({
+            "name": "Jane Tester",
+            "email": "jane@robotics.co",
+            "company": "Apex Robotics",
+            "fleet_size": "10-50",
+            "goal": "soc2"
+        }).encode("utf-8")
+        req_access = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/request-access",
+            data=req_access_data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_access) as resp:
+            self.assertEqual(resp.status, 200)
+            acc_res = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(acc_res["status"], "received")
+
+        # 7. Logout
+        req_logout = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/logout",
+            headers={"Cookie": f"roam_session={token}"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req_logout) as resp:
+            self.assertEqual(resp.status, 200)
+
+        # 8. Check /api/v1/auth/me after logout -> 401
+        req_me_after = urllib.request.Request(
+            f"{self.api_url}/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            urllib.request.urlopen(req_me_after)
+        self.assertEqual(ctx.exception.code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

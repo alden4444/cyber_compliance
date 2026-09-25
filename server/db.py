@@ -1,8 +1,11 @@
 """Database management for Cyber Compliance platform using SQLite3."""
 
 import contextlib
+import hashlib
+import hmac
 import json
 from pathlib import Path
+import secrets
 import sqlite3
 import time
 import uuid
@@ -390,6 +393,41 @@ class ComplianceDatabase:
             except Exception:
                 pass
 
+            # Ensure password columns exist on users
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN password_hash TEXT;")
+            except Exception:
+                pass
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN salt TEXT;")
+            except Exception:
+                pass
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                org_id TEXT NOT NULL,
+                token TEXT UNIQUE NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            );
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS access_requests (
+                id TEXT PRIMARY KEY,
+                email TEXT NOT NULL,
+                name TEXT,
+                company TEXT,
+                fleet_size TEXT,
+                goal TEXT,
+                created_at TEXT NOT NULL,
+                status TEXT DEFAULT 'pending'
+            );
+            """)
+
             # Seed a default demo organization for instant testing if empty
             cursor.execute("SELECT COUNT(*) as count FROM organizations;")
             if cursor.fetchone()["count"] == 0:
@@ -409,6 +447,23 @@ class ComplianceDatabase:
                     ("usr_founder", "org_roam_compliance", "admin@roamcompliance.com", "Security Lead", "admin", "active", now)
                 )
 
+            # Ensure primary requested user aldentmcqueen@gmail.com exists with secure password
+            primary_admin = "aldentmcqueen@gmail.com"
+            cursor.execute("SELECT * FROM users WHERE lower(email) = lower(?);", (primary_admin,))
+            existing = cursor.fetchone()
+            pw_hash, salt = self.hash_password("Roam-Vault-2026!Security")
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            if not existing:
+                cursor.execute(
+                    "INSERT INTO users (id, org_id, email, name, role, status, created_at, password_hash, salt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                    ("usr_alden", "org_roam_compliance", primary_admin, "Alden McQueen", "admin", "active", now, pw_hash, salt)
+                )
+            else:
+                cursor.execute(
+                    "UPDATE users SET password_hash = ?, salt = ?, role = 'admin' WHERE id = ?;",
+                    (pw_hash, salt, existing["id"])
+                )
+
             conn.commit()
 
     def get_org_by_token(self, org_token):
@@ -416,8 +471,8 @@ class ComplianceDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM organizations WHERE org_token = ?;", (org_token,))
             row = cursor.fetchone()
-            if not row and org_token in ("org_demo_pattern_labs_2026", "org_pattern_labs"):
-                cursor.execute("SELECT * FROM organizations WHERE id = 'org_roam_compliance' OR org_token = 'org_demo_roam_compliance_2026';")
+            if not row and org_token == "org_demo_roam_compliance_2026":
+                cursor.execute("SELECT * FROM organizations WHERE id = 'org_roam_compliance';")
                 row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -426,8 +481,8 @@ class ComplianceDatabase:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM organizations WHERE id = ?;", (org_id,))
             row = cursor.fetchone()
-            if not row and org_id in ("org_pattern_labs", "org_demo_pattern_labs_2026"):
-                cursor.execute("SELECT * FROM organizations WHERE id = 'org_roam_compliance';")
+            if not row and org_id == "org_roam_compliance":
+                cursor.execute("SELECT * FROM organizations LIMIT 1;")
                 row = cursor.fetchone()
             return dict(row) if row else None
 
@@ -932,3 +987,107 @@ class ComplianceDatabase:
             }
         self.record_telemetry(device, telemetry)
         return device
+
+    def hash_password(self, password, salt=None):
+        """Derive standard PBKDF2-HMAC-SHA256 password hash using standard library."""
+        if not salt:
+            salt = secrets.token_hex(16)
+        pw_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000).hex()
+        return pw_hash, salt
+
+    def verify_password(self, password, salt, expected_hash):
+        """Constant-time password verification using hmac.compare_digest."""
+        if not salt or not expected_hash:
+            return False
+        pw_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000).hex()
+        return hmac.compare_digest(pw_hash, expected_hash)
+
+    def authenticate_user(self, email, password):
+        """Verify email and password; generate session token valid for 30 days."""
+        if not email or not password:
+            return None
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE lower(email) = lower(?);", (email.strip(),))
+            user = cursor.fetchone()
+            if not user or not user["password_hash"] or not user["salt"]:
+                return None
+
+            if not self.verify_password(password, user["salt"], user["password_hash"]):
+                return None
+
+            # Generate secure session token
+            session_id = f"sess_{secrets.token_urlsafe(32)}"
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            expires_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 30 * 86400))
+
+            cursor.execute("""
+            INSERT INTO sessions (id, user_id, org_id, token, created_at, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?);
+            """, (session_id, user["id"], user["org_id"], session_id, now, expires_at))
+            conn.commit()
+
+            user_clean = dict(user)
+            user_clean.pop("password_hash", None)
+            user_clean.pop("salt", None)
+
+            return {
+                "token": session_id,
+                "expires_at": expires_at,
+                "user": user_clean,
+                "org_id": user["org_id"]
+            }
+
+    def get_session(self, token):
+        """Validate an active session token and return user + organization metadata."""
+        if not token:
+            return None
+
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            cursor.execute("""
+            SELECT s.token, s.expires_at, s.created_at,
+                   u.id as user_id, u.email, u.name, u.role, u.status as user_status,
+                   o.id as org_id, o.name as org_name, o.org_token, o.framework, o.fleet_scope
+            FROM sessions s
+            JOIN users u ON s.user_id = u.id
+            JOIN organizations o ON s.org_id = o.id
+            WHERE s.token = ? AND s.expires_at > ?;
+            """, (token, now))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def delete_session(self, token):
+        """Invalidate a session upon logout."""
+        if not token:
+            return False
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM sessions WHERE token = ?;", (token,))
+            conn.commit()
+            return True
+
+    def create_access_request(self, email, name=None, company=None, fleet_size=None, goal=None):
+        """Log an external waitlist / access request for approval."""
+        if not email:
+            raise ValueError("Email is required for access requests")
+
+        req_id = f"req_{uuid.uuid4().hex[:10]}"
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO access_requests (id, email, name, company, fleet_size, goal, created_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending');
+            """, (req_id, email.strip(), name, company, fleet_size, goal, now))
+            conn.commit()
+            return {"id": req_id, "email": email, "status": "pending", "created_at": now}
+
+    def list_access_requests(self):
+        """List pending customer access requests for administrative review."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM access_requests ORDER BY created_at DESC;")
+            return [dict(r) for r in cursor.fetchall()]

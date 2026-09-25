@@ -139,7 +139,15 @@
             <span>Auditor JSON Stream</span>
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
           </a>
-          <div class="border-t border-white/5 pt-1.5 mt-1">
+          <div class="border-t border-white/5 pt-1.5 mt-1 space-y-1">
+            <div class="px-2 py-1 text-[11px] text-zinc-400">
+              <div class="text-zinc-500 text-[10px] uppercase font-mono">Authenticated Operator</div>
+              <div class="font-medium text-zinc-200 truncate" id="dropdown-user-email">aldentmcqueen@gmail.com</div>
+            </div>
+            <button onclick="signOut();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between transition-colors">
+              <span>Sign Out</span>
+              <span class="material-symbols-outlined text-[14px]">logout</span>
+            </button>
             <button onclick="resetDemoAccount(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-rose-500/10 text-rose-400 flex items-center justify-between transition-colors">
               <span>Reset Demo to Day 0</span>
               <span class="material-symbols-outlined text-[14px]">restart_alt</span>
@@ -148,6 +156,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Quick Sign Out Button -->
+    <button onclick="signOut()" title="Sign out of Roam Vault" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/5 text-xs text-zinc-400 hover:text-white transition-colors border border-white/5 ml-1">
+      <span class="material-symbols-outlined text-[15px]">logout</span>
+      <span class="hidden md:inline">Sign Out</span>
+    </button>
   </div>
 </header>
 
@@ -2842,7 +2856,36 @@ window.addEventListener("click", (e) => {
   }
 });
 
+// Authentication Session Handling
+async function signOut() {
+  try {
+    await fetch("/api/v1/auth/logout", { method: "POST" });
+  } catch (e) {
+    console.error("Logout error:", e);
+  }
+  localStorage.removeItem("roam_session");
+  window.location.href = "/";
+}
+
+async function loadCurrentUser() {
+  try {
+    const res = await fetch("/api/v1/auth/me");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        const emailEl = document.getElementById("dropdown-user-email");
+        if (emailEl) emailEl.textContent = data.user.email;
+        const avatarEl = document.getElementById("header-org-avatar");
+        if (avatarEl && data.user.name) avatarEl.textContent = getInitials(data.user.name);
+      }
+    }
+  } catch (e) {
+    console.warn("Could not fetch user session:", e);
+  }
+}
+
 // Initial boot
+loadCurrentUser();
 refreshData();
 </script>
 </body>
