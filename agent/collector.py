@@ -257,10 +257,33 @@ def windows_firewall_is_active():
         return False
 
 
+def firewalld_is_active():
+    """Verify firewalld service status and running state."""
+    if not shutil.which("firewall-cmd"):
+        return False
+    try:
+        res = subprocess.run(["firewall-cmd", "--state"], capture_output=True, text=True, timeout=5)
+        return res.stdout.strip() == "running"
+    except Exception:
+        return False
+
+
+def nftables_is_active():
+    """Verify nftables active ruleset with incoming drops."""
+    if not shutil.which("nft"):
+        return False
+    try:
+        res = subprocess.run(["nft", "list", "ruleset"], capture_output=True, text=True, timeout=5)
+        out = res.stdout.lower()
+        return "drop" in out or "reject" in out
+    except Exception:
+        return False
+
+
 def inspect_firewall(system):
     """Determine host firewall active status across platforms."""
     if system in ["Arch", "Ubuntu", "Linux"]:
-        if ufw_is_correctly_configured():
+        if ufw_is_correctly_configured() or firewalld_is_active() or nftables_is_active():
             return True
         try:
             iptables_rules = subprocess.check_output(["iptables", "-S", "INPUT"], text=True, stderr=subprocess.DEVNULL)
@@ -329,9 +352,6 @@ def inspect_antivirus(system):
 def is_sudo_prompting_for_root():
     """Check if sudo prompts for root password rather than user password."""
     try:
-        import threading
-        if threading.active_count() > 1:
-            return False
         import pty
         import select
         pid, fd = pty.fork()
@@ -547,6 +567,56 @@ def detect_web_scanning(system, home):
     return False
 
 
+def detect_ros_environment():
+    """Detect ROS 1 / ROS 2 installation, DDS domain, and SROS2 security enclaves."""
+    ros_info = {
+        "detected": False,
+        "version": None,
+        "distro": None,
+        "domain_id": None,
+        "sros2_enabled": False,
+        "security_strategy": "N/A",
+        "enclave_status": "Not active"
+    }
+
+    version = os.environ.get("ROS_VERSION")
+    distro = os.environ.get("ROS_DISTRO")
+    domain_id = os.environ.get("ROS_DOMAIN_ID")
+    sros_enable = os.environ.get("ROS_SECURITY_ENABLE", "").lower() in ("true", "1")
+    strategy = os.environ.get("ROS_SECURITY_STRATEGY", "Permissive")
+
+    if not distro and Path("/opt/ros").is_dir():
+        try:
+            subdirs = [p.name for p in Path("/opt/ros").iterdir() if p.is_dir()]
+            if subdirs:
+                distro = subdirs[0]
+                version = "2" if distro in ["foxy", "galactic", "humble", "iron", "jazzy", "rolling"] else "1"
+        except Exception:
+            pass
+
+    try:
+        ps_out = subprocess.check_output(["ps", "-A"], text=True, stderr=subprocess.DEVNULL)
+        if "roscore" in ps_out or "rosmaster" in ps_out:
+            version = "1"
+            ros_info["detected"] = True
+        elif any(d in ps_out for d in ["ros2", "fastdds", "cyclonedds"]):
+            version = "2"
+            ros_info["detected"] = True
+    except Exception:
+        pass
+
+    if version or distro or ros_info["detected"]:
+        ros_info["detected"] = True
+        ros_info["version"] = int(version) if version and str(version).isdigit() else (2 if distro in ["humble", "iron", "jazzy", "rolling"] else 1)
+        ros_info["distro"] = distro or "ros2-core"
+        ros_info["domain_id"] = domain_id or "0 (default)"
+        ros_info["sros2_enabled"] = sros_enable
+        ros_info["security_strategy"] = strategy if sros_enable else "Off (DDS Multicast)"
+        ros_info["enclave_status"] = "SROS2 Cryptographic Enclave Active" if sros_enable else "Standard DDS Domain Isolation"
+
+    return ros_info
+
+
 # ---------------------------------------------------------------------------
 # Robot Fleet & Edge Checks (Ports, Interfaces, Patch Age, Passwords)
 # ---------------------------------------------------------------------------
@@ -570,7 +640,7 @@ def get_interfaces():
 
 
 def get_open_ports():
-    """Identify open listening ports and public exposure flags (0.0.0.0, ::, *)."""
+    """Identify open listening ports and classify robotics DDS IPC vs exposed services."""
     ports = []
     try:
         raw = subprocess.check_output(["ss", "-tulnH"], text=True)
@@ -582,15 +652,24 @@ def get_open_ports():
                     continue
                 socket = parts[4]
                 if ":" in socket:
-                    ip, port = socket.rsplit(":", 1)
-                    if port.isdigit():
+                    ip, port_str = socket.rsplit(":", 1)
+                    if port_str.isdigit():
+                        port_num = int(port_str)
                         cleaned_ip = ip.strip("[]")
                         is_exposed = cleaned_ip in ["0.0.0.0", "::", "*"]
+                        is_dds_ipc = protocol == "udp" and 7400 <= port_num <= 7550
+                        is_ros_master = protocol == "tcp" and port_num == 11311
+
+                        service_tag = "ROS 2 DDS Enclave (Internal IPC)" if is_dds_ipc else (
+                            "ROS 1 Master" if is_ros_master else "System Service"
+                        )
                         ports.append({
                             "proto": protocol,
                             "ip": ip,
-                            "port": port,
-                            "exposed": is_exposed
+                            "port": port_str,
+                            "exposed": is_exposed,
+                            "is_robotics_ipc": is_dds_ipc or is_ros_master,
+                            "service_tag": service_tag
                         })
     except Exception:
         pass

@@ -252,19 +252,47 @@ def windows_firewall_is_active():
     return disabled_profile_count == "0"
 
 
+def firewalld_is_active():
+    """Verify firewalld service status and running state."""
+    if not shutil.which("firewall-cmd"):
+        return False
+    try:
+        res = subprocess.run(["firewall-cmd", "--state"], capture_output=True, text=True, timeout=5)
+        return res.stdout.strip() == "running"
+    except Exception:
+        return False
+
+
+def nftables_is_active():
+    """Verify nftables active ruleset with incoming drops."""
+    if not shutil.which("nft"):
+        return False
+    try:
+        res = subprocess.run(["nft", "list", "ruleset"], capture_output=True, text=True, timeout=5)
+        out = res.stdout.lower()
+        return "drop" in out or "reject" in out
+    except Exception:
+        return False
+
+
 def inspect_firewall(system):
     if system in ["Arch", "Ubuntu", "Linux"]:
-        if ufw_is_correctly_configured():
+        if ufw_is_correctly_configured() or firewalld_is_active() or nftables_is_active():
             log_success("Firewall active with baseline rules.")
             return True
         log_warning("Firewall is not configured to policy.")
-        print("\n    To configure manually:")
-        print("    1. Install UFW (e.g. sudo pacman -S ufw / sudo apt install ufw)")
-        print("    2. sudo ufw default deny incoming")
-        print("    3. sudo ufw default allow outgoing")
-        print("    4. sudo ufw enable")
-        input("\n    Press [Enter] once enabled...")
-        return ufw_is_correctly_configured()
+        print("\n    To configure host firewall safely with SSH lockout protection:")
+        if shutil.which("pacman"):
+            cmd = "command -v ufw >/dev/null 2>&1 || sudo pacman -Sy --noconfirm ufw iptables; sudo ufw allow 22/tcp && sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw --force enable && sudo systemctl enable --now ufw"
+        elif shutil.which("apt-get") or shutil.which("apt"):
+            cmd = "command -v ufw >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y ufw); sudo ufw allow 22/tcp && sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw --force enable && sudo systemctl enable --now ufw"
+        elif shutil.which("dnf"):
+            cmd = "command -v firewall-cmd >/dev/null 2>&1 || sudo dnf install -y firewalld; sudo systemctl enable --now firewalld && sudo firewall-cmd --add-service=ssh --permanent && sudo firewall-cmd --set-default-zone=drop && sudo firewall-cmd --reload"
+        else:
+            cmd = "sudo ufw allow 22/tcp && sudo ufw default deny incoming && sudo ufw --force enable"
+        print(f"    Run:\n      {cmd}\n")
+        input("    Press [Enter] once enabled...")
+        return ufw_is_correctly_configured() or firewalld_is_active() or nftables_is_active()
 
     if system == "macOS":
         if mac_firewall_is_active():

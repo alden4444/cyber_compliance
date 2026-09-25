@@ -8,6 +8,263 @@ import time
 import uuid
 
 
+DEFAULT_POLICIES = [
+    {
+        "key": "infosec",
+        "title": "Information Security Policy",
+        "category": "CC1.1, CC1.2, CC5.1",
+        "summary": "Establishes baseline encryption, MFA, workstation currency, and cloud infrastructure security standards.",
+        "content": """# Information Security Policy (SOC 2 CC1.1, CC5.1)
+
+1. Purpose & Scope: This policy applies to all personnel, workstations, cloud infrastructure, and repositories within the organization.
+2. Endpoint Encryption: All corporate workstations, laptops, and edge devices containing source code or cloud access must enforce full disk encryption (LUKS, FileVault, or BitLocker).
+3. Access Controls: Multi-factor authentication (MFA) is strictly mandatory on all identity providers, GitHub repositories, and cloud management consoles (AWS/GCP).
+4. Patch Management: Operating systems and software packages must be updated within a 14-day SLA of security releases.
+5. Code Security: Direct pushes to main branches are prohibited; code reviews and automated security scans are enforced before production deployments."""
+    },
+    {
+        "key": "asset_management",
+        "title": "Hardware Asset Management Policy",
+        "category": "CC6.1, ISO 27001 A.8.1",
+        "summary": "Governs tracking, attribution, and secure decommissioning of developer workstations and robot nodes.",
+        "content": """# Hardware Asset Management Policy (SOC 2 CC6.1)
+
+1. Purpose & Scope: Governs all physical computing hardware, including developer workstations, field edge nodes, single-board computers, and autonomous robotics fleet units.
+2. Central Inventory: Every hardware device must be uniquely identified by hardware UUID or machine serial and attributed to a verified team member or fleet facility.
+3. Zero-Payload Isolation: Compliance collectors operating on hardware assets must restrict telemetry to operational and security metadata only. No camera video, point clouds, SLAM maps, or customer proprietary data may be collected.
+4. Disposal & Reassignment: Hardware retired from production must undergo cryptographic data sanitization before reassignment or disposal."""
+    },
+    {
+        "key": "access_control",
+        "title": "Logical Access & Privilege Policy",
+        "category": "CC6.1, CC6.2, CC6.3",
+        "summary": "Enforces principle of least privilege, strict admin separation, and 24h offboarding revocation.",
+        "content": """# Logical Access & Privilege Separation Policy (SOC 2 CC6.1, CC6.2)
+
+1. Principle of Least Privilege: Personnel are granted access strictly necessary to perform assigned engineering and operational duties.
+2. Administrator Separation: Daily user accounts on developer workstations and field nodes must not operate with persistent unrestricted root privileges. Root escalation requires explicit password authentication.
+3. Access Reviews: Logical access permissions are reviewed quarterly by the Security Lead or System Administrator.
+4. Offboarding SLA: Access to all cloud services, repositories, and device management tokens must be revoked within 24 hours of personnel termination."""
+    },
+    {
+        "key": "incident_response",
+        "title": "Incident Response & Operational Safety Plan",
+        "category": "CC7.3, CC7.4",
+        "summary": "Standard operating procedures for security incidents, stolen hardware, and robot fleet network isolation.",
+        "content": """# Incident Response & Operational Safety Plan (SOC 2 CC7.3, CC7.4)
+
+1. Incident Classification: Security incidents are classified as Low (single endpoint alert), Medium (potential credential compromise), or High (unauthorized production access or lost hardware with active session tokens).
+2. Containment Protocol: In the event of a lost device or compromised edge node, the administrator must immediately revoke the device bearer token and apply host firewall drop rules.
+3. Notification SLA: Affected customers and external regulatory authorities will be notified within 72 hours of verified security breaches involving sensitive data.
+4. Post-Incident Review: A written post-mortem analyzing root cause, blast radius, and preventative controls must be completed within 5 business days."""
+    }
+]
+
+
+COMPLIANCE_FRAMEWORKS = {
+    "soc2": {
+        "id": "soc2",
+        "code": "SOC 2 Type II",
+        "name": "SOC 2 Type II (AICPA Trust Services Criteria)",
+        "authority": "American Institute of CPAs (AICPA)",
+        "badge": "SOC 2 Type II",
+        "regulatory_ref": "AICPA TSP Section 100",
+        "criteria": [
+            {
+                "id": "CC1.1",
+                "name": "Control Environment & Security Governance",
+                "description": "Formally approved written policies governing info security, access, and asset management.",
+                "control_key": "policies"
+            },
+            {
+                "id": "CC6.1",
+                "name": "Logical Access Controls & Privilege Separation",
+                "description": "User accounts and administrative privileges are separated to prevent unauthorized access.",
+                "control_key": "admin_separation"
+            },
+            {
+                "id": "CC6.6",
+                "name": "Perimeter & Host Firewall Protection",
+                "description": "Host-based firewalls prevent unauthorized network boundary traversal on laptops and edge devices.",
+                "control_key": "firewall"
+            },
+            {
+                "id": "CC6.8",
+                "name": "Malicious Software & Web Threat Prevention",
+                "description": "Antivirus, EDR, and domain-level protective threat filtering mechanisms are active.",
+                "control_key": "antivirus"
+            },
+            {
+                "id": "CC7.1",
+                "name": "Vulnerability & Patch Management",
+                "description": "Operating system and kernel patches are verified current within acceptable SLA (<14 days).",
+                "control_key": "patch_management"
+            }
+        ]
+    },
+    "iso27001": {
+        "id": "iso27001",
+        "code": "ISO/IEC 27001:2022",
+        "name": "ISO/IEC 27001:2022 Information Security Management",
+        "authority": "International Organization for Standardization (ISO)",
+        "badge": "ISO 27001:2022",
+        "regulatory_ref": "ISO/IEC 27001:2022 Annex A Controls",
+        "criteria": [
+            {
+                "id": "A.5.1",
+                "name": "Policies for Information Security",
+                "description": "Information security policy and topic-specific policies are defined and approved by management.",
+                "control_key": "policies"
+            },
+            {
+                "id": "A.5.15",
+                "name": "Access Control & Privilege Management",
+                "description": "Allocation and use of privileged access rights are restricted and strictly controlled.",
+                "control_key": "admin_separation"
+            },
+            {
+                "id": "A.8.20",
+                "name": "Network Security & Boundary Segregation",
+                "description": "Networks and network devices are secured, managed, and controlled to protect information.",
+                "control_key": "firewall"
+            },
+            {
+                "id": "A.8.7",
+                "name": "Protection Against Malware & Endpoint Security",
+                "description": "Protection against malware is implemented and supported by appropriate threat prevention.",
+                "control_key": "antivirus"
+            },
+            {
+                "id": "A.8.8",
+                "name": "Management of Technical Vulnerabilities",
+                "description": "Information about technical vulnerabilities is obtained in a timely fashion and patched.",
+                "control_key": "patch_management"
+            }
+        ]
+    },
+    "hipaa": {
+        "id": "hipaa",
+        "code": "HIPAA Security Rule",
+        "name": "HIPAA Security Rule (45 CFR § 164.308 / § 164.312)",
+        "authority": "U.S. Dept of Health & Human Services (HHS)",
+        "badge": "HIPAA Security",
+        "regulatory_ref": "45 CFR Part 160 & Part 164 Subparts A & C",
+        "criteria": [
+            {
+                "id": "§ 164.308(a)(1)(i)",
+                "name": "Security Management Process & Policies",
+                "description": "Implement policies and procedures to prevent, detect, contain, and correct security violations.",
+                "control_key": "policies"
+            },
+            {
+                "id": "§ 164.312(a)(1)",
+                "name": "Access Control & Unique User Identification",
+                "description": "Assign unique name/number for identifying and tracking user identity and separate admin privileges.",
+                "control_key": "admin_separation"
+            },
+            {
+                "id": "§ 164.312(e)(1)",
+                "name": "Transmission Security & Boundary Protection",
+                "description": "Guard against unauthorized network access to ePHI transmitted over electronic communications.",
+                "control_key": "firewall"
+            },
+            {
+                "id": "§ 164.312(c)(1)",
+                "name": "Data Integrity & Malicious Software Protection",
+                "description": "Implement procedures for guarding against, detecting, and reporting malicious software.",
+                "control_key": "antivirus"
+            },
+            {
+                "id": "§ 164.308(a)(1)(ii)(B)",
+                "name": "Risk Management & Vulnerability Mitigation",
+                "description": "Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable level.",
+                "control_key": "patch_management"
+            }
+        ]
+    },
+    "nist800_171": {
+        "id": "nist800_171",
+        "code": "NIST SP 800-171 / CMMC",
+        "name": "NIST SP 800-171 Rev 2 / CMMC Level 2",
+        "authority": "National Institute of Standards and Technology (NIST)",
+        "badge": "NIST SP 800-171",
+        "regulatory_ref": "NIST Special Publication 800-171 Rev 2 / DFARS 252.204-7012",
+        "criteria": [
+            {
+                "id": "3.1.2",
+                "name": "Organizational Security Policies & Governance",
+                "description": "Establish and maintain baseline organizational security policies and operational controls.",
+                "control_key": "policies"
+            },
+            {
+                "id": "3.1.1",
+                "name": "Authorized Access Enforcement & Least Privilege",
+                "description": "Limit system access to authorized users and processes acting on behalf of authorized users.",
+                "control_key": "admin_separation"
+            },
+            {
+                "id": "3.13.1",
+                "name": "Boundary Protection & Interface Segregation",
+                "description": "Monitor, control, and protect organizational communications at external boundaries and key internal boundaries.",
+                "control_key": "firewall"
+            },
+            {
+                "id": "3.14.2",
+                "name": "Malicious Code Protection & Threat Updating",
+                "description": "Provide protection from malicious code at system entry and exit points and update signatures.",
+                "control_key": "antivirus"
+            },
+            {
+                "id": "3.14.1",
+                "name": "System Flaw Remediation & Timely Patching",
+                "description": "Identify, report, and correct system flaws in a timely manner according to risk SLAs.",
+                "control_key": "patch_management"
+            }
+        ]
+    },
+    "cra": {
+        "id": "cra",
+        "code": "EU Cyber Resilience Act",
+        "name": "EU Cyber Resilience Act (CRA) / ETSI EN 303 645",
+        "authority": "European Union / European Standards Organisation",
+        "badge": "EU CRA / ETSI",
+        "regulatory_ref": "Regulation (EU) 2024/2847 / ETSI EN 303 645 V2.1.1",
+        "criteria": [
+            {
+                "id": "5.13-1",
+                "name": "Documentation & Security Policy Maintenance",
+                "description": "Maintain technical documentation, statutory security policies, and vulnerability disclosure policies.",
+                "control_key": "policies"
+            },
+            {
+                "id": "5.1-1",
+                "name": "No Default Universal Passwords & Privilege Escalation",
+                "description": "All device passwords must be unique or set by user, and root escalation must be verified.",
+                "control_key": "admin_separation"
+            },
+            {
+                "id": "5.5-1",
+                "name": "Network Interface Minimization & Perimeter Firewall",
+                "description": "Minimize unnecessary exposed network ports and enforce default incoming drop rules.",
+                "control_key": "firewall"
+            },
+            {
+                "id": "5.3-2",
+                "name": "Software Integrity & Automated Threat Defense",
+                "description": "Protect against unauthorized modification of software and enforce endpoint malware protection.",
+                "control_key": "antivirus"
+            },
+            {
+                "id": "5.2-1",
+                "name": "Vulnerability Management & Timely Patch Updates",
+                "description": "Continuously identify security vulnerabilities and deploy security updates without delay.",
+                "control_key": "patch_management"
+            }
+        ]
+    }
+}
+
+
 class ComplianceDatabase:
     """Manages multi-tenant organizations, enrolled devices, and telemetry audit logs."""
 
@@ -17,8 +274,11 @@ class ComplianceDatabase:
 
     @contextlib.contextmanager
     def connection(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=10.0)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        conn.execute("PRAGMA foreign_keys=ON;")
         try:
             with conn:
                 yield conn
@@ -84,6 +344,24 @@ class ComplianceDatabase:
             );
             """)
 
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS policies (
+                id TEXT PRIMARY KEY,
+                org_id TEXT NOT NULL,
+                policy_key TEXT NOT NULL,
+                title TEXT NOT NULL,
+                category TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                version TEXT NOT NULL DEFAULT '1.0',
+                status TEXT NOT NULL DEFAULT 'draft',
+                content TEXT NOT NULL,
+                adopted_by TEXT,
+                adopted_at TEXT,
+                FOREIGN KEY (org_id) REFERENCES organizations(id),
+                UNIQUE(org_id, policy_key)
+            );
+            """)
+
             # Ensure os_distro and os_version columns exist on devices
             try:
                 cursor.execute("ALTER TABLE devices ADD COLUMN os_distro TEXT;")
@@ -94,7 +372,7 @@ class ComplianceDatabase:
             except Exception:
                 pass
 
-            # Ensure framework and onboarding columns exist on organizations
+            # Ensure framework, fleet_scope and onboarding columns exist on organizations
             try:
                 cursor.execute("ALTER TABLE organizations ADD COLUMN framework TEXT DEFAULT 'SOC 2 Type II';")
             except Exception:
@@ -105,6 +383,10 @@ class ComplianceDatabase:
                 pass
             try:
                 cursor.execute("ALTER TABLE organizations ADD COLUMN onboarding_completed INTEGER DEFAULT 0;")
+            except Exception:
+                pass
+            try:
+                cursor.execute("ALTER TABLE organizations ADD COLUMN fleet_scope TEXT DEFAULT 'workstations_only';")
             except Exception:
                 pass
 
@@ -157,6 +439,55 @@ class ComplianceDatabase:
             """, (name, framework, target_audit_date, onboarding_completed, org_id))
             conn.commit()
             return self.get_org_by_id(org_id)
+
+    def set_fleet_scope(self, org_id, fleet_scope):
+        """Update organization compliance fleet scope ('workstations_only' vs 'full_fleet')."""
+        if fleet_scope not in ["workstations_only", "full_fleet"]:
+            fleet_scope = "workstations_only"
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE organizations SET fleet_scope = ? WHERE id = ?;", (fleet_scope, org_id))
+            conn.commit()
+            return self.get_org_by_id(org_id)
+
+    def seed_default_policies(self, org_id="org_pattern_labs"):
+        """Seed the 4 mandatory SOC 2 compliance policies for an organization if not present."""
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            for p in DEFAULT_POLICIES:
+                pk = f"pol_{uuid.uuid4().hex[:10]}"
+                cursor.execute("""
+                INSERT INTO policies (id, org_id, policy_key, title, category, summary, content, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'draft')
+                ON CONFLICT(org_id, policy_key) DO NOTHING;
+                """, (pk, org_id, p["key"], p["title"], p["category"], p["summary"], p["content"]))
+            conn.commit()
+
+    def list_policies(self, org_id):
+        """List all core compliance policies with adoption status."""
+        self.seed_default_policies(org_id)
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM policies WHERE org_id = ? ORDER BY id ASC;", (org_id,))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def adopt_policy(self, org_id, policy_key, user_name="Executive Leadership"):
+        """Sign and adopt a policy on behalf of the company executive leadership."""
+        self.seed_default_policies(org_id)
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        with self.connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            UPDATE policies SET
+                status = 'adopted',
+                adopted_by = ?,
+                adopted_at = ?
+            WHERE org_id = ? AND policy_key = ?;
+            """, (user_name, now, org_id, policy_key))
+            conn.commit()
+            cursor.execute("SELECT * FROM policies WHERE org_id = ? AND policy_key = ?;", (org_id, policy_key))
+            row = cursor.fetchone()
+            return dict(row) if row else None
 
     def create_user(self, org_id, email, name, role="engineer", status="active"):
         """Add a team member or auditor to the organization."""
@@ -329,8 +660,23 @@ class ComplianceDatabase:
             """, (rec_id, device_id, org_id, now, posture, json.dumps(sim_ctls), now))
             conn.commit()
 
-    def get_soc2_evidence(self, org_id):
-        """Compile structured SOC 2 Trust Services Criteria mapping with timestamped proof."""
+    def list_frameworks(self):
+        """Return metadata for all supported compliance frameworks."""
+        return [
+            {
+                "id": f["id"],
+                "code": f["code"],
+                "name": f["name"],
+                "authority": f["authority"],
+                "badge": f["badge"],
+                "regulatory_ref": f["regulatory_ref"],
+                "criteria_count": len(f["criteria"])
+            }
+            for f in COMPLIANCE_FRAMEWORKS.values()
+        ]
+
+    def get_framework_evidence(self, org_id, framework_id=None):
+        """Compile structured compliance criteria mapping with timestamped proof for any framework."""
         devices = self.list_devices(org_id)
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -340,52 +686,98 @@ class ComplianceDatabase:
 
         org = self.get_org_by_id(org_id)
         org_name = org["name"] if org else "Organization"
+        fleet_scope = (org.get("fleet_scope") if org else None) or "workstations_only"
+
+        # Resolve requested framework
+        if not framework_id:
+            raw_fw = (org.get("framework") if org else "") or "soc2"
+            framework_id = "soc2"
+            for fid, fdef in COMPLIANCE_FRAMEWORKS.items():
+                if fid == raw_fw.lower() or fdef["code"].lower() in raw_fw.lower() or fid in raw_fw.lower():
+                    framework_id = fid
+                    break
+
+        fw_def = COMPLIANCE_FRAMEWORKS.get(framework_id, COMPLIANCE_FRAMEWORKS["soc2"])
+
+        audited_scope_devices = workstations if fleet_scope == "workstations_only" else devices
+        audited_pass_count = sum(1 for d in audited_scope_devices if d["last_posture"] == "compliant")
+        audited_fail_count = sum(1 for d in audited_scope_devices if d["last_posture"] == "non_compliant")
+
+        policies = self.list_policies(org_id)
+        adopted_policies_count = sum(1 for p in policies if p["status"] == "adopted")
+
+        # Dynamically build mapped criteria
+        criteria_list = []
+        for item in fw_def["criteria"]:
+            ckey = item.get("control_key")
+            if ckey == "policies":
+                crit_status = "pass" if adopted_policies_count >= 4 else "warning"
+                crit_assets = adopted_policies_count
+            elif ckey == "admin_separation":
+                crit_status = "pass" if all(d["last_posture"] != "non_compliant" for d in workstations) else "warning"
+                crit_assets = len(workstations)
+            elif ckey == "firewall":
+                crit_status = "pass" if all(d["last_posture"] != "non_compliant" for d in audited_scope_devices) else "fail"
+                crit_assets = len(audited_scope_devices)
+            elif ckey == "antivirus":
+                crit_status = "pass" if all(d["last_posture"] != "non_compliant" for d in audited_scope_devices) else "warning"
+                crit_assets = len(audited_scope_devices)
+            elif ckey == "patch_management":
+                crit_status = "pass" if all(d["last_posture"] != "non_compliant" for d in audited_scope_devices) else "fail"
+                crit_assets = len(audited_scope_devices)
+            else:
+                crit_status = "pass"
+                crit_assets = len(audited_scope_devices)
+
+            criteria_list.append({
+                "criteria_id": item["id"],
+                "name": item["name"],
+                "description": item["description"],
+                "control_key": ckey,
+                "status": crit_status,
+                "audited_assets": crit_assets,
+                "framework_id": fw_def["id"],
+                "framework_name": fw_def["name"],
+                "authority": fw_def["authority"]
+            })
 
         evidence = {
-            "framework": "SOC 2 Type 1 / Type 2",
+            "framework": fw_def["code"],
+            "framework_id": fw_def["id"],
+            "framework_name": fw_def["name"],
+            "authority": fw_def["authority"],
+            "regulatory_ref": fw_def["regulatory_ref"],
             "report_generated_at": now,
             "organization_id": org_id,
             "organization_name": org_name,
+            "fleet_scope": fleet_scope,
+            "fleet_scope_label": "Workstations Only (Pattern Labs Mode)" if fleet_scope == "workstations_only" else "Full Robotics Fleet Mode",
             "asset_summary": {
                 "total_devices": len(devices),
                 "workstations": len(workstations),
                 "robots": len(robots),
-                "compliant_count": sum(1 for d in devices if d["last_posture"] == "compliant"),
-                "non_compliant_count": sum(1 for d in devices if d["last_posture"] == "non_compliant"),
+                "audited_in_scope_devices": len(audited_scope_devices),
+                "compliant_count": audited_pass_count,
+                "non_compliant_count": audited_fail_count,
+                "overall_posture": "compliant" if audited_fail_count == 0 and len(audited_scope_devices) > 0 else "action_required"
             },
-            "trust_services_criteria": [
-                {
-                    "criteria_id": "CC6.1",
-                    "name": "Logical Access Controls",
-                    "description": "User accounts and administrative privileges are separated to prevent unauthorized access.",
-                    "status": "pass" if all(d["last_posture"] != "non_compliant" for d in workstations) else "warning",
-                    "audited_assets": len(workstations),
-                },
-                {
-                    "criteria_id": "CC6.6",
-                    "name": "Perimeter & Host Firewall Protection",
-                    "description": "Host-based firewalls prevent unauthorized network boundary traversal on laptops and robot fleets.",
-                    "status": "pass" if all(d["last_posture"] != "non_compliant" for d in devices) else "fail",
-                    "audited_assets": len(devices),
-                },
-                {
-                    "criteria_id": "CC6.8",
-                    "name": "Malicious Software Prevention",
-                    "description": "Antivirus, EDR, and endpoint threat inspection mechanisms are active.",
-                    "status": "pass" if all(d["last_posture"] != "non_compliant" for d in devices) else "warning",
-                    "audited_assets": len(devices),
-                },
-                {
-                    "criteria_id": "CC7.1",
-                    "name": "Vulnerability & Patch Management",
-                    "description": "Operating system and kernel patches are verified current within acceptable SLA (<14 days).",
-                    "status": "pass" if all(d["last_posture"] != "non_compliant" for d in devices) else "fail",
-                    "audited_assets": len(devices),
-                },
-            ],
+            "policy_summary": {
+                "total_policies": len(policies),
+                "adopted_count": adopted_policies_count,
+                "all_adopted": adopted_policies_count == len(policies)
+            },
+            "criteria": criteria_list,
+            "trust_services_criteria": criteria_list,  # Backwards compatibility alias
+            "policies": policies,
             "device_inventory": devices,
+            "workstations": workstations,
+            "hardware_asset_inventory": robots if fleet_scope == "workstations_only" else []
         }
         return evidence
+
+    def get_soc2_evidence(self, org_id, framework_id=None):
+        """Compile structured compliance criteria mapping (defaults to SOC 2 or org's target)."""
+        return self.get_framework_evidence(org_id, framework_id=framework_id)
 
     def seed_demo_fleet(self, org_id="org_pattern_labs"):
         """Populate realistic multi-facility robotics fleet (AMRs, drones, arms, rovers, and laptops)."""
