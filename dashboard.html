@@ -87,8 +87,13 @@
     </div>
   </div>
 
-  <!-- Right: Refresh, Settings Dropdown -->
+  <!-- Right: Refresh, Certificate, Settings Dropdown -->
   <div class="flex items-center space-x-2 sm:space-x-3">
+    <a id="header-cert-btn" href="/certificate" target="_blank" title="View formal Certificate of Cyber Compliance" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-xs text-emerald-300 font-medium transition-colors shadow-sm">
+      <span class="material-symbols-outlined text-[15px] text-emerald-400">workspace_premium</span>
+      <span>Cyber Certificate</span>
+    </a>
+
     <button onclick="refreshData()" title="Re-fetch live telemetry from API" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-xs text-zinc-300 transition-colors">
       <span class="material-symbols-outlined text-[15px]" id="refresh-icon">refresh</span>
       <span class="hidden lg:inline">Refresh</span>
@@ -107,6 +112,10 @@
           <p class="text-[11px] text-zinc-400 font-mono mt-0.5" id="dropdown-org-token">--</p>
         </div>
         <div class="space-y-1">
+          <a id="dropdown-cert-link" href="/certificate" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-emerald-300 flex items-center justify-between">
+            <span>Cyber Compliance Certificate</span>
+            <span class="material-symbols-outlined text-[14px]">workspace_premium</span>
+          </a>
           <button onclick="openOnboardingModal(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Setup Wizard</span>
             <span class="material-symbols-outlined text-[14px]">checklist</span>
@@ -488,6 +497,28 @@
   <!-- ======================================================================= -->
   <div id="view-audit" class="tab-view hidden space-y-7">
 
+    <!-- Formal Certificate of Cyber Compliance Card -->
+    <div class="bg-card rounded-2xl border border-emerald-500/30 p-6 sm:p-7 space-y-5 bg-gradient-to-br from-emerald-950/20 via-transparent to-transparent shadow-lg">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+            <span class="material-symbols-outlined text-[22px]">workspace_premium</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-semibold text-white">Certificate of Cyber Compliance</h2>
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Official Attestation</span>
+            </div>
+            <p class="text-xs text-zinc-400 mt-0.5">Formal compliance certificate for prospective clients, enterprise partners, and underwriters featuring cryptographic SHA-256 evidence digest.</p>
+          </div>
+        </div>
+        <a href="/certificate" id="cert-link-btn" target="_blank" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0">
+          <span class="material-symbols-outlined text-[16px]">workspace_premium</span>
+          <span>View / Print Certificate</span>
+        </a>
+      </div>
+    </div>
+
     <!-- Executive CPA Audit Packet Card -->
     <div class="bg-card rounded-2xl border border-white/10 p-6 sm:p-7 space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -688,6 +719,15 @@
       <p class="text-[11px] text-zinc-400 leading-relaxed">
         Applies required security baseline controls (enables default-deny incoming host firewall) and synchronizes verified compliance state with Roam Central.
       </p>
+
+      <!-- Statutory Liability & Operational Notice -->
+      <div class="p-2.5 rounded-lg bg-zinc-900/60 border border-white/5 text-[11px] text-zinc-400 space-y-1">
+        <span class="font-semibold text-zinc-300 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[13px] text-zinc-400">gavel</span>
+          Administrative Responsibility & Liability Limitation
+        </span>
+        <p>Remediation scripts configure host-level defenses (e.g. UFW firewall, package updates) and must be reviewed by your engineering lead. Under Master Services Agreement &sect; 10, Roam operates strictly as software telemetry and disclaims liability for hardware disruption, robot motion events, or audit outcomes.</p>
+      </div>
     </div>
 
     <!-- Hidden elements kept for clean JS compatibility -->
@@ -1070,6 +1110,14 @@ async function switchFramework(fwKey) {
   if (csvControlsLink) {
     csvControlsLink.href = `/api/v1/export/controls.csv?framework=${ACTIVE_FRAMEWORK}&org_token=${ORG_TOKEN}`;
   }
+
+  const certUrl = `/certificate?framework=${ACTIVE_FRAMEWORK}&org_token=${ORG_TOKEN}`;
+  const headerCertBtn = document.getElementById("header-cert-btn");
+  if (headerCertBtn) headerCertBtn.href = certUrl;
+  const dropdownCertLink = document.getElementById("dropdown-cert-link");
+  if (dropdownCertLink) dropdownCertLink.href = certUrl;
+  const certLinkBtn = document.getElementById("cert-link-btn");
+  if (certLinkBtn) certLinkBtn.href = certUrl;
 
   if (activeDevices && activeDevices.length > 0) {
     renderDashboard(activeDevices);
@@ -2795,7 +2843,8 @@ async function loadOrgDetails() {
 
     const orgKey = (org && org.id) || "org_roam_compliance";
     const isLocalOnboarded = localStorage.getItem("roam_onboarded_" + orgKey) === "1";
-    if (org.onboarding_completed !== 1 && !isLocalOnboarded && !hasOpenedOnboardingAuto) {
+    const hasData = (activeDevices && activeDevices.length > 0) || (activeUsers && activeUsers.length > 0);
+    if (org.onboarding_completed !== 1 && !isLocalOnboarded && !hasOpenedOnboardingAuto && !hasData) {
       hasOpenedOnboardingAuto = true;
       openOnboardingModal(true);
     }
@@ -2864,12 +2913,20 @@ async function signOut() {
 let currentSessionUser = null;
 
 async function loadAuthSession() {
+  const localToken = localStorage.getItem("roam_session");
+  const headers = {};
+  if (localToken) {
+    headers["Authorization"] = `Bearer ${localToken}`;
+  }
   try {
-    const res = await fetch("/api/v1/auth/me");
+    const res = await fetch("/api/v1/auth/me", { headers });
     if (res.ok) {
       const data = await res.json();
       if (data.authenticated && data.user) {
         currentSessionUser = data.user;
+        if (data.user.token) {
+          localStorage.setItem("roam_session", data.user.token);
+        }
         if (data.user.org_token) {
           ORG_TOKEN = data.user.org_token;
         }
@@ -2883,6 +2940,9 @@ async function loadAuthSession() {
   } catch (e) {
     console.warn("Could not fetch user session:", e);
   }
+  // Clear stale token and redirect to landing sign-in
+  localStorage.removeItem("roam_session");
+  window.location.href = "/?signin=1";
   return false;
 }
 

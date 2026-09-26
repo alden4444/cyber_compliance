@@ -15,6 +15,7 @@ from pathlib import Path
 import tarfile
 import urllib.parse
 
+from server.certificate import generate_certificate_html
 from server.db import ComplianceDatabase
 from server.report import generate_audit_packet_html
 
@@ -125,6 +126,13 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
         if path in ["/dashboard", "/app"]:
             # Gate console dashboard behind active authentication
             session = self._get_authenticated_user()
+            token_in_query = query.get("token", query.get("session", [None]))[0]
+            set_cookie_token = None
+            if not session and token_in_query:
+                session = self.db.get_session(token_in_query)
+                if session:
+                    set_cookie_token = token_in_query
+
             if not session:
                 # Redirect unauthenticated visitors to signin modal on landing page
                 self.send_response(HTTPStatus.FOUND)
@@ -138,6 +146,16 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(content)))
+                if set_cookie_token:
+                    cookie = SimpleCookie()
+                    cookie["roam_session"] = set_cookie_token
+                    cookie["roam_session"]["path"] = "/"
+                    cookie["roam_session"]["httponly"] = True
+                    cookie["roam_session"]["max-age"] = 2592000
+                    cookie["roam_session"]["samesite"] = "Lax"
+                    if self.headers.get("X-Forwarded-Proto") == "https":
+                        cookie["roam_session"]["secure"] = True
+                    self.send_header("Set-Cookie", cookie["roam_session"].OutputString())
                 self.end_headers()
                 self.wfile.write(content)
                 return
@@ -167,10 +185,29 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
             if not user_session:
                 self._send_json(HTTPStatus.UNAUTHORIZED, {"authenticated": False, "error": "Not authenticated"})
                 return
-            self._send_json(HTTPStatus.OK, {
+
+            token = user_session.get("token")
+            data = json.dumps({
                 "authenticated": True,
                 "user": user_session
-            })
+            }, indent=2).encode("utf-8")
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            if token:
+                cookie = SimpleCookie()
+                cookie["roam_session"] = token
+                cookie["roam_session"]["path"] = "/"
+                cookie["roam_session"]["httponly"] = True
+                cookie["roam_session"]["max-age"] = 2592000
+                cookie["roam_session"]["samesite"] = "Lax"
+                if self.headers.get("X-Forwarded-Proto") == "https":
+                    cookie["roam_session"]["secure"] = True
+                self.send_header("Set-Cookie", cookie["roam_session"].OutputString())
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
             return
 
         if path == "/api/v1/access-requests":
@@ -243,6 +280,13 @@ class ComplianceAPIHandler(BaseHTTPRequestHandler):
 # ==============================================================================
 # Roam Fleet Continuous Compliance - Autonomous Node Installer
 # Zero external dependencies. Uses Python 3 standard library only.
+#
+# NOTICE & STRICT LIABILITY LIMITATION:
+# Roam Compliance is provided strictly as a software and telemetry provider.
+# Roam Compliance does NOT operate, control, or warrant physical hardware, robot actuators,
+# or operating systems. In accordance with MSA Section 10, Roam disclaims all liability
+# for system disruption, motion events, hardware damage, or audit outcomes.
+# Independent CPAs certify formal audits, not this software.
 # ==============================================================================
 set -e
 
@@ -255,6 +299,7 @@ INSTALL_DIR="/opt/roam-compliance"
 
 echo "===================================================================="
 echo "    ROAM FLEET COMPLIANCE // Continuous SOC 2 Fleet Node Setup"
+echo "    Software Telemetry Only &bull; Zero-Payload Architecture Active"
 echo "===================================================================="
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -264,6 +309,8 @@ fi
 
 echo "[*] Creating secure installation directory: $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
+mkdir -p /etc/cyber-compliance
+chmod 700 /etc/cyber-compliance 2>/dev/null || true
 
 echo "[*] Downloading zero-dependency Roam agent bundle from $API_URL..."
 curl -sSL "$API_URL/api/v1/agent/bundle.tar.gz" | tar -xz -C "$INSTALL_DIR"
@@ -295,16 +342,20 @@ echo "[*] Executing initial automated compliance audit..."
 python3 -m agent.cli --fast --mode "$MODE" --api-url "$API_URL"
 
 if [ -d "/etc/systemd/system" ] && [ "$(id -u)" = "0" ]; then
-    echo "[*] Installing systemd continuous monitoring service..."
+    echo "[*] Installing permanent systemd background service..."
     python3 -m agent.cli --mode "$MODE" --install-service 2>/dev/null || true
     systemctl daemon-reload 2>/dev/null || true
-    systemctl enable --now cyber-compliance.service 2>/dev/null || true
+    systemctl enable cyber-compliance.service 2>/dev/null || true
+    systemctl restart cyber-compliance.service 2>/dev/null || true
+    echo "[OK] Systemd service 'cyber-compliance.service' is enabled and will automatically persist across reboots."
 fi
 
 echo ""
 echo "===================================================================="
 echo " [OK] Roam Agent installed and active!"
 echo " Continuous security evidence is syncing to the auditor vault."
+echo " Permanent systemd service active: persists across system reboots."
+echo " Notice: Roam operates strictly as software telemetry; independent CPAs certify audits."
 echo "===================================================================="
 """
             content = script.encode("utf-8")
@@ -367,6 +418,30 @@ echo "===================================================================="
             self.wfile.write(content)
             return
 
+        if path in ["/certificate", "/cyber-compliance-certificate", "/cert"]:
+            token = self._get_bearer_token()
+            org_token = query.get("org_token", [None])[0] or token
+            org = self.db.get_org_by_token(org_token) if org_token else None
+            org_id = org["id"] if org else "org_roam_compliance"
+            if not org:
+                org = self.db.get_org_by_id(org_id) or {"name": "Roam Robotics", "org_token": "org_demo_roam_compliance_2026"}
+
+            framework_id = query.get("framework", [None])[0]
+            evidence = self.db.get_framework_evidence(org_id, framework_id=framework_id)
+            users = self.db.list_users(org_id)
+            host = self.headers.get("Host", "127.0.0.1:8000")
+            proto = self.headers.get("X-Forwarded-Proto", "http")
+            base_url = f"{proto}://{host}"
+
+            html_doc = generate_certificate_html(evidence, org, users, base_url=base_url)
+            content = html_doc.encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+
         if path == "/fix.sh":
             org = self._resolve_org(query=query)
             org_token = query.get("token", query.get("org_token", [org.get("org_token", "org_demo_roam_compliance_2026")]))[0]
@@ -380,6 +455,12 @@ echo "===================================================================="
 # ==============================================================================
 # Roam Fleet Compliance - Autonomous Remediation Engine
 # Non-destructive, multi-distro remediation with lockout protection
+#
+# NOTICE & STRICT LIABILITY LIMITATION:
+# Remediation operations modify local host configurations at Customer's sole discretion
+# and risk. Roam Compliance operates strictly as software telemetry and disclaims all liability
+# for network disruption, downtime, configuration errors, or physical hardware behavior
+# per Section 10 of the Master Services Agreement. Independent CPAs certify audits.
 # ==============================================================================
 set -e
 
@@ -390,6 +471,7 @@ ORG_TOKEN="{org_token}"
 
 echo "===================================================================="
 echo "    ROAM COMPLIANCE // Automated Remediation: $CONTROL"
+echo "    Software Telemetry Provider &bull; Customer Configuration Utility"
 echo "===================================================================="
 
 if [ "$(id -u)" != "0" ]; then
@@ -691,6 +773,8 @@ echo "===================================================================="
             cookie["roam_session"]["httponly"] = True
             cookie["roam_session"]["max-age"] = 2592000  # 30 days
             cookie["roam_session"]["samesite"] = "Lax"
+            if self.headers.get("X-Forwarded-Proto") == "https":
+                cookie["roam_session"]["secure"] = True
 
             data = json.dumps({
                 "status": "ok",

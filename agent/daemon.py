@@ -13,7 +13,7 @@ from agent.collector import collect_telemetry, get_hardware_serial, get_os
 class ComplianceDaemon:
     """Continuous posture monitoring daemon with configurable heartbeat intervals."""
 
-    def __init__(self, mode="workstation", interval_seconds=21600, api_url=None, device_token=None):
+    def __init__(self, mode="workstation", interval_seconds=1800, api_url=None, device_token=None):
         self.mode = mode
         self.interval = interval_seconds
         self.running = True
@@ -35,18 +35,26 @@ class ComplianceDaemon:
         return payload, result
 
     def start(self):
-        """Start the persistent daemon monitoring loop."""
+        """Start the persistent daemon monitoring loop with boot retry resilience."""
         print(f"[Compliance Daemon] Started in '{self.mode}' mode. Heartbeat interval: {self.interval}s.", flush=True)
         while self.running:
+            success = False
             try:
                 payload, result = self.run_once()
                 status = result.get("status", "unknown")
                 posture = payload.get("posture", "unknown")
                 print(f"[Heartbeat] Time: {payload['collected_at']} | Posture: {posture.upper()} | Sync: {status.upper()}", flush=True)
+                success = True
             except Exception as e:
-                print(f"[Heartbeat Error] Failed execution: {e}", file=sys.stderr, flush=True)
+                print(f"[Heartbeat Notice] Telemetry dispatch failed ({e}). Retrying in 15 seconds...", file=sys.stderr, flush=True)
+                # Boot resilience: If network is establishing after reboot, retry quickly rather than waiting the full interval
+                retry_elapsed = 0
+                while retry_elapsed < 15 and self.running:
+                    time.sleep(1)
+                    retry_elapsed += 1
+                continue
 
-            # Sleep in 1-second slices so termination signals break out immediately
+            # Regular scheduled interval sleep
             elapsed = 0
             while elapsed < self.interval and self.running:
                 time.sleep(1)
@@ -59,14 +67,15 @@ def generate_systemd_unit(mode="robot", python_bin=None, script_path=None):
     script = script_path or "/usr/local/bin/cyber-compliance"
     return f"""[Unit]
 Description=Cyber Compliance Continuous Monitoring Daemon ({mode.title()})
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
 ExecStart={py} {script} --daemon --mode {mode}
 Restart=always
-RestartSec=60
+RestartSec=15
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONPATH=/opt/roam-compliance:$PYTHONPATH"
 

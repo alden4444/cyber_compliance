@@ -248,7 +248,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         with urllib.request.urlopen(req_pol) as resp:
             self.assertEqual(resp.status, 200)
             pol_data = json.loads(resp.read().decode("utf-8"))
-            self.assertEqual(pol_data["count"], 4)
+            self.assertEqual(pol_data["count"], 5)
             keys = [p["policy_key"] for p in pol_data["policies"]]
             self.assertIn("infosec", keys)
 
@@ -539,7 +539,7 @@ class TestServerAndAgentIntegration(unittest.TestCase):
 
         # Verify tenant policies were automatically seeded
         policies = self.db.list_policies(new_org["id"])
-        self.assertEqual(len(policies), 4)
+        self.assertEqual(len(policies), 5)
 
         # 3. Verify customized 1-line installer script generation
         install_url = f"{self.api_url}/install.sh?token={new_token}&mode=workstation&owner=engineer@acme.com"
@@ -676,6 +676,19 @@ class TestServerAndAgentIntegration(unittest.TestCase):
 
         updated_org = self.db.get_org_by_id(org_id)
         self.assertEqual(updated_org["onboarding_completed"], 1)
+
+    def test_cyber_compliance_certificate(self):
+        """Verify printable Cyber Compliance Certificate generation and SHA256 digest."""
+        org_token = "org_demo_roam_compliance_2026"
+        cert_url = f"{self.api_url}/certificate?org_token={org_token}&framework=soc2"
+        with urllib.request.urlopen(cert_url) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("text/html", resp.headers.get("Content-Type", ""))
+            html_text = resp.read().decode("utf-8")
+            self.assertIn("Certificate of Cyber Compliance", html_text)
+            self.assertIn("SHA256:", html_text)
+            self.assertIn("AICPA", html_text)
+            self.assertIn("Master Services Agreement", html_text)
 
 
 if __name__ == "__main__":

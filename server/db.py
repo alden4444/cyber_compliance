@@ -1,5 +1,4 @@
-"""Database management for Cyber Compliance platform using SQLite3."""
-
+import base64
 import contextlib
 import hashlib
 import hmac
@@ -16,51 +15,63 @@ DEFAULT_POLICIES = [
     {
         "key": "infosec",
         "title": "Information Security Policy",
-        "category": "CC1.1, CC1.2, CC5.1",
+        "category": "SOC 2 CC1.1, CC5.1, CC6.6",
         "summary": "Establishes baseline encryption, MFA, workstation currency, and cloud infrastructure security standards.",
         "content": """# Information Security Policy (SOC 2 CC1.1, CC5.1)
 
-1. Purpose & Scope: This policy applies to all personnel, workstations, cloud infrastructure, and repositories within the organization.
-2. Endpoint Encryption: All corporate workstations, laptops, and edge devices containing source code or cloud access must enforce full disk encryption (LUKS, FileVault, or BitLocker).
-3. Access Controls: Multi-factor authentication (MFA) is strictly mandatory on all identity providers, GitHub repositories, and cloud management consoles (AWS/GCP).
-4. Patch Management: Operating systems and software packages must be updated within a 14-day SLA of security releases.
-5. Code Security: Direct pushes to main branches are prohibited; code reviews and automated security scans are enforced before production deployments."""
+1. Purpose & Scope: This policy applies to all personnel, workstations, cloud infrastructure (AWS/GCP), CI/CD pipelines, and hardware repositories within the organization.
+2. Endpoint Encryption: All corporate workstations, laptops, and edge devices containing source code or cloud access must enforce full disk encryption (LUKS on Linux, FileVault on macOS, BitLocker on Windows).
+3. Access Controls: Multi-factor authentication (MFA / TOTP or FIDO2) is strictly mandatory on all identity providers, GitHub repositories, and cloud management consoles.
+4. Vulnerability & Patch Management: Operating systems, kernels, and system packages must be updated within a 14-day SLA of verified vendor security releases.
+5. Code Security & Branch Protection: Direct pushes to production/main branches are prohibited. All code merges require peer review approval and automated compliance checks.
+6. Operational Boundary: Roam Compliance provides automated evidence metadata collection software only. All operational system changes remain under customer engineering authority."""
     },
     {
         "key": "asset_management",
-        "title": "Hardware Asset Management Policy",
-        "category": "CC6.1, ISO 27001 A.8.1",
+        "title": "Hardware & Robotics Asset Management Policy",
+        "category": "SOC 2 CC6.1, ISO 27001 A.8.1",
         "summary": "Governs tracking, attribution, and secure decommissioning of developer workstations and robot nodes.",
-        "content": """# Hardware Asset Management Policy (SOC 2 CC6.1)
+        "content": """# Hardware & Robotics Asset Management Policy (SOC 2 CC6.1, ISO 27001 A.8.1)
 
-1. Purpose & Scope: Governs all physical computing hardware, including developer workstations, field edge nodes, single-board computers, and autonomous robotics fleet units.
-2. Central Inventory: Every hardware device must be uniquely identified by hardware UUID or machine serial and attributed to a verified team member or fleet facility.
-3. Zero-Payload Isolation: Compliance collectors operating on hardware assets must restrict telemetry to operational and security metadata only. No camera video, point clouds, SLAM maps, or customer proprietary data may be collected.
-4. Disposal & Reassignment: Hardware retired from production must undergo cryptographic data sanitization before reassignment or disposal."""
+1. Purpose & Scope: Governs all physical computing hardware, including developer workstations, field edge nodes, single-board computers, autonomous mobile robots (AMRs), and edge controllers.
+2. Immutable Inventory: Every hardware device must be uniquely identified by hardware UUID, DMI serial, or MAC address and attributed to a verified team member or fleet facility.
+3. Zero-Payload Isolation: Compliance collectors operating on hardware assets must restrict telemetry to operational and security metadata only. No camera video, point clouds, SLAM maps, or customer proprietary data may be inspected or collected.
+4. Disposal & Reassignment: Hardware retired from production must undergo cryptographic data sanitization (NIST SP 800-88 Rev 1 standards) prior to reassignment or disposal."""
     },
     {
         "key": "access_control",
-        "title": "Logical Access & Privilege Policy",
-        "category": "CC6.1, CC6.2, CC6.3",
+        "title": "Logical Access, Least Privilege & Offboarding Policy",
+        "category": "SOC 2 CC6.1, CC6.2, CC6.3",
         "summary": "Enforces principle of least privilege, strict admin separation, and 24h offboarding revocation.",
-        "content": """# Logical Access & Privilege Separation Policy (SOC 2 CC6.1, CC6.2)
+        "content": """# Logical Access & Privilege Separation Policy (SOC 2 CC6.1, CC6.2, CC6.3)
 
-1. Principle of Least Privilege: Personnel are granted access strictly necessary to perform assigned engineering and operational duties.
-2. Administrator Separation: Daily user accounts on developer workstations and field nodes must not operate with persistent unrestricted root privileges. Root escalation requires explicit password authentication.
-3. Access Reviews: Logical access permissions are reviewed quarterly by the Security Lead or System Administrator.
-4. Offboarding SLA: Access to all cloud services, repositories, and device management tokens must be revoked within 24 hours of personnel termination."""
+1. Principle of Least Privilege: Personnel are granted access strictly necessary to perform assigned engineering, administrative, and operational duties.
+2. Administrator Separation: Daily user accounts on developer workstations and field nodes must not operate with persistent unrestricted root privileges. Administrative escalation requires explicit password authentication.
+3. Access Reconciliation: Logical access permissions are audited and reconciled quarterly by the Security Lead or System Administrator.
+4. Offboarding SLA: Access to all cloud services, repositories, and device management bearer tokens must be revoked within 24 hours of personnel termination."""
     },
     {
         "key": "incident_response",
-        "title": "Incident Response & Operational Safety Plan",
-        "category": "CC7.3, CC7.4",
+        "title": "Security Incident Response & Fleet Isolation Plan",
+        "category": "SOC 2 CC7.3, CC7.4",
         "summary": "Standard operating procedures for security incidents, stolen hardware, and robot fleet network isolation.",
-        "content": """# Incident Response & Operational Safety Plan (SOC 2 CC7.3, CC7.4)
+        "content": """# Security Incident Response & Fleet Isolation Plan (SOC 2 CC7.3, CC7.4)
 
-1. Incident Classification: Security incidents are classified as Low (single endpoint alert), Medium (potential credential compromise), or High (unauthorized production access or lost hardware with active session tokens).
-2. Containment Protocol: In the event of a lost device or compromised edge node, the administrator must immediately revoke the device bearer token and apply host firewall drop rules.
-3. Notification SLA: Affected customers and external regulatory authorities will be notified within 72 hours of verified security breaches involving sensitive data.
-4. Post-Incident Review: A written post-mortem analyzing root cause, blast radius, and preventative controls must be completed within 5 business days."""
+1. Incident Classification: Security incidents are classified as SEV-1 (Critical: active unauthorized production access or lost field hardware), SEV-2 (High: suspected credential exposure), or SEV-3 (Moderate: single endpoint alert).
+2. Immediate Containment Protocol: In the event of a compromised edge node or lost workstation, administrators must immediately revoke the device token and execute host firewall isolation rules (drop non-loopback traffic).
+3. Notification SLA: Affected customers and regulatory authorities will be notified within 72 hours of verified security breaches involving sensitive data.
+4. Post-Incident Review: A blameless written post-mortem analyzing root cause, blast radius, and preventative controls must be completed within 5 business days."""
+    },
+    {
+        "key": "zero_payload",
+        "title": "Zero-Payload Telemetry & Sensor Isolation Policy",
+        "category": "SOC 2 CC6.5, CC6.7",
+        "summary": "Contractual guarantee that camera feeds, LiDAR, maps, and robot payloads are never collected or transmitted.",
+        "content": """# Zero-Payload Telemetry & Sensor Isolation Policy (SOC 2 CC6.5, CC6.7)
+
+1. Zero-Payload Architectural Mandate: Telemetry collection software is strictly forbidden from capturing, inspecting, storing, or transmitting sensor payloads, camera video, LiDAR point clouds, SLAM spatial maps, or proprietary ROS node messages.
+2. Monitored Metadata Only: Permitted telemetry is limited to system security posture: host firewall status, listening TCP/UDP port integers, OS kernel release versions, and cryptographic checksums.
+3. Liability & Hardware Disruption Waiver: Roam Compliance operates strictly as a software provider. Roam disclaims all liability for physical robot operation, actuator movement, or hardware disruption under the Master Services Agreement."""
     }
 ]
 
@@ -451,6 +462,13 @@ class ComplianceDatabase:
                 goal TEXT,
                 created_at TEXT NOT NULL,
                 status TEXT DEFAULT 'pending'
+            );
+            """)
+
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS revoked_tokens (
+                token TEXT PRIMARY KEY,
+                revoked_at TEXT NOT NULL
             );
             """)
 
@@ -1197,13 +1215,19 @@ class ComplianceDatabase:
             if not self.verify_password(password, user["salt"], user["password_hash"]):
                 return None
 
-            # Generate secure session token
-            session_id = f"sess_{secrets.token_urlsafe(32)}"
-            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-            expires_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 30 * 86400))
+            # Generate cryptographically signed session token resilient across container restarts
+            now_ts = int(time.time())
+            exp_ts = now_ts + (30 * 86400)
+            payload_str = f"{user['id']}:{user['org_id']}:{exp_ts}"
+            raw_b64 = base64.urlsafe_b64encode(payload_str.encode()).decode().rstrip("=")
+            SESSION_SECRET = hashlib.sha256(b"roam_fleet_compliance_master_secret_2026").digest()
+            sig = hmac.new(SESSION_SECRET, payload_str.encode(), hashlib.sha256).hexdigest()[:32]
+            session_id = f"sess_{raw_b64}_{sig}"
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now_ts))
+            expires_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(exp_ts))
 
             cursor.execute("""
-            INSERT INTO sessions (id, user_id, org_id, token, created_at, expires_at)
+            INSERT OR REPLACE INTO sessions (id, user_id, org_id, token, created_at, expires_at)
             VALUES (?, ?, ?, ?, ?, ?);
             """, (session_id, user["id"], user["org_id"], session_id, now, expires_at))
             conn.commit()
@@ -1224,8 +1248,13 @@ class ComplianceDatabase:
         if not token:
             return None
 
+        # 1. Check local database record first (and verify not revoked)
         with self.connection() as conn:
             cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM revoked_tokens WHERE token = ?;", (token,))
+            if cursor.fetchone():
+                return None
+
             now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             cursor.execute("""
             SELECT s.token, s.expires_at, s.created_at,
@@ -1237,7 +1266,58 @@ class ComplianceDatabase:
             WHERE s.token = ? AND s.expires_at > ?;
             """, (token, now))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if row:
+                return dict(row)
+
+        # 2. Cryptographic signature fallback (resilient across Cloud Run cold boots / restarts)
+        SESSION_SECRET = hashlib.sha256(b"roam_fleet_compliance_master_secret_2026").digest()
+        if token.startswith("sess_"):
+            parts = token[5:].split("_", 1)
+            if len(parts) == 2:
+                raw_b64, sig = parts
+                padded = raw_b64 + "=" * ((4 - len(raw_b64) % 4) % 4)
+                try:
+                    payload_str = base64.urlsafe_b64decode(padded).decode("utf-8")
+                    expected_sig = hmac.new(SESSION_SECRET, payload_str.encode(), hashlib.sha256).hexdigest()[:32]
+                    if hmac.compare_digest(expected_sig, sig):
+                        user_id, org_id, exp_ts_str = payload_str.split(":", 2)
+                        if int(exp_ts_str) > int(time.time()):
+                            with self.connection() as conn:
+                                cursor = conn.cursor()
+                                cursor.execute("SELECT 1 FROM revoked_tokens WHERE token = ?;", (token,))
+                                if cursor.fetchone():
+                                    return None
+                                cursor.execute("SELECT * FROM users WHERE id = ? AND org_id = ?;", (user_id, org_id))
+                                u_row = cursor.fetchone()
+                                cursor.execute("SELECT * FROM organizations WHERE id = ?;", (org_id,))
+                                o_row = cursor.fetchone()
+                                if u_row and o_row and u_row["status"] == "active":
+                                    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                                    expires_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(int(exp_ts_str)))
+                                    cursor.execute("""
+                                    INSERT OR REPLACE INTO sessions (id, user_id, org_id, token, created_at, expires_at)
+                                    VALUES (?, ?, ?, ?, ?, ?);
+                                    """, (token, user_id, org_id, token, now, expires_at))
+                                    conn.commit()
+                                    return {
+                                        "token": token,
+                                        "expires_at": expires_at,
+                                        "created_at": now,
+                                        "user_id": u_row["id"],
+                                        "email": u_row["email"],
+                                        "name": u_row["name"],
+                                        "role": u_row["role"],
+                                        "user_status": u_row["status"],
+                                        "org_id": o_row["id"],
+                                        "org_name": o_row["name"],
+                                        "org_token": o_row["org_token"],
+                                        "framework": o_row["framework"],
+                                        "fleet_scope": o_row["fleet_scope"]
+                                    }
+                except Exception:
+                    pass
+
+        return None
 
     def delete_session(self, token):
         """Invalidate a session upon logout."""
@@ -1245,9 +1325,12 @@ class ComplianceDatabase:
             return False
         with self.connection() as conn:
             cursor = conn.cursor()
+            now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            cursor.execute("INSERT OR REPLACE INTO revoked_tokens (token, revoked_at) VALUES (?, ?);", (token, now))
             cursor.execute("DELETE FROM sessions WHERE token = ?;", (token,))
             conn.commit()
             return True
+
 
     def create_access_request(self, email, name=None, company=None, fleet_size=None, goal=None):
         """Log an external waitlist / access request for approval."""
