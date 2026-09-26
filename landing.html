@@ -1,662 +1,341 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Roam Compliance // Continuous Cyber Compliance for Robotics Fleets</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-<script id="tailwind-config">
-  tailwind.config = {
-    darkMode: "class",
-    theme: {
-      extend: {
-        fontFamily: {
-          sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-          mono: ['JetBrains Mono', 'monospace'],
-        },
-        colors: {
-          brand: {
-            bg: '#090a0f',
-            card: '#11141d',
-            border: '#1e2433',
-            muted: '#8b95a5',
-            text: '#f0f3f8',
-            accent: '#2563eb',
-            accentHover: '#1d4ed8',
-            emerald: '#10b981'
-          }
-        }
-      }
-    }
-  }
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Roam Cyber Compliance</title>
 <style>
-  html {
-    scroll-behavior: smooth;
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
   body {
-    background-color: #090a0f;
-    color: #f0f3f8;
-    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #0c0d10;
+    color: #c9cdd4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 24px;
   }
-  .code-tab.active {
+  .container {
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
     color: #ffffff;
-    border-bottom: 2px solid #3b82f6;
-    background-color: rgba(59, 130, 246, 0.05);
+    letter-spacing: -0.2px;
+    margin-bottom: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
-  .code-tab:not(.active) {
-    color: #8b95a5;
-    border-bottom: 2px solid transparent;
+  p {
+    margin-bottom: 16px;
+    color: #9ea4b0;
   }
-  .code-tab:not(.active):hover {
-    color: #f0f3f8;
+  .strong {
+    color: #e2e5eb;
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+    margin-bottom: 40px;
+  }
+  button, .btn {
+    display: inline-block;
+    background-color: #1e2229;
+    color: #ffffff;
+    border: 1px solid #2e3440;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: inherit;
+  }
+  button:hover, .btn:hover {
+    background-color: #272c36;
+    border-color: #3b4252;
+  }
+  button.primary, .btn.primary {
+    background-color: #ffffff;
+    color: #0c0d10;
+    border-color: #ffffff;
+  }
+  button.primary:hover, .btn.primary:hover {
+    background-color: #e5e7eb;
+    border-color: #e5e7eb;
+  }
+  .footer {
+    border-top: 1px solid #1a1d24;
+    padding-top: 20px;
+    font-size: 12px;
+    color: #5c6370;
+  }
+  .footer a {
+    color: #7b8290;
+    text-decoration: none;
+  }
+  .footer a:hover {
+    color: #c9cdd4;
+    text-decoration: underline;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.active {
+    display: flex;
+  }
+  .modal-box {
+    background: #12141a;
+    border: 1px solid #242933;
+    border-radius: 8px;
+    max-width: 380px;
+    width: 100%;
+    padding: 24px;
+    position: relative;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+  }
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: #7b8290;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .close-btn:hover {
+    color: #ffffff;
+    background: transparent;
+  }
+  .form-group {
+    margin-bottom: 12px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    color: #8b92a0;
+    margin-bottom: 4px;
+  }
+  input, textarea {
+    width: 100%;
+    background: #090a0d;
+    border: 1px solid #222630;
+    border-radius: 5px;
+    color: #ffffff;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: #4c566a;
+  }
+  .error-banner {
+    display: none;
+    background: #2b1418;
+    border: 1px solid #5a1e27;
+    color: #ff8b9a;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    margin-bottom: 12px;
+  }
+  .error-banner.active {
+    display: block;
+  }
+  .success-banner {
+    display: none;
+    background: #11281e;
+    border: 1px solid #1e4d36;
+    color: #6ee7b7;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 12px;
+  }
+  .success-banner.active {
+    display: block;
   }
 </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-blue-600/30 selection:text-white">
+<body>
 
-<!-- ========================================================================= -->
-<!-- NAVIGATION HEADER                                                         -->
-<!-- ========================================================================= -->
-<header class="border-b border-[#1e2433] bg-[#090a0f]/90 backdrop-blur-md sticky top-0 z-40">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-    <!-- Brand -->
-    <a href="/" class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-        <span class="material-symbols-outlined text-[19px]">shield</span>
-      </div>
-      <div class="flex items-baseline gap-2">
-        <span class="font-bold text-white tracking-tight text-sm font-mono">ROAM</span>
-        <span class="text-xs text-brand-muted hidden sm:inline">Fleet Compliance</span>
-      </div>
-    </a>
+<div class="container">
+  <h1>roam compliance</h1>
 
-    <!-- Nav Links (Desktop) -->
-    <nav class="hidden md:flex items-center gap-7 text-xs font-medium text-brand-muted">
-      <a href="#overview" class="hover:text-white transition-colors">Overview</a>
-      <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
-      <a href="#pilot" class="hover:text-white transition-colors">Pattern Labs Pilot</a>
-      <a href="#security-contract" class="hover:text-white transition-colors">Zero-Payload Contract</a>
-      <a href="#frameworks" class="hover:text-white transition-colors">Frameworks</a>
-    </nav>
+  <p>
+    Continuous cyber compliance for robotics fleets and hardware engineering teams.
+  </p>
+  <p>
+    We collect security posture telemetry from Linux workstations and ROS/ROS 2 edge nodes to automate SOC 2 and ISO 27001 audit evidence.
+  </p>
+  <p style="font-size: 13px; color: #737b8b;">
+    Zero payload policy: firewalls, listening ports, and disk encryption only. We never inspect camera video, LiDAR, maps, or customer code.
+  </p>
 
-    <!-- Actions -->
-    <div class="flex items-center gap-3">
-      <button onclick="openSignInModal()" class="header-signin-btn px-4 py-2 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-white/5 border border-[#1e2433] transition-colors">
-        Sign in
-      </button>
-      <button onclick="openAccessModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-sm">
-        Request access
-      </button>
-      <button onclick="toggleMobileNav()" class="md:hidden text-brand-muted hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors" aria-label="Toggle Navigation">
-        <span class="material-symbols-outlined text-[20px]" id="mobile-nav-icon">menu</span>
-      </button>
-    </div>
+  <div class="actions">
+    <button class="primary" id="main-login-btn" onclick="openLogin()">Log in</button>
+    <button onclick="openContact()">Get in contact</button>
   </div>
 
-  <!-- Mobile Drawer -->
-  <div id="mobile-nav-drawer" class="hidden md:hidden border-t border-[#1e2433] bg-[#11141d] px-4 py-4 space-y-3 shadow-lg">
-    <nav class="flex flex-col space-y-2 text-xs font-medium text-brand-muted">
-      <a href="#overview" onclick="toggleMobileNav()" class="py-1.5 hover:text-white transition-colors">Overview</a>
-      <a href="#architecture" onclick="toggleMobileNav()" class="py-1.5 hover:text-white transition-colors">Architecture</a>
-      <a href="#pilot" onclick="toggleMobileNav()" class="py-1.5 hover:text-white transition-colors">Pattern Labs Pilot</a>
-      <a href="#security-contract" onclick="toggleMobileNav()" class="py-1.5 hover:text-white transition-colors">Zero-Payload Contract</a>
-      <a href="#frameworks" onclick="toggleMobileNav()" class="py-1.5 hover:text-white transition-colors">Frameworks</a>
-    </nav>
-    <div class="pt-3 border-t border-white/5 flex flex-col gap-2">
-      <button onclick="toggleMobileNav(); openSignInModal()" class="header-signin-btn w-full text-left py-2 px-3 rounded-lg text-xs font-medium text-zinc-300 hover:bg-white/5 border border-[#1e2433]">
-        Sign in
-      </button>
-      <button onclick="toggleMobileNav(); openAccessModal()" class="w-full py-2 px-3 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white text-center">
-        Request access
-      </button>
-    </div>
+  <div class="footer">
+    <span>&copy; 2026 Roam Compliance. Software telemetry provider.</span><br/>
+    <span style="font-size: 11px;">Independent CPAs certify audits.</span> &middot;
+    <a href="/legal/MASTER_SERVICES_AGREEMENT.md" target="_blank">Master Services Agreement</a>
   </div>
-</header>
+</div>
 
-<!-- ========================================================================= -->
-<!-- MAIN CONTENT                                                              -->
-<!-- ========================================================================= -->
-<main class="flex-1">
-
-  <!-- ======================================================================= -->
-  <!-- HERO SECTION                                                            -->
-  <!-- ======================================================================= -->
-  <section id="overview" class="max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 text-center space-y-6 scroll-mt-20">
-    <!-- Sub-badge -->
-    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#11141d] border border-[#1e2433] text-xs text-brand-muted">
-      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-      <span class="font-medium text-zinc-300">Continuous SOC 2 & ISO 27001 for Robotics Fleets</span>
+<!-- Log in Modal -->
+<div id="login-modal" class="modal-backdrop" onclick="if(event.target === this) closeLogin()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Sign In</div>
+      <button class="close-btn" onclick="closeLogin()">&times;</button>
     </div>
 
-    <!-- Main Headline -->
-    <h1 class="text-3xl sm:text-5xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-snug">
-      Automated cyber compliance for robotics fleets and developer workstations.
-    </h1>
+    <div id="login-error" class="error-banner"></div>
 
-    <!-- Subtitle -->
-    <p class="max-w-2xl mx-auto text-sm sm:text-base text-brand-muted leading-relaxed">
-      Legacy MDMs break ROS 2 nodes and disrupt Linux developer environments. Roam provides automated, zero-dependency compliance telemetry for edge hardware and engineering laptops without inspecting camera feeds, LiDAR point clouds, or proprietary code.
-    </p>
-
-    <!-- CTAs -->
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-      <button onclick="openAccessModal()" class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm">
-        <span>Request Early Access</span>
-        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
-      </button>
-      <button onclick="openSignInModal()" class="header-signin-btn w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#11141d] hover:bg-[#161a26] text-white text-xs font-medium border border-[#1e2433] flex items-center justify-center gap-2 transition-colors">
-        <span>Console Sign In</span>
-      </button>
-    </div>
-
-    <!-- ===================================================================== -->
-    <!-- INTERACTIVE DEVELOPER CONSOLE PREVIEW                                 -->
-    <!-- ===================================================================== -->
-    <div class="pt-8 text-left max-w-4xl mx-auto">
-      <div class="bg-[#11141d] border border-[#1e2433] rounded-xl overflow-hidden shadow-2xl">
-        <!-- Console Tabs -->
-        <div class="flex items-center justify-between border-b border-[#1e2433] px-3 bg-[#0d1017]">
-          <div class="flex items-center gap-1 text-xs font-mono">
-            <button onclick="switchCodeTab('audit')" id="tab-audit" class="code-tab active px-4 py-3 font-medium transition-colors">
-              1-Shot Workstation Audit
-            </button>
-            <button onclick="switchCodeTab('fleet')" id="tab-fleet" class="code-tab px-4 py-3 font-medium transition-colors">
-              Robotics Fleet Agent
-            </button>
-            <button onclick="switchCodeTab('evidence')" id="tab-evidence" class="code-tab px-4 py-3 font-medium transition-colors">
-              Auditor Evidence JSON
-            </button>
-            <button onclick="switchCodeTab('fix')" id="tab-fix" class="code-tab px-4 py-3 font-medium transition-colors">
-              Safe Remediation CLI
-            </button>
-          </div>
-          <button onclick="copyCurrentSnippet()" class="text-xs text-brand-muted hover:text-white flex items-center gap-1.5 font-mono px-3 py-1.5 rounded hover:bg-white/5 transition-colors">
-            <span class="material-symbols-outlined text-[15px]">content_copy</span>
-            <span id="copy-label">Copy</span>
-          </button>
-        </div>
-
-        <!-- Tab 1: 1-Shot Audit -->
-        <div id="snippet-audit" class="p-5 font-mono text-xs text-zinc-300 space-y-2 overflow-x-auto">
-          <div class="text-zinc-500 select-none"># Execute zero-dependency workstation audit (Python 3 standard library only; zero pip setup)</div>
-          <div class="text-emerald-400 select-all font-semibold">$ curl -sSL https://roamcompliance.com/audit.py | python3</div>
-          <div class="text-zinc-400 pt-2 space-y-1 text-[11px] leading-relaxed">
-            <div>[*] ROAM FLEET COMPLIANCE // Standalone Workstation Security Audit</div>
-            <div>[OK] Host Firewall: ACTIVE (ufw configured with default DROP policy)</div>
-            <div>[OK] Disk Encryption: ENFORCED (LUKS cryptographic block device verified)</div>
-            <div>[OK] Root Privilege Boundary: ENFORCED (Sudo administrative authentication required)</div>
-            <div>[OK] Threat Protection: ACTIVE (ClamAV daemon active with updated signatures)</div>
-            <div>[OK] Patch Currency: COMPLIANT (0 pending high-severity CVE packages)</div>
-            <div class="text-blue-400 pt-1">--- Evidence record mapped to SOC 2 CC6.1, CC6.6, CC6.8, CC7.1 ---</div>
-          </div>
-        </div>
-
-        <!-- Tab 2: Fleet Agent -->
-        <div id="snippet-fleet" class="hidden p-5 font-mono text-xs text-zinc-300 space-y-2 overflow-x-auto">
-          <div class="text-zinc-500 select-none"># Deploy persistent background agent on robot edge computers (ROS 2 / Ubuntu / NixOS)</div>
-          <div class="text-emerald-400 select-all font-semibold">$ curl -sSL "https://roamcompliance.com/install.sh?mode=robot&tag=amr-fleet" | sudo bash</div>
-          <div class="text-zinc-400 pt-2 space-y-1 text-[11px] leading-relaxed">
-            <div>[*] Initializing Roam Continuous Compliance Daemon in /opt/roam-compliance...</div>
-            <div>[*] Hardware UUID: HW-AMR-048B (Attributed to Warehouse Deployment)</div>
-            <div>[*] ROS 2 Middleware Discovery: FastDDS / CycloneDDS ports verified in safe boundary</div>
-            <div>[*] Zero-Payload Verification: Network sockets, firewalls, and ports only. Video/LiDAR locked out.</div>
-            <div>[OK] Permanent systemd service 'cyber-compliance.service' activated. Persists across reboots.</div>
-          </div>
-        </div>
-
-        <!-- Tab 3: Auditor Evidence JSON -->
-        <div id="snippet-evidence" class="hidden p-5 font-mono text-xs text-zinc-300 space-y-2 overflow-x-auto">
-          <div class="text-zinc-500 select-none"># Continuous auditor evidence stream ingested by CPA firm (AICPA Trust Services Criteria)</div>
-          <div class="text-emerald-400 select-all font-semibold">$ curl -H "Authorization: Bearer org_live_token" https://roamcompliance.com/api/v1/evidence/soc2</div>
-          <pre class="text-zinc-300 pt-2 text-[11px] leading-relaxed">{
-  "framework": "AICPA SOC 2 Type II",
-  "generated_at": "2026-09-26T15:00:00Z",
-  "compliance_score": 100,
-  "asset_summary": { "total_nodes": 24, "workstations": 16, "robots": 8 },
-  "trust_services_criteria": [
-    { "criteria_id": "CC6.1", "name": "Logical Access Controls", "status": "pass" },
-    { "criteria_id": "CC6.6", "name": "Perimeter & Host Firewall Defense", "status": "pass" },
-    { "criteria_id": "CC6.8", "name": "Malware & Threat Defense", "status": "pass" },
-    { "criteria_id": "CC7.1", "name": "Vulnerability & Patch Currency SLA", "status": "pass" }
-  ]
-}</pre>
-        </div>
-
-        <!-- Tab 4: Safe Remediation -->
-        <div id="snippet-fix" class="hidden p-5 font-mono text-xs text-zinc-300 space-y-2 overflow-x-auto">
-          <div class="text-zinc-500 select-none"># Non-destructive automated remediation with SSH lockout protection</div>
-          <div class="text-emerald-400 select-all font-semibold">$ curl -sSL "https://roamcompliance.com/fix.sh?control=firewall" | sudo bash</div>
-          <div class="text-zinc-400 pt-2 space-y-1 text-[11px] leading-relaxed">
-            <div>[*] Checking SSH access guards before firewall modification...</div>
-            <div>[OK] SSH port 22 explicitly pre-authorized in firewall rules.</div>
-            <div>[*] Enabling UFW with default incoming deny policy...</div>
-            <div>[OK] Host firewall active. Remote lockout prevented.</div>
-          </div>
-        </div>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required value="aldentmcqueen@gmail.com" autocomplete="username"/>
       </div>
-    </div>
-  </section>
-
-  <!-- ======================================================================= -->
-  <!-- PATTERN LABS & HARDWARE FOUNDERS PILOT CALLOUT                          -->
-  <!-- ======================================================================= -->
-  <section id="pilot" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 scroll-mt-20">
-    <div class="p-8 rounded-2xl bg-gradient-to-r from-blue-950/30 via-[#11141d] to-[#11141d] border border-blue-500/20 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-      <div class="space-y-2 max-w-2xl">
-        <div class="flex items-center gap-2 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-          <span class="w-2 h-2 rounded-full bg-blue-400"></span>
-          <span>Pattern Labs Pilot Program</span>
-        </div>
-        <h3 class="text-xl font-bold text-white tracking-tight">Built for robotics startups preparing for enterprise audits.</h3>
-        <p class="text-xs sm:text-sm text-brand-muted leading-relaxed">
-          Whether you are deploying autonomous mobile robots, surgical hardware, or humanoid manipulation systems, enterprise customers demand SOC 2 or ISO 27001 certification before procurement. Roam automates the technical evidence collection without burdening your robotics engineering team.
-        </p>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required placeholder="••••••••••••" autocomplete="current-password"/>
       </div>
-      <div class="shrink-0 flex flex-col sm:flex-row gap-3">
-        <button onclick="openAccessModal()" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-sm text-center">
-          Join Pilot Program
-        </button>
-        <a href="/certificate" target="_blank" class="px-5 py-2.5 rounded-lg bg-[#161a26] hover:bg-[#1e2433] text-emerald-400 border border-emerald-500/30 text-xs font-medium transition-colors text-center flex items-center justify-center gap-1.5">
-          <span class="material-symbols-outlined text-[15px]">workspace_premium</span>
-          <span>Sample Certificate</span>
-        </a>
+      <div style="margin-top: 16px;">
+        <button type="submit" id="submit-login-btn" class="primary" style="width: 100%;">Sign in</button>
       </div>
-    </div>
-  </section>
-
-  <!-- ======================================================================= -->
-  <!-- TECHNICAL ARCHITECTURE                                                  -->
-  <!-- ======================================================================= -->
-  <section id="architecture" class="max-w-5xl mx-auto px-4 sm:px-6 py-14 border-t border-[#1e2433] scroll-mt-20">
-    <div class="max-w-2xl mb-10">
-      <div class="text-xs font-mono text-blue-400 uppercase tracking-wider mb-2">Engineered For Hardware</div>
-      <h2 class="text-2xl font-bold text-white tracking-tight">Built for robotics constraints, not corporate IT.</h2>
-      <p class="text-xs sm:text-sm text-brand-muted mt-2">Traditional MDMs were designed for corporate MacBooks and break Linux developer environments. Roam was built from first principles for roboticists and hardware teams.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Feature 1 -->
-      <div class="p-6 rounded-xl bg-[#11141d] border border-[#1e2433] space-y-3">
-        <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-[20px]">terminal</span>
-        </div>
-        <h3 class="text-sm font-semibold text-white">Zero External Dependencies</h3>
-        <p class="text-xs text-brand-muted leading-relaxed">
-          Both the client collector and central server run on Python 3 standard library only (<code class="text-zinc-300">urllib.request</code>, <code class="text-zinc-300">sqlite3</code>, <code class="text-zinc-300">hashlib</code>). Zero pip packages, zero wheel compilations, and zero package collisions on edge machines, Yocto, or NixOS nodes.
-        </p>
-      </div>
-
-      <!-- Feature 2 -->
-      <div class="p-6 rounded-xl bg-[#11141d] border border-[#1e2433] space-y-3">
-        <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-[20px]">smart_toy</span>
-        </div>
-        <h3 class="text-sm font-semibold text-white">Native ROS & ROS 2 Awareness</h3>
-        <p class="text-xs text-brand-muted leading-relaxed">
-          Understands ROS 2 DDS discovery boundaries (CycloneDDS, FastDDS) and isolates internal motor controller communications from public WAN exposure without breaking real-time control loops.
-        </p>
-      </div>
-
-      <!-- Feature 3 -->
-      <div class="p-6 rounded-xl bg-[#11141d] border border-[#1e2433] space-y-3">
-        <div class="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-[20px]">lock_reset</span>
-        </div>
-        <h3 class="text-sm font-semibold text-white">Fail-Safe Lockout Protection</h3>
-        <p class="text-xs text-brand-muted leading-relaxed">
-          Automated remediation scripts verify that SSH is allowed before enabling firewalls, and verify root password configurations before touching sudoers, preventing accidental lockouts on remote hardware.
-        </p>
-      </div>
-
-      <!-- Feature 4 -->
-      <div class="p-6 rounded-xl bg-[#11141d] border border-[#1e2433] space-y-3">
-        <div class="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
-          <span class="material-symbols-outlined text-[20px]">verified</span>
-        </div>
-        <h3 class="text-sm font-semibold text-white">Official Auditor Workpapers & Certificate</h3>
-        <p class="text-xs text-brand-muted leading-relaxed">
-          1-click export of formal CPA audit attestation packets, formatted CSV control workpapers, and printable Cyber Compliance Certificates with cryptographic SHA-256 evidence digests.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======================================================================= -->
-  <!-- ZERO-PAYLOAD DATA POLICY CONTRACT                                       -->
-  <!-- ======================================================================= -->
-  <section id="security-contract" class="max-w-5xl mx-auto px-4 sm:px-6 py-14 border-t border-[#1e2433] scroll-mt-20">
-    <div class="max-w-2xl mb-8">
-      <div class="text-xs font-mono text-emerald-400 uppercase tracking-wider mb-2">Cryptographic Privacy Guarantee</div>
-      <h2 class="text-2xl font-bold text-white tracking-tight">The Zero-Payload Data Contract</h2>
-      <p class="text-xs sm:text-sm text-brand-muted mt-2">
-        Robotics companies handle sensitive proprietary hardware, spatial navigation maps, and training data. Roam enforces strict zero-payload telemetry at the architectural level.
-      </p>
-    </div>
-
-    <div class="bg-[#11141d] border border-[#1e2433] rounded-xl overflow-hidden shadow-sm">
-      <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#1e2433]">
-        <!-- What We Collect -->
-        <div class="p-6 space-y-4">
-          <div class="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-            <span class="material-symbols-outlined text-[18px]">check_circle</span>
-            <span>Security Metadata We Collect</span>
-          </div>
-          <ul class="space-y-3 text-xs text-zinc-300">
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-emerald-400 text-[16px] shrink-0 mt-0.5">done</span>
-              <span><strong>Firewall State:</strong> Verification that UFW, firewalld, or iptables default drop rules are active.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-emerald-400 text-[16px] shrink-0 mt-0.5">done</span>
-              <span><strong>Listening Sockets:</strong> TCP/UDP port numbers bound to local vs public interfaces.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-emerald-400 text-[16px] shrink-0 mt-0.5">done</span>
-              <span><strong>Disk Encryption:</strong> Verification of LUKS, FileVault, or BitLocker block encryption.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-emerald-400 text-[16px] shrink-0 mt-0.5">done</span>
-              <span><strong>Patch SLA:</strong> Package currency and operating system kernel version hashes.</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- What We Never Touch -->
-        <div class="p-6 space-y-4 bg-black/20">
-          <div class="flex items-center gap-2 text-rose-400 text-xs font-semibold uppercase tracking-wider">
-            <span class="material-symbols-outlined text-[18px]">block</span>
-            <span>Data Roam Never Touches</span>
-          </div>
-          <ul class="space-y-3 text-xs text-zinc-300">
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-rose-400 text-[16px] shrink-0 mt-0.5">close</span>
-              <span><strong>Camera & Vision Streams:</strong> Zero video, raw sensor frames, or image captures.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-rose-400 text-[16px] shrink-0 mt-0.5">close</span>
-              <span><strong>Spatial Maps:</strong> Zero LiDAR point clouds, SLAM graphs, or occupancy grids.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-rose-400 text-[16px] shrink-0 mt-0.5">close</span>
-              <span><strong>Control Logic:</strong> Zero motor trajectory commands, joint kinematics, or actuator states.</span>
-            </li>
-            <li class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-rose-400 text-[16px] shrink-0 mt-0.5">close</span>
-              <span><strong>Customer Source Code:</strong> Zero code inspection, proprietary models, or neural weights.</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======================================================================= -->
-  <!-- COMPLIANCE FRAMEWORKS                                                   -->
-  <!-- ======================================================================= -->
-  <section id="frameworks" class="max-w-5xl mx-auto px-4 sm:px-6 py-14 border-t border-[#1e2433] scroll-mt-20">
-    <div class="max-w-2xl mb-8">
-      <div class="text-xs font-mono text-blue-400 uppercase tracking-wider mb-2">Multi-Framework Continuous Mapping</div>
-      <h2 class="text-2xl font-bold text-white tracking-tight">Certified once. Audited everywhere.</h2>
-      <p class="text-xs sm:text-sm text-brand-muted mt-2">Roam maps every collected workstation and robot telemetry point to multiple security frameworks simultaneously.</p>
-    </div>
-
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-      <div class="p-4 rounded-xl bg-[#11141d] border border-[#1e2433] text-center space-y-1">
-        <div class="text-sm font-semibold text-white">SOC 2 Type II</div>
-        <div class="text-[11px] text-brand-muted">AICPA TSC</div>
-      </div>
-      <div class="p-4 rounded-xl bg-[#11141d] border border-[#1e2433] text-center space-y-1">
-        <div class="text-sm font-semibold text-white">ISO 27001</div>
-        <div class="text-[11px] text-brand-muted">2022 Controls</div>
-      </div>
-      <div class="p-4 rounded-xl bg-[#11141d] border border-[#1e2433] text-center space-y-1">
-        <div class="text-sm font-semibold text-white">HIPAA Security</div>
-        <div class="text-[11px] text-brand-muted">HHS Safeguards</div>
-      </div>
-      <div class="p-4 rounded-xl bg-[#11141d] border border-[#1e2433] text-center space-y-1">
-        <div class="text-sm font-semibold text-white">NIST 800-171</div>
-        <div class="text-[11px] text-brand-muted">CMMC Level 2</div>
-      </div>
-      <div class="p-4 rounded-xl bg-[#11141d] border border-[#1e2433] text-center space-y-1 col-span-2 sm:col-span-1">
-        <div class="text-sm font-semibold text-white">EU CRA</div>
-        <div class="text-[11px] text-brand-muted">Cyber Resilience Act</div>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- ========================================================================= -->
-<!-- FOOTER                                                                    -->
-<!-- ========================================================================= -->
-<footer class="border-t border-[#1e2433] bg-[#090a0f] py-10 text-xs text-brand-muted">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-    <div class="space-y-1 text-center sm:text-left">
-      <div class="font-medium text-white">&copy; 2026 Roam Fleet Compliance SaaS.</div>
-      <div class="text-[11px] text-zinc-500">Pure software evidence platform. Independent licensed CPAs certify audits, not this software.</div>
-    </div>
-    <div class="flex items-center gap-5 text-xs text-brand-muted">
-      <button onclick="openSignInModal()" class="header-signin-btn hover:text-white transition-colors">Sign in</button>
-      <button onclick="openAccessModal()" class="hover:text-white transition-colors">Request access</button>
-      <a href="/certificate" target="_blank" class="hover:text-white transition-colors">Certificate</a>
-      <a href="/legal/MASTER_SERVICES_AGREEMENT.md" target="_blank" class="hover:text-white transition-colors">Master Services Agreement</a>
-      <a href="https://roamcompliance.com/audit.py" target="_blank" class="hover:text-white transition-colors font-mono">audit.py</a>
-    </div>
-  </div>
-</footer>
-
-<!-- ========================================================================= -->
-<!-- SIGN IN MODAL                                                             -->
-<!-- ========================================================================= -->
-<div id="signin-modal" onclick="if(event.target === this) closeSignInModal()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-  <div class="bg-[#11141d] border border-[#1e2433] rounded-xl w-full max-w-sm p-6 space-y-5 shadow-2xl relative">
-    <button onclick="closeSignInModal()" class="absolute top-4 right-4 text-brand-muted hover:text-white">
-      <span class="material-symbols-outlined text-[18px]">close</span>
-    </button>
-
-    <div class="space-y-1">
-      <div class="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-2">
-        <span class="material-symbols-outlined text-[18px]">lock</span>
-      </div>
-      <h3 class="text-base font-semibold text-white">Sign In to Roam Console</h3>
-      <p class="text-xs text-brand-muted">Enter authorized credentials to access your fleet compliance vault.</p>
-    </div>
-
-    <!-- Error Banner -->
-    <div id="signin-error" class="hidden p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
-      <span class="material-symbols-outlined text-[16px]">error</span>
-      <span id="signin-error-text">Invalid email or password.</span>
-    </div>
-
-    <form onsubmit="handleSignInSubmit(event)" class="space-y-3.5">
-      <div>
-        <label class="block text-xs font-medium text-zinc-300 mb-1">Email Address</label>
-        <input type="email" id="signin-email" required value="aldentmcqueen@gmail.com" class="w-full px-3.5 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-zinc-300 mb-1">Password</label>
-        <input type="password" id="signin-password" required placeholder="••••••••••••" class="w-full px-3.5 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
-      </div>
-
-      <button type="submit" id="signin-btn" class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
-        <span>Sign In to Vault</span>
-        <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-      </button>
     </form>
-
-    <div class="text-[11px] text-brand-muted text-center">
-      Need credentials? <button onclick="switchToAccessModal()" class="text-blue-400 hover:underline">Request access</button>
-    </div>
   </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- REQUEST ACCESS MODAL                                                      -->
-<!-- ========================================================================= -->
-<div id="access-modal" onclick="if(event.target === this) closeAccessModal()" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-  <div class="bg-[#11141d] border border-[#1e2433] rounded-xl w-full max-w-md p-6 space-y-5 shadow-2xl relative">
-    <button onclick="closeAccessModal()" class="absolute top-4 right-4 text-brand-muted hover:text-white">
-      <span class="material-symbols-outlined text-[18px]">close</span>
-    </button>
-
-    <div id="access-form-state" class="space-y-4">
-      <div class="space-y-1">
-        <div class="w-8 h-8 rounded-lg bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-          <span class="material-symbols-outlined text-[18px]">key</span>
-        </div>
-        <h3 class="text-base font-semibold text-white">Request Early Access</h3>
-        <p class="text-xs text-brand-muted">Private pilot preview for robotics and hardware startups (Seed to Series B).</p>
-      </div>
-
-      <form onsubmit="handleAccessSubmit(event)" class="space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Your Name</label>
-            <input type="text" id="access-name" required placeholder="Elena Rostova" class="w-full px-3 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Work Email</label>
-            <input type="email" id="access-email" required placeholder="elena@robotics.co" class="w-full px-3 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-zinc-300 mb-1">Company / Startup Name</label>
-          <input type="text" id="access-company" required placeholder="Pattern Labs / Apex Robotics" class="w-full px-3 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Fleet Scope</label>
-            <select id="access-fleet" class="w-full px-3 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
-              <option value="workstations">Workstations Only</option>
-              <option value="1-10">1 - 10 Robot Nodes</option>
-              <option value="10-50">10 - 50 Robot Nodes</option>
-              <option value="50+">50+ Autonomous Units</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-zinc-300 mb-1">Target Audit</label>
-            <select id="access-goal" class="w-full px-3 py-2 rounded-lg bg-[#090a0f] border border-[#1e2433] text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
-              <option value="soc2">SOC 2 Type II</option>
-              <option value="iso27001">ISO 27001:2022</option>
-              <option value="nist800_171">NIST SP 800-171 / CMMC</option>
-              <option value="cra">EU Cyber Resilience Act</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="pt-2">
-          <button type="submit" id="access-submit-btn" class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
-            <span>Submit Access Application</span>
-            <span class="material-symbols-outlined text-[14px]">send</span>
-          </button>
-        </div>
-      </form>
+<!-- Contact Modal -->
+<div id="contact-modal" class="modal-backdrop" onclick="if(event.target === this) closeContact()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Get in contact</div>
+      <button class="close-btn" onclick="closeContact()">&times;</button>
     </div>
 
-    <!-- Success State -->
-    <div id="access-success-state" class="hidden text-center py-6 space-y-3">
-      <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-        <span class="material-symbols-outlined text-[24px]">done_all</span>
-      </div>
-      <h4 class="text-base font-semibold text-white">Application Received</h4>
-      <p class="text-xs text-brand-muted max-w-xs mx-auto leading-relaxed">
-        Thank you. Our compliance engineering team will review your fleet profile and dispatch private vault credentials shortly.
-      </p>
-      <button onclick="closeAccessModal()" class="px-5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-white">
-        Done
-      </button>
+    <div id="contact-success" class="success-banner">
+      Message received. We will be in touch shortly.
     </div>
+
+    <form id="contact-form" onsubmit="handleContact(event)">
+      <div class="form-group">
+        <label for="contact-name">Name</label>
+        <input type="text" id="contact-name" required placeholder="Your name"/>
+      </div>
+      <div class="form-group">
+        <label for="contact-email">Work email</label>
+        <input type="email" id="contact-email" required placeholder="name@company.com"/>
+      </div>
+      <div class="form-group">
+        <label for="contact-company">Company & fleet size</label>
+        <input type="text" id="contact-company" placeholder="e.g. Pattern Labs, 15 nodes"/>
+      </div>
+      <div style="margin-top: 16px;">
+        <button type="submit" id="submit-contact-btn" class="primary" style="width: 100%;">Submit</button>
+      </div>
+      <div style="margin-top: 12px; text-align: center; font-size: 12px; color: #737b8b;">
+        Or email directly: <a href="mailto:aldentmcqueen@gmail.com" style="color: #9ea4b0; text-decoration: underline;">aldentmcqueen@gmail.com</a>
+      </div>
+    </form>
   </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- JAVASCRIPT LOGIC                                                          -->
-<!-- ========================================================================= -->
 <script>
-let currentTabKey = "audit";
-
-const SNIPPET_TEXTS = {
-  audit: "curl -sSL https://roamcompliance.com/audit.py | python3",
-  fleet: "curl -sSL \"https://roamcompliance.com/install.sh?mode=robot&tag=amr-fleet\" | sudo bash",
-  evidence: "curl -H \"Authorization: Bearer org_live_token\" https://roamcompliance.com/api/v1/evidence/soc2",
-  fix: "curl -sSL \"https://roamcompliance.com/fix.sh?control=firewall\" | sudo bash"
-};
-
-function switchCodeTab(tabKey) {
-  currentTabKey = tabKey;
-  ["audit", "fleet", "evidence", "fix"].forEach(k => {
-    const btn = document.getElementById(`tab-${k}`);
-    const snip = document.getElementById(`snippet-${k}`);
-    if (btn) {
-      if (k === tabKey) btn.classList.add("active");
-      else btn.classList.remove("active");
-    }
-    if (snip) {
-      if (k === tabKey) snip.classList.remove("hidden");
-      else snip.classList.add("hidden");
-    }
-  });
+function openLogin() {
+  document.getElementById("login-modal").classList.add("active");
+  document.getElementById("login-error").classList.remove("active");
+  document.getElementById("login-password").focus();
 }
 
-function copyCurrentSnippet() {
-  const text = SNIPPET_TEXTS[currentTabKey] || "";
-  navigator.clipboard.writeText(text).then(() => {
-    const label = document.getElementById("copy-label");
-    if (label) {
-      label.innerText = "Copied!";
-      setTimeout(() => label.innerText = "Copy", 1800);
-    }
-  });
+function closeLogin() {
+  document.getElementById("login-modal").classList.remove("active");
 }
 
-function openSignInModal() {
-  document.getElementById("signin-modal").classList.remove("hidden");
-  document.getElementById("signin-error").classList.add("hidden");
+function openContact() {
+  document.getElementById("contact-modal").classList.add("active");
+  document.getElementById("contact-success").classList.remove("active");
 }
 
-function closeSignInModal() {
-  document.getElementById("signin-modal").classList.add("hidden");
+function closeContact() {
+  document.getElementById("contact-modal").classList.remove("active");
 }
 
-function openAccessModal() {
-  document.getElementById("access-modal").classList.remove("hidden");
-  document.getElementById("access-form-state").classList.remove("hidden");
-  document.getElementById("access-success-state").classList.add("hidden");
-}
-
-function closeAccessModal() {
-  document.getElementById("access-modal").classList.add("hidden");
-}
-
-function switchToAccessModal() {
-  closeSignInModal();
-  openAccessModal();
-}
-
-// Auto open signin if ?signin=1 is in URL
+// Auto-open login if ?signin=1
 if (window.location.search.includes("signin=1")) {
-  openSignInModal();
+  openLogin();
 }
 
-async function handleSignInSubmit(e) {
-  e.preventDefault();
-  const email = document.getElementById("signin-email").value.trim();
-  const password = document.getElementById("signin-password").value;
-  const btn = document.getElementById("signin-btn");
-  const errBox = document.getElementById("signin-error");
-  const errText = document.getElementById("signin-error-text");
+// Check if user already has an active session
+async function checkActiveSession() {
+  const localToken = localStorage.getItem("roam_session");
+  const headers = {};
+  if (localToken) {
+    headers["Authorization"] = "Bearer " + localToken;
+  }
+  try {
+    const res = await fetch("/api/v1/auth/me", { headers });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.authenticated) {
+        const btn = document.getElementById("main-login-btn");
+        if (btn) {
+          btn.innerText = "Console \u2192";
+          btn.onclick = () => window.location.href = "/dashboard";
+        }
+      }
+    }
+  } catch (e) {}
+}
+checkActiveSession();
 
-  errBox.classList.add("hidden");
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const btn = document.getElementById("submit-login-btn");
+  const errBox = document.getElementById("login-error");
+
+  errBox.classList.remove("active");
   btn.disabled = true;
-  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">progress_activity</span><span>Authenticating...</span>`;
+  btn.innerText = "Authenticating...";
 
   try {
     const res = await fetch("/api/v1/auth/login", {
@@ -668,89 +347,49 @@ async function handleSignInSubmit(e) {
     if (!res.ok) {
       throw new Error(data.error || "Authentication failed");
     }
-
     if (data.token) {
       localStorage.setItem("roam_session", data.token);
     }
-
     window.location.href = "/dashboard";
   } catch (err) {
-    errText.innerText = err.message;
-    errBox.classList.remove("hidden");
+    errBox.innerText = err.message;
+    errBox.classList.add("active");
     btn.disabled = false;
-    btn.innerHTML = `<span>Sign In to Vault</span><span class="material-symbols-outlined text-[14px]">arrow_forward</span>`;
+    btn.innerText = "Sign in";
   }
 }
 
-async function handleAccessSubmit(e) {
+async function handleContact(e) {
   e.preventDefault();
-  const name = document.getElementById("access-name").value.trim();
-  const email = document.getElementById("access-email").value.trim();
-  const company = document.getElementById("access-company").value.trim();
-  const fleet_size = document.getElementById("access-fleet").value;
-  const goal = document.getElementById("access-goal").value;
-  const btn = document.getElementById("access-submit-btn");
+  const name = document.getElementById("contact-name").value.trim();
+  const email = document.getElementById("contact-email").value.trim();
+  const company = document.getElementById("contact-company").value.trim();
+  const btn = document.getElementById("submit-contact-btn");
 
   btn.disabled = true;
-  btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">progress_activity</span><span>Submitting...</span>`;
+  btn.innerText = "Sending...";
 
   try {
-    const res = await fetch("/api/v1/auth/request-access", {
+    await fetch("/api/v1/auth/request-access", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, company, fleet_size, goal })
+      body: JSON.stringify({ name, email, company })
     });
-    const data = await res.json();
-    document.getElementById("access-form-state").classList.add("hidden");
-    document.getElementById("access-success-state").classList.remove("hidden");
+    document.getElementById("contact-form").style.display = "none";
+    document.getElementById("contact-success").classList.add("active");
   } catch (err) {
-    alert("Could not submit request: " + err.message);
+    alert("Error: " + err.message);
     btn.disabled = false;
-    btn.innerHTML = `<span>Submit Access Application</span><span class="material-symbols-outlined text-[14px]">send</span>`;
+    btn.innerText = "Submit";
   }
 }
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    closeSignInModal();
-    closeAccessModal();
-    const drawer = document.getElementById("mobile-nav-drawer");
-    if (drawer && !drawer.classList.contains("hidden")) toggleMobileNav();
+    closeLogin();
+    closeContact();
   }
 });
-
-function toggleMobileNav() {
-  const drawer = document.getElementById("mobile-nav-drawer");
-  const icon = document.getElementById("mobile-nav-icon");
-  if (drawer) {
-    drawer.classList.toggle("hidden");
-    if (icon) {
-      icon.innerText = drawer.classList.contains("hidden") ? "menu" : "close";
-    }
-  }
-}
-
-async function checkActiveSession() {
-  const localToken = localStorage.getItem("roam_session");
-  const headers = {};
-  if (localToken) {
-    headers["Authorization"] = `Bearer ${localToken}`;
-  }
-  try {
-    const res = await fetch("/api/v1/auth/me", { headers });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.authenticated) {
-        const signinBtns = document.querySelectorAll(".header-signin-btn");
-        signinBtns.forEach(btn => {
-          btn.onclick = () => window.location.href = "/dashboard";
-          btn.innerHTML = `<span>Console &rarr;</span>`;
-        });
-      }
-    }
-  } catch (e) {}
-}
-checkActiveSession();
 </script>
 
 </body>
