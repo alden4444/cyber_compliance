@@ -144,6 +144,11 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
+    *, *::before, *::after {{
+        border-radius: 0 !important;
+        -webkit-border-radius: 0 !important;
+        -moz-border-radius: 0 !important;
+    }}
     * {{
         box-sizing: border-box;
         margin: 0;
@@ -175,7 +180,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         color: #0f172a;
         border: none;
         padding: 8px 16px;
-        border-radius: 6px;
+        border-radius: 0;
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
@@ -199,7 +204,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         margin: 32px auto;
         background: #ffffff;
         padding: 48px;
-        border-radius: 8px;
+        border-radius: 0;
         border: 1px solid #e2e8f0;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }}
@@ -242,7 +247,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         font-family: 'JetBrains Mono', monospace;
         background: #f1f5f9;
         padding: 2px 6px;
-        border-radius: 4px;
+        border-radius: 0;
         margin-top: 4px;
         display: inline-block;
     }}
@@ -251,7 +256,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         align-items: center;
         gap: 16px;
         padding: 16px 20px;
-        border-radius: 8px;
+        border-radius: 0;
         margin-bottom: 28px;
     }}
     .seal-pass {{
@@ -269,7 +274,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         font-weight: bold;
         width: 44px;
         height: 44px;
-        border-radius: 50%;
+        border-radius: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -296,7 +301,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     .kpi-card {{
         border: 1px solid #e2e8f0;
         padding: 14px 16px;
-        border-radius: 8px;
+        border-radius: 0;
         background: #f8fafc;
     }}
     .kpi-label {{
@@ -323,7 +328,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         padding: 14px 18px;
         font-size: 12px;
         color: #334155;
-        border-radius: 0 8px 8px 0;
+        border-radius: 0;
         margin-bottom: 32px;
     }}
     h2.section-heading {{
@@ -383,7 +388,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     .badge {{
         display: inline-block;
         padding: 3px 8px;
-        border-radius: 4px;
+        border-radius: 0;
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.04em;
@@ -411,7 +416,7 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
     .legal-box {{
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 8px;
+        border-radius: 0;
         padding: 18px 22px;
         font-size: 11px;
         color: #475569;

@@ -76,6 +76,12 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     --green-border: #a7f3d0;
   }}
 
+  *, *::before, *::after {{
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+  }}
+
   * {{
     box-sizing: border-box;
     margin: 0;
@@ -114,7 +120,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     padding: 8px 14px;
     background: #ffffff;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 0;
     transition: all 0.15s ease;
   }}
 
@@ -131,7 +137,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     padding: 8px 18px;
     font-size: 13px;
     font-weight: 600;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -149,7 +155,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     max-width: 860px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 56px 64px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
     position: relative;
@@ -176,7 +182,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     height: 38px;
     background: var(--navy-header);
     color: #ffffff;
-    border-radius: 6px;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -261,7 +267,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
   .metric-card {{
     background: #f8fafc;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 0;
     padding: 12px 14px;
   }}
 
@@ -299,7 +305,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     border-collapse: collapse;
     font-size: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 0;
     overflow: hidden;
   }}
 
@@ -361,7 +367,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     color: var(--green-pass);
     border: 1px solid var(--green-border);
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -373,7 +379,7 @@ def generate_certificate_html(evidence, org, users, base_url="https://roamcompli
     background: #f8fafc;
     border: 1px solid var(--border-color);
     border-left: 4px solid var(--navy-header);
-    border-radius: 6px;
+    border-radius: 0;
     padding: 14px 18px;
     margin-bottom: 28px;
     font-size: 11px;

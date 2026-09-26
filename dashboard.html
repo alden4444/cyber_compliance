@@ -125,9 +125,12 @@
     --modal-bg: #202020;
   }
 
-  * {
+  *, *::before, *::after {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
   }
   body {
     background-color: var(--bg-canvas);
@@ -158,28 +161,45 @@
   .tab-btn.active {
     color: var(--text-primary) !important;
     background-color: var(--bg-card-subtle) !important;
-    border-radius: 6px;
   }
   .tab-btn:not(.active) {
     color: var(--text-muted) !important;
     background-color: transparent !important;
-    border-radius: 6px;
   }
   .tab-btn:not(.active):hover {
     color: var(--text-primary) !important;
     background-color: var(--btn-secondary-hover) !important;
   }
 
-  /* Material 3 Expressive Animations */
-  @keyframes m3-celebrate-glow {
-    0% { transform: scale(0.92); opacity: 0.2; }
-    50% { transform: scale(1.08); opacity: 0.65; }
-    100% { transform: scale(0.96); opacity: 0.35; }
+  /* Permanent Sliding Animations (Zero Opacity Fading) */
+  @keyframes slide-in-tab {
+    0% { transform: translateX(24px); }
+    100% { transform: translateX(0); }
   }
-  .m3-glow-active {
-    opacity: 1 !important;
-    animation: m3-celebrate-glow 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  .tab-view:not(.hidden) {
+    animation: slide-in-tab 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
+  @keyframes modal-slide-down {
+    0% { transform: translateY(-40px); }
+    100% { transform: translateY(0); }
+  }
+  #policy-modal:not(.hidden) > div,
+  #details-modal:not(.hidden) > div,
+  #remediation-modal:not(.hidden) > div,
+  #add-node-modal:not(.hidden) > div,
+  #onboarding-modal:not(.hidden) > div {
+    animation: modal-slide-down 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes dropdown-slide-down {
+    0% { transform: translateY(-12px); }
+    100% { transform: translateY(0); }
+  }
+  #org-dropdown:not(.hidden) {
+    animation: dropdown-slide-down 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   .m3-progress-arc {
     transition: stroke-dashoffset 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -235,9 +255,9 @@
 <!-- ========================================================================= -->
 <!-- 1. TOP HEADER & BRANDING                                                  -->
 <!-- ========================================================================= -->
-<header class="border-b border-[#2e2e2e] px-6 lg:px-12 py-3 flex items-center justify-between bg-[#191919]/95 backdrop-blur-md sticky top-0 z-30">
+<header class="border-b border-[#2e2e2e] px-6 lg:px-12 py-3 flex items-center justify-between bg-[#191919]/95  sticky top-0 z-30">
   <div class="flex items-center space-x-3">
-    <div class="w-7 h-7 rounded-md bg-[#252525] border border-[#2e2e2e] flex items-center justify-center text-sm shadow-sm">
+    <div class="w-7 h-7 rounded-none bg-[#252525] border border-[#2e2e2e] flex items-center justify-center text-sm shadow-sm">
       <span class="material-symbols-outlined text-[17px] text-[#2383e2] dark:text-[#529cca]">shield</span>
     </div>
     <div class="flex items-center gap-2 text-xs">
@@ -251,8 +271,8 @@
 
   <!-- Center: SOC 2 Continuous Audit Active Badge -->
   <div class="hidden md:flex items-center">
-    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-[#202020] border border-[#2e2e2e] text-xs text-[#9b9b9b]">
-      <span class="w-2 h-2 rounded-full bg-[#4dab78]"></span>
+    <div class="flex items-center gap-2 px-3 py-1 rounded-none bg-[#202020] border border-[#2e2e2e] text-xs text-[#9b9b9b]">
+      <span class="w-2 h-2 rounded-none bg-[#4dab78]"></span>
       <span class="font-medium text-[#e3e2e0]">SOC 2 Type II</span>
       <span class="text-[#6a6a6a]">•</span>
       <span class="text-[11px] text-[#9b9b9b]">Continuous Audit Active</span>
@@ -261,55 +281,55 @@
 
   <!-- Right: Theme Toggle, Refresh, Certificate, Settings Dropdown -->
   <div class="flex items-center space-x-2 sm:space-x-3">
-    <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light / Dark mode" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors">
+    <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light / Dark mode" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-none bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors">
       <span class="material-symbols-outlined text-[15px]" id="theme-toggle-icon">dark_mode</span>
       <span class="hidden xl:inline text-[11px]" id="theme-toggle-label">Theme</span>
     </button>
 
-    <a id="header-cert-btn" href="/certificate" target="_blank" title="View formal Certificate of Cyber Compliance" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#e3e2e0] font-medium transition-colors">
+    <a id="header-cert-btn" href="/certificate" target="_blank" title="View formal Certificate of Cyber Compliance" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-none bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#e3e2e0] font-medium transition-colors">
       <span class="material-symbols-outlined text-[15px]">workspace_premium</span>
       <span>Cyber Certificate</span>
     </a>
 
-    <button onclick="refreshData()" title="Re-fetch live telemetry from API" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors">
+    <button onclick="refreshData()" title="Re-fetch live telemetry from API" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-none bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors">
       <span class="material-symbols-outlined text-[15px]" id="refresh-icon">refresh</span>
       <span class="hidden lg:inline">Refresh</span>
     </button>
 
     <!-- Org / Settings Dropdown -->
     <div class="relative">
-      <button onclick="toggleOrgDropdown()" class="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-[#252525] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors border-l border-[#2e2e2e] pl-3">
-        <span class="w-6 h-6 rounded-full bg-[#2e2e2e] text-[#e3e2e0] flex items-center justify-center font-medium text-[11px] border border-[#3e3e3e]" id="header-org-avatar">AM</span>
+      <button onclick="toggleOrgDropdown()" class="flex items-center gap-2 px-2.5 py-1.5 rounded-none hover:bg-[#252525] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors border-l border-[#2e2e2e] pl-3">
+        <span class="w-6 h-6 rounded-none bg-[#2e2e2e] text-[#e3e2e0] flex items-center justify-center font-medium text-[11px] border border-[#3e3e3e]" id="header-org-avatar">AM</span>
         <span class="hidden md:inline" id="header-facility">Settings</span>
         <span class="material-symbols-outlined text-[#6a6a6a] text-[16px]">expand_more</span>
       </button>
-      <div id="org-dropdown" class="hidden absolute right-0 mt-2 w-64 rounded-xl bg-card border border-borderline shadow-2xl p-3 space-y-2 z-50 text-xs">
+      <div id="org-dropdown" class="hidden absolute right-0 mt-2 w-64 rounded-none bg-card border border-borderline shadow-2xl p-3 space-y-2 z-50 text-xs">
         <div class="border-b border-borderline pb-2">
           <p class="font-semibold text-white" id="dropdown-org-name">Organization</p>
           <p class="text-[11px] text-zinc-400 font-mono mt-0.5" id="dropdown-org-token">--</p>
         </div>
         <div class="space-y-1">
-          <a id="dropdown-cert-link" href="/certificate" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-emerald-300 flex items-center justify-between">
+          <a id="dropdown-cert-link" href="/certificate" target="_blank" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-emerald-300 flex items-center justify-between">
             <span>Cyber Compliance Certificate</span>
             <span class="material-symbols-outlined text-[14px]">workspace_premium</span>
           </a>
-          <button onclick="openOnboardingModal(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <button onclick="openOnboardingModal(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Setup Wizard</span>
             <span class="material-symbols-outlined text-[14px]">checklist</span>
           </button>
-          <button onclick="copyInstallCommand(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <button onclick="copyInstallCommand(); toggleOrgDropdown();" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Copy 1-Line Installer</span>
             <span class="material-symbols-outlined text-[14px]">terminal</span>
           </button>
-          <a href="/audit-packet" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <a href="/audit-packet" target="_blank" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Print CPA Audit Packet</span>
             <span class="material-symbols-outlined text-[14px]">print</span>
           </a>
-          <a href="/api/v1/export/devices.csv" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <a href="/api/v1/export/devices.csv" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Export Devices (.csv)</span>
             <span class="material-symbols-outlined text-[14px]">download</span>
           </a>
-          <a href="/api/v1/evidence/soc2" id="header-evidence-json-link" target="_blank" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between">
+          <a href="/api/v1/evidence/soc2" id="header-evidence-json-link" target="_blank" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between">
             <span>Auditor JSON Stream</span>
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
           </a>
@@ -318,7 +338,7 @@
               <div class="text-zinc-500 text-[10px] uppercase font-mono">Authenticated Operator</div>
               <div class="font-medium text-zinc-200 truncate" id="dropdown-user-email">aldentmcqueen@gmail.com</div>
             </div>
-            <button onclick="signOut();" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-zinc-300 flex items-center justify-between transition-colors">
+            <button onclick="signOut();" class="w-full text-left px-2 py-1.5 rounded-none hover:bg-white/5 text-zinc-300 flex items-center justify-between transition-colors">
               <span>Sign Out</span>
               <span class="material-symbols-outlined text-[14px]">logout</span>
             </button>
@@ -340,22 +360,22 @@
   <button onclick="switchTab('devices')" id="tab-btn-devices" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
     <span class="material-symbols-outlined text-[16px]">laptop_mac</span>
     <span>Devices & Hardware</span>
-    <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-devices-badge">--</span>
+    <span class="px-1.5 py-0.2 rounded-none bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-devices-badge">--</span>
   </button>
   <button onclick="switchTab('team')" id="tab-btn-team" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
     <span class="material-symbols-outlined text-[16px]">group</span>
     <span>Team & Access</span>
-    <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-team-badge">--</span>
+    <span class="px-1.5 py-0.2 rounded-none bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-team-badge">--</span>
   </button>
   <button onclick="switchTab('policies')" id="tab-btn-policies" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
     <span class="material-symbols-outlined text-[16px]">description</span>
     <span>Policies</span>
-    <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-policies-badge">4/4</span>
+    <span class="px-1.5 py-0.2 rounded-none bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-policies-badge">4/4</span>
   </button>
   <button onclick="switchTab('audit')" id="tab-btn-audit" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
     <span class="material-symbols-outlined text-[16px]">account_balance</span>
     <span>Audit Vault</span>
-    <span class="px-1.5 py-0.2 rounded bg-[#1c3829] text-[#4dab78] text-[10px] font-mono border border-[#265339]">CPA</span>
+    <span class="px-1.5 py-0.2 rounded-none bg-[#1c3829] text-[#4dab78] text-[10px] font-mono border border-[#265339]">CPA</span>
   </button>
 </nav>
 
@@ -370,15 +390,15 @@
   <div id="view-overview" class="tab-view space-y-6">
 
     <!-- Notion-Style Segmented Scope Switcher -->
-    <div class="bg-card rounded-xl border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+    <div class="bg-card rounded-none border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
       <div class="flex items-start sm:items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
+        <div class="w-9 h-9 rounded-none bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
           <span class="material-symbols-outlined text-[18px] text-[var(--text-muted)]">tune</span>
         </div>
         <div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-zinc-100">Audit Scope</span>
-            <span id="scope-status-pill-overview" class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
+            <span id="scope-status-pill-overview" class="px-2 py-0.5 rounded-none text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
               Workstations Only
             </span>
           </div>
@@ -389,12 +409,12 @@
       </div>
 
       <!-- Notion-Style Segmented Button Group -->
-      <div class="inline-flex p-1 rounded-lg bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
-        <button type="button" id="scope-btn-workstations-overview" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
+      <div class="inline-flex p-1 rounded-none bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
+        <button type="button" id="scope-btn-workstations-overview" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
           <span class="material-symbols-outlined text-[14px]">laptop_mac</span>
           <span>Workstations Only</span>
         </button>
-        <button type="button" id="scope-btn-fleet-overview" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
+        <button type="button" id="scope-btn-fleet-overview" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
           <span class="material-symbols-outlined text-[14px]">precision_manufacturing</span>
           <span>Full Fleet</span>
         </button>
@@ -402,11 +422,11 @@
     </div>
 
     <!-- Hero Readiness Hub with Material 3 Expressive Progress Meter -->
-    <section class="bg-card rounded-xl p-6 sm:p-7 border border-borderline shadow-sm">
+    <section class="bg-card rounded-none p-6 sm:p-7 border border-borderline shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-card-subtle border border-borderline text-zinc-300 text-xs font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" id="hero-pulse"></span>
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-none bg-card-subtle border border-borderline text-zinc-300 text-xs font-medium">
+            <span class="w-1.5 h-1.5 rounded-none bg-emerald-400" id="hero-pulse"></span>
             <span id="hero-badge">Continuous SOC 2 Verified</span>
           </div>
           <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-white leading-tight" id="hero-headline">
@@ -420,8 +440,6 @@
         <!-- Material 3 Expressive Readiness Meter (Google Health / Fitbit style) -->
         <div class="flex flex-col items-center sm:items-end justify-center border-t sm:border-t-0 border-borderline pt-5 sm:pt-0 shrink-0">
           <div class="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center">
-            <!-- M3 Breathing Celebration Glow (active at 100%) -->
-            <div id="m3-celebrate-glow" class="absolute inset-2 rounded-full bg-emerald-500/20 blur-xl pointer-events-none transition-opacity duration-700 opacity-0"></div>
             
             <svg class="w-36 h-36 sm:w-40 sm:h-40 -rotate-90 transform" viewBox="0 0 140 140">
               <defs>
@@ -442,16 +460,16 @@
             </svg>
             <div class="absolute flex flex-col items-center justify-center text-center select-none">
               <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white" id="gauge-percent">100%</span>
-              <span id="gauge-label" class="mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-400">Audit Ready</span>
+              <span id="gauge-label" class="mt-0.5 px-2.5 py-0.5 rounded-none text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-400">Audit Ready</span>
             </div>
           </div>
           <div class="flex items-center gap-3 text-xs mt-3">
             <span class="flex items-center gap-1.5 text-zinc-300 font-medium">
-              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span id="stat-passing-count">1</span> Passing
+              <span class="w-2 h-2 rounded-none bg-emerald-400"></span> <span id="stat-passing-count">1</span> Passing
             </span>
             <span class="text-zinc-600 dark:text-zinc-700">|</span>
             <span class="flex items-center gap-1.5 text-zinc-400 font-medium">
-              <span class="w-2 h-2 rounded-full bg-zinc-500"></span> <span id="stat-action-count">0</span> Action
+              <span class="w-2 h-2 rounded-none bg-zinc-500"></span> <span id="stat-action-count">0</span> Action
             </span>
           </div>
         </div>
@@ -463,7 +481,7 @@
           <span class="material-symbols-outlined text-[15px] text-[var(--text-muted)]">verified_user</span>
           <span>Zero-payload security metadata • Independent CPA certified</span>
         </div>
-        <button id="hero-fix-btn" onclick="triggerReAudit(activeDevice?.device_id)" class="px-3.5 py-1.5 rounded-md bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-sm">
+        <button id="hero-fix-btn" onclick="triggerReAudit(activeDevice?.device_id)" class="px-3.5 py-1.5 rounded-none bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-sm">
           <span class="material-symbols-outlined text-[15px]">refresh</span>
           <span id="hero-btn-label">Verify Posture</span>
         </button>
@@ -472,7 +490,7 @@
 
     <!-- 4 Executive KPI Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-      <div class="bg-card rounded-xl p-4 border border-borderline space-y-1">
+      <div class="bg-card rounded-none p-4 border border-borderline space-y-1">
         <div class="flex items-center justify-between text-zinc-400 text-xs">
           <span>In-Scope Systems</span>
           <span class="material-symbols-outlined text-[16px] text-zinc-500">laptop_mac</span>
@@ -481,7 +499,7 @@
         <p class="text-[11px] text-zinc-500" id="kpi-in-scope-sub">Workstations with cloud access</p>
       </div>
 
-      <div class="bg-card rounded-xl p-4 border border-borderline space-y-1">
+      <div class="bg-card rounded-none p-4 border border-borderline space-y-1">
         <div class="flex items-center justify-between text-zinc-400 text-xs">
           <span>Physical Assets (CC6.1)</span>
           <span class="material-symbols-outlined text-[16px] text-zinc-500">smart_toy</span>
@@ -490,7 +508,7 @@
         <p class="text-[11px] text-zinc-500" id="kpi-robot-assets-sub">Field robots & proving grounds</p>
       </div>
 
-      <div class="bg-card rounded-xl p-4 border border-borderline space-y-1">
+      <div class="bg-card rounded-none p-4 border border-borderline space-y-1">
         <div class="flex items-center justify-between text-zinc-400 text-xs">
           <span>Statutory Policies</span>
           <span class="material-symbols-outlined text-[16px] text-zinc-500">policy</span>
@@ -499,7 +517,7 @@
         <p class="text-[11px] text-emerald-400 font-medium" id="kpi-policies-sub">Executive Approved</p>
       </div>
 
-      <div class="bg-card rounded-xl p-4 border border-borderline space-y-1">
+      <div class="bg-card rounded-none p-4 border border-borderline space-y-1">
         <div class="flex items-center justify-between text-zinc-400 text-xs">
           <span>CPA Audit Window</span>
           <span class="material-symbols-outlined text-[16px] text-zinc-500">verified</span>
@@ -510,12 +528,12 @@
     </div>
 
     <!-- NEW FEATURE: Continuous SOC 2 Readiness Checklist -->
-    <section class="bg-card rounded-2xl border border-white/10 p-5 sm:p-6 space-y-4">
+    <section class="bg-card rounded-none border border-white/10 p-5 sm:p-6 space-y-4">
       <div class="flex items-center justify-between">
         <div class="space-y-0.5">
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-semibold text-white">Continuous SOC 2 Readiness Checklist</h3>
-            <span class="px-2 py-0.2 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="checklist-progress-pill">5 / 5 Verified</span>
+            <span class="px-2 py-0.2 rounded-none text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="checklist-progress-pill">5 / 5 Verified</span>
           </div>
           <p class="text-xs text-zinc-400">Core Trust Services Criteria requirements monitored continuously.</p>
         </div>
@@ -533,7 +551,7 @@
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center space-x-2">
           <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Action Required</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="attention-badge-count">1</span>
+          <span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-zinc-700/60 font-medium" id="attention-badge-count">1</span>
         </div>
         <span class="text-[11px] text-zinc-500">Items requiring configuration before auditor sign-off</span>
       </div>
@@ -550,15 +568,15 @@
   <div id="view-devices" class="tab-view hidden space-y-6">
 
     <!-- Notion-Style Segmented Scope Switcher -->
-    <div class="bg-card rounded-xl border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+    <div class="bg-card rounded-none border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
       <div class="flex items-start sm:items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
+        <div class="w-9 h-9 rounded-none bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
           <span class="material-symbols-outlined text-[18px] text-[var(--text-muted)]">tune</span>
         </div>
         <div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold text-zinc-100">Audit Scope</span>
-            <span id="scope-status-pill-devices" class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
+            <span id="scope-status-pill-devices" class="px-2 py-0.5 rounded-none text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
               Workstations Only
             </span>
           </div>
@@ -569,12 +587,12 @@
       </div>
 
       <!-- Notion-Style Segmented Button Group -->
-      <div class="inline-flex p-1 rounded-lg bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
-        <button type="button" id="scope-btn-workstations-devices" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
+      <div class="inline-flex p-1 rounded-none bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
+        <button type="button" id="scope-btn-workstations-devices" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
           <span class="material-symbols-outlined text-[14px]">laptop_mac</span>
           <span>Workstations Only</span>
         </button>
-        <button type="button" id="scope-btn-fleet-devices" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
+        <button type="button" id="scope-btn-fleet-devices" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
           <span class="material-symbols-outlined text-[14px]">precision_manufacturing</span>
           <span>Full Fleet</span>
         </button>
@@ -582,38 +600,38 @@
     </div>
 
     <!-- 1-Line Installer Snippet Box -->
-    <div class="bg-card rounded-xl border border-borderline p-5 space-y-3">
+    <div class="bg-card rounded-none border border-borderline p-5 space-y-3">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 class="text-sm font-semibold text-white">Zero-Dependency 1-Line Installer</h3>
           <p class="text-xs text-zinc-400">Run on any developer workstation or Linux edge robot for 5-second automated onboarding.</p>
         </div>
-        <button onclick="copyInstallCommand(this)" class="self-start sm:self-center px-3 py-1.5 rounded-md bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0">
+        <button onclick="copyInstallCommand(this)" class="self-start sm:self-center px-3 py-1.5 rounded-none bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0">
           <span class="material-symbols-outlined text-[14px]">content_copy</span>
           <span>Copy Command</span>
         </button>
       </div>
-      <div class="bg-[#141414] border border-borderline rounded-lg p-3 font-mono text-xs text-zinc-300 overflow-x-auto select-all" id="installer-command-display">
+      <div class="bg-[#141414] border border-borderline rounded-none p-3 font-mono text-xs text-zinc-300 overflow-x-auto select-all" id="installer-command-display">
         curl -sSL "https://roamcompliance.com/install.sh" | sudo bash
       </div>
     </div>
 
     <!-- Real-Time Search & Filter Controls -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-xl border border-borderline text-xs">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-none border border-borderline text-xs">
       <div class="relative flex-1">
         <span class="material-symbols-outlined text-[16px] text-zinc-500 absolute left-3 top-2.5 pointer-events-none">search</span>
-        <input type="text" id="device-search-input" oninput="applyDeviceFilters()" placeholder="Filter by hostname, owner email, OS distro, or facility tag..." class="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#191919] border border-borderline text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
+        <input type="text" id="device-search-input" oninput="applyDeviceFilters()" placeholder="Filter by hostname, owner email, OS distro, or facility tag..." class="w-full pl-9 pr-3 py-1.5 rounded-none bg-[#191919] border border-borderline text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-500" />
       </div>
       <div class="flex items-center gap-2 flex-wrap">
-        <div class="flex items-center rounded-lg bg-[#141414] p-0.5 border border-borderline text-[11px]">
-          <button onclick="setFilterStatus('all')" id="filter-status-all" class="px-2.5 py-1 rounded bg-[#2a2a2a] text-white font-medium transition-colors">All</button>
-          <button onclick="setFilterStatus('compliant')" id="filter-status-compliant" class="px-2.5 py-1 rounded text-zinc-400 hover:text-white transition-colors">Compliant</button>
-          <button onclick="setFilterStatus('action')" id="filter-status-action" class="px-2.5 py-1 rounded text-zinc-400 hover:text-white transition-colors">Action Req.</button>
+        <div class="flex items-center rounded-none bg-[#141414] p-0.5 border border-borderline text-[11px]">
+          <button onclick="setFilterStatus('all')" id="filter-status-all" class="px-2.5 py-1 rounded-none bg-[#2a2a2a] text-white font-medium transition-colors">All</button>
+          <button onclick="setFilterStatus('compliant')" id="filter-status-compliant" class="px-2.5 py-1 rounded-none text-zinc-400 hover:text-white transition-colors">Compliant</button>
+          <button onclick="setFilterStatus('action')" id="filter-status-action" class="px-2.5 py-1 rounded-none text-zinc-400 hover:text-white transition-colors">Action Req.</button>
         </div>
-        <select id="device-facility-filter" onchange="applyDeviceFilters()" class="px-2.5 py-1.5 rounded-lg bg-[#191919] border border-borderline text-[11px] text-zinc-300 focus:outline-none">
+        <select id="device-facility-filter" onchange="applyDeviceFilters()" class="px-2.5 py-1.5 rounded-none bg-[#191919] border border-borderline text-[11px] text-zinc-300 focus:outline-none">
           <option value="all">All Facilities & Tags</option>
         </select>
-        <button onclick="openAddNodeModal()" class="px-3 py-1.5 rounded-md bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm">
+        <button onclick="openAddNodeModal()" class="px-3 py-1.5 rounded-none bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm">
           <span class="material-symbols-outlined text-[15px]">add</span>
           <span>Add Node</span>
         </button>
@@ -625,11 +643,11 @@
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-white">Developer Workstations</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">SOC 2 In-Scope</span>
+          <span class="px-2 py-0.5 rounded-none text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">SOC 2 In-Scope</span>
         </div>
         <span class="text-[11px] text-zinc-400">Laptops & PCs with cloud infrastructure credentials</span>
       </div>
-      <div class="bg-card rounded-xl border border-borderline overflow-hidden shadow-sm" id="workstations-table-container">
+      <div class="bg-card rounded-none border border-borderline overflow-hidden shadow-sm" id="workstations-table-container">
         <!-- Injected dynamically -->
       </div>
     </div>
@@ -639,11 +657,11 @@
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-white">Robotics & Field Hardware</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-[#252525] text-zinc-400 border border-borderline" id="robotics-scope-badge">Asset Inventory (CC6.1)</span>
+          <span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-[#252525] text-zinc-400 border border-borderline" id="robotics-scope-badge">Asset Inventory (CC6.1)</span>
         </div>
         <span class="text-[11px] text-zinc-400">AMRs, Manipulator Arms, Jetson Nodes, Rovers</span>
       </div>
-      <div class="bg-card rounded-xl border border-borderline overflow-hidden shadow-sm" id="robots-table-container">
+      <div class="bg-card rounded-none border border-borderline overflow-hidden shadow-sm" id="robots-table-container">
         <!-- Injected dynamically -->
       </div>
     </div>
@@ -656,7 +674,7 @@
   <div id="view-team" class="tab-view hidden space-y-7">
 
     <!-- Top Action Box: Invite User -->
-    <div class="bg-card rounded-2xl border border-white/10 p-5 space-y-4">
+    <div class="bg-card rounded-none border border-white/10 p-5 space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-sm font-semibold text-white">Add Team Member or Auditor</h3>
@@ -665,16 +683,16 @@
         <span class="text-[11px] font-mono text-zinc-500">SOC 2 CC6.1 Directory</span>
       </div>
       <form onsubmit="submitInviteUser(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        <input type="text" id="invite-name" required placeholder="Full Name (e.g. Alex Smith)" class="px-3 py-2 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
-        <input type="email" id="invite-email" required placeholder="Work Email (e.g. alex@company.com)" class="px-3 py-2 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+        <input type="text" id="invite-name" required placeholder="Full Name (e.g. Alex Smith)" class="px-3 py-2 rounded-none bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+        <input type="email" id="invite-email" required placeholder="Work Email (e.g. alex@company.com)" class="px-3 py-2 rounded-none bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
         <div class="flex gap-2">
-          <select id="invite-role" class="flex-1 px-3 py-2 rounded-xl bg-zinc-900 border border-white/10 text-xs text-zinc-300 focus:outline-none">
+          <select id="invite-role" class="flex-1 px-3 py-2 rounded-none bg-zinc-900 border border-white/10 text-xs text-zinc-300 focus:outline-none">
             <option value="engineer">Engineer</option>
             <option value="security_officer">Security Officer</option>
             <option value="auditor">Auditor (CPA)</option>
             <option value="admin">Admin</option>
           </select>
-          <button type="submit" id="invite-submit-btn" class="px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors">
+          <button type="submit" id="invite-submit-btn" class="px-4 py-2 rounded-none bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors">
             Add
           </button>
         </div>
@@ -686,23 +704,23 @@
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Attributed Personnel</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-white/10" id="team-list-count">--</span>
+          <span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-white/10" id="team-list-count">--</span>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-[11px] text-zinc-500 hidden sm:inline">Logical access linked to verified device telemetry</span>
-          <button onclick="resetTeamMembers()" class="text-[11px] text-zinc-400 hover:text-red-400 px-2.5 py-1 rounded-lg border border-white/5 hover:border-red-500/20 bg-zinc-900/60 transition-colors flex items-center gap-1.5" title="Purge test members and retain primary lead">
+          <button onclick="resetTeamMembers()" class="text-[11px] text-zinc-400 hover:text-red-400 px-2.5 py-1 rounded-none border border-white/5 hover:border-red-500/20 bg-zinc-900/60 transition-colors flex items-center gap-1.5" title="Purge test members and retain primary lead">
             <span class="material-symbols-outlined text-[14px]">restart_alt</span>
             <span>Reset Team</span>
           </button>
         </div>
       </div>
-      <div class="bg-card rounded-2xl border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="team-table-container">
+      <div class="bg-card rounded-none border border-white/10 divide-y divide-white/5 overflow-hidden shadow-sm" id="team-table-container">
         <!-- Injected dynamically via loadTeamUsers() -->
       </div>
     </div>
 
     <!-- Zero-Payload Privacy Callout -->
-    <div class="bg-zinc-900/60 rounded-xl p-4 border border-white/5 flex items-start gap-3 text-xs text-zinc-400">
+    <div class="bg-zinc-900/60 rounded-none p-4 border border-white/5 flex items-start gap-3 text-xs text-zinc-400">
       <span class="material-symbols-outlined text-[18px] text-zinc-400 mt-0.5 shrink-0">verified_user</span>
       <div>
         <strong class="text-zinc-200">Zero-Payload Privacy Guarantee:</strong>
@@ -718,16 +736,16 @@
   <div id="view-policies" class="tab-view hidden space-y-7">
 
     <!-- Policy Adoption Progress Hero -->
-    <div class="bg-card rounded-2xl border border-white/10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="bg-card rounded-none border border-white/10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Governance Framework</span>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="policy-progress-pill">4 of 4 Adopted</span>
+          <span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="policy-progress-pill">4 of 4 Adopted</span>
         </div>
         <h2 class="text-base sm:text-lg font-semibold text-white">Statutory SOC 2 Policies</h2>
         <p class="text-xs text-zinc-400 max-w-xl">Approved governance policies for SOC 2 Type II compliance.</p>
       </div>
-      <button onclick="adoptAllPolicies()" class="self-start sm:self-center px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors shadow-sm flex items-center gap-1.5">
+      <button onclick="adoptAllPolicies()" class="self-start sm:self-center px-4 py-2 rounded-none bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors shadow-sm flex items-center gap-1.5">
         <span class="material-symbols-outlined text-[15px]">done_all</span>
         <span>Approve All Policies</span>
       </button>
@@ -746,21 +764,21 @@
   <div id="view-audit" class="tab-view hidden space-y-7">
 
     <!-- Formal Certificate of Cyber Compliance Card -->
-    <div class="bg-card rounded-2xl border border-emerald-500/30 p-6 sm:p-7 space-y-5 bg-gradient-to-br from-emerald-950/20 via-transparent to-transparent shadow-lg">
+    <div class="bg-card rounded-none border border-emerald-500/30 p-6 sm:p-7 space-y-5 bg-gradient-to-br from-emerald-950/20 via-transparent to-transparent shadow-lg">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-start gap-3.5">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+          <div class="w-10 h-10 rounded-none bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
             <span class="material-symbols-outlined text-[22px]">workspace_premium</span>
           </div>
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-white">Certificate of Cyber Compliance</h2>
-              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Official Attestation</span>
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-none bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Official Attestation</span>
             </div>
             <p class="text-xs text-zinc-400 mt-0.5">Formal compliance certificate for prospective clients, enterprise partners, and underwriters featuring cryptographic SHA-256 evidence digest.</p>
           </div>
         </div>
-        <a href="/certificate" id="cert-link-btn" target="_blank" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0">
+        <a href="/certificate" id="cert-link-btn" target="_blank" class="px-4 py-2.5 rounded-none bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0">
           <span class="material-symbols-outlined text-[16px]">workspace_premium</span>
           <span>View / Print Certificate</span>
         </a>
@@ -768,10 +786,10 @@
     </div>
 
     <!-- Executive CPA Audit Packet Card -->
-    <div class="bg-card rounded-2xl border border-white/10 p-6 sm:p-7 space-y-5">
+    <div class="bg-card rounded-none border border-white/10 p-6 sm:p-7 space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-start gap-3.5">
-          <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-white/10 flex items-center justify-center text-white shrink-0">
+          <div class="w-10 h-10 rounded-none bg-zinc-800 border border-white/10 flex items-center justify-center text-white shrink-0">
             <span class="material-symbols-outlined text-[22px]">verified</span>
           </div>
           <div>
@@ -779,14 +797,14 @@
             <p class="text-xs text-zinc-400 mt-0.5">Print-ready executive compliance attestation with seal, asset inventory, and CPA disclaimers.</p>
           </div>
         </div>
-        <a href="/audit-packet" id="audit-packet-link-btn" target="_blank" class="px-4 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0">
+        <a href="/audit-packet" id="audit-packet-link-btn" target="_blank" class="px-4 py-2.5 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all shrink-0">
           <span class="material-symbols-outlined text-[16px]">print</span>
           <span>Open / Export Audit PDF</span>
         </a>
       </div>
 
       <!-- Auditor Link Box -->
-      <div class="bg-black/50 border border-white/5 p-3.5 rounded-xl space-y-1.5">
+      <div class="bg-black/50 border border-white/5 p-3.5 rounded-none space-y-1.5">
         <div class="flex items-center justify-between text-xs text-zinc-400">
           <span class="font-medium text-zinc-300">Auditor Read-Only Access URL:</span>
           <button onclick="copyToClipboard(document.getElementById('cpa-url-display').innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
@@ -801,7 +819,7 @@
     </div>
 
     <!-- NEW FEATURE: CSV Exports for CPA Working Papers -->
-    <div class="bg-card rounded-2xl border border-white/10 p-5 space-y-3">
+    <div class="bg-card rounded-none border border-white/10 p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-sm font-semibold text-white">Spreadsheet Data Exports (.CSV)</h3>
@@ -810,11 +828,11 @@
         <span class="text-[11px] font-mono text-zinc-500">CPA Workpaper Exports</span>
       </div>
       <div class="flex items-center gap-3 pt-1 flex-wrap">
-        <a href="/api/v1/export/devices.csv" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-200 border border-white/10 flex items-center gap-1.5 transition-colors">
+        <a href="/api/v1/export/devices.csv" class="px-4 py-2 rounded-none bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-200 border border-white/10 flex items-center gap-1.5 transition-colors">
           <span class="material-symbols-outlined text-[15px] text-zinc-400">table_view</span>
           <span>Download Devices Inventory (.CSV)</span>
         </a>
-        <a href="/api/v1/export/controls.csv" id="csv-controls-link-btn" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-200 border border-white/10 flex items-center gap-1.5 transition-colors">
+        <a href="/api/v1/export/controls.csv" id="csv-controls-link-btn" class="px-4 py-2 rounded-none bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-200 border border-white/10 flex items-center gap-1.5 transition-colors">
           <span class="material-symbols-outlined text-[15px] text-zinc-400">fact_check</span>
           <span>Download Controls Ledger (.CSV)</span>
         </a>
@@ -823,7 +841,7 @@
 
     <!-- Raw Evidence Links -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
+      <div class="bg-card rounded-none p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Raw SOC 2 Evidence JSON</span>
         <p class="text-xs text-zinc-400">Timestamped cryptographic proof payload for automated CPA auditing tools.</p>
         <a href="/api/v1/evidence/soc2" id="raw-evidence-link" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
@@ -832,7 +850,7 @@
         </a>
       </div>
 
-      <div class="bg-card rounded-xl p-4 border border-white/10 space-y-2">
+      <div class="bg-card rounded-none p-4 border border-white/10 space-y-2">
         <span class="text-xs font-semibold text-white">Hardware Asset Export (CC6.1)</span>
         <p class="text-xs text-zinc-400">Structured serial number, OS, and facility location inventory list.</p>
         <a href="/api/v1/devices" id="raw-devices-link" target="_blank" class="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white underline pt-1">
@@ -843,7 +861,7 @@
     </div>
 
     <!-- Legal Terms & Liability Disclaimers -->
-    <div class="bg-card/60 rounded-xl p-5 border border-white/5 space-y-2 text-xs text-zinc-400 leading-relaxed">
+    <div class="bg-card/60 rounded-none p-5 border border-white/5 space-y-2 text-xs text-zinc-400 leading-relaxed">
       <h4 class="font-semibold text-zinc-200">Pure Software Provider Model & Liability Insulation:</h4>
       <p>Roam Fleet Compliance is an automated continuous evidence collection system. We are not a CPA accounting firm and do not issue audit certifications. Official SOC 2 certifications are certified exclusively by independent CPAs. In accordance with the Roam Master Services Agreement, aggregate liability is strictly capped at 12 months of paid fees.</p>
     </div>
@@ -855,31 +873,31 @@
 <!-- ========================================================================= -->
 <!-- MODAL: Policy Full Text Viewer & Sign-Off                                  -->
 <!-- ========================================================================= -->
-<div id="policy-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-  <div class="bg-card w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
+<div id="policy-modal" class="hidden fixed inset-0 z-50 bg-black/80  flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-2xl rounded-none border border-white/10 shadow-2xl p-6 sm:p-8 space-y-5 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/10 pb-4">
       <div>
         <h3 class="text-base font-semibold text-white" id="policy-modal-title">Policy Title</h3>
         <p class="text-xs text-zinc-400" id="policy-modal-category">Category • Version 1.0</p>
       </div>
-      <button onclick="closePolicyModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+      <button onclick="closePolicyModal()" class="w-8 h-8 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
         <span class="material-symbols-outlined text-[18px]">close</span>
       </button>
     </div>
 
-    <div class="bg-black/40 border border-white/5 p-4 rounded-xl font-mono text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto" id="policy-modal-content">
+    <div class="bg-black/40 border border-white/5 p-4 rounded-none font-mono text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto" id="policy-modal-content">
       <!-- Injected -->
     </div>
 
     <div class="flex items-center justify-between pt-3 border-t border-white/5 text-xs flex-wrap gap-2">
       <span class="text-zinc-500" id="policy-modal-status">Status: Draft</span>
       <div class="flex items-center gap-2">
-        <button onclick="downloadCurrentPolicyMd()" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center gap-1 transition-colors" title="Export markdown to local handbook">
+        <button onclick="downloadCurrentPolicyMd()" class="px-3 py-2 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center gap-1 transition-colors" title="Export markdown to local handbook">
           <span class="material-symbols-outlined text-[14px]">download</span>
           <span>Export .md</span>
         </button>
-        <button onclick="closePolicyModal()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
-        <button id="policy-modal-adopt-btn" onclick="adoptCurrentPolicyModal()" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5">
+        <button onclick="closePolicyModal()" class="px-4 py-2 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
+        <button id="policy-modal-adopt-btn" onclick="adoptCurrentPolicyModal()" class="px-4 py-2 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5">
           <span class="material-symbols-outlined text-[15px]">check</span>
           <span>Approve Policy</span>
         </button>
@@ -891,17 +909,17 @@
 <!-- ========================================================================= -->
 <!-- MODAL: Device Details Inspection Drawer                                   -->
 <!-- ========================================================================= -->
-<div id="details-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-  <div class="bg-card w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+<div id="details-modal" class="hidden fixed inset-0 z-50 bg-black/80  flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-2xl rounded-none border border-white/10 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/10 pb-4">
       <div>
         <div class="flex items-center gap-2">
           <h3 class="text-lg font-semibold text-white" id="modal-hostname">inspiron</h3>
-          <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-800 text-zinc-300" id="modal-mode">Workstation</span>
+          <span class="px-2 py-0.5 rounded-none text-[11px] font-mono bg-zinc-800 text-zinc-300" id="modal-mode">Workstation</span>
         </div>
         <p class="text-xs text-zinc-400 font-mono mt-1" id="modal-device-id">UUID: --</p>
       </div>
-      <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+      <button onclick="closeDetailsModal()" class="w-8 h-8 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
         <span class="material-symbols-outlined text-[18px]">close</span>
       </button>
     </div>
@@ -917,7 +935,7 @@
     <!-- Exposed Ports Telemetry -->
     <div class="space-y-3">
       <h4 class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Listening Network Ports</h4>
-      <div class="bg-black/50 rounded-xl border border-white/5 p-3 space-y-1 font-mono text-xs max-h-48 overflow-y-auto" id="modal-ports-list">
+      <div class="bg-black/50 rounded-none border border-white/5 p-3 space-y-1 font-mono text-xs max-h-48 overflow-y-auto" id="modal-ports-list">
         <!-- Injected dynamically -->
       </div>
     </div>
@@ -925,8 +943,8 @@
     <div class="flex justify-between items-center pt-2 border-t border-white/5 text-xs">
       <span class="text-zinc-500" id="modal-last-heartbeat">Last heartbeat: --</span>
       <div class="flex gap-2">
-        <button onclick="closeDetailsModal()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
-        <button onclick="closeDetailsModal(); openRemediationModal(null, activeDevice?.device_id);" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold">Remediate</button>
+        <button onclick="closeDetailsModal()" class="px-4 py-2 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
+        <button onclick="closeDetailsModal(); openRemediationModal(null, activeDevice?.device_id);" class="px-4 py-2 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold">Remediate</button>
       </div>
     </div>
   </div>
@@ -935,11 +953,11 @@
 <!-- ========================================================================= -->
 <!-- MODAL: Multi-OS Assisted Remediation & Lockout Prevention                 -->
 <!-- ========================================================================= -->
-<div id="remediation-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-  <div class="bg-card w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-7 space-y-5">
+<div id="remediation-modal" class="hidden fixed inset-0 z-50 bg-black/80  flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-none border border-white/10 shadow-2xl p-6 sm:p-7 space-y-5">
     <div class="flex items-center justify-between border-b border-white/10 pb-4">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-white/10 text-white flex items-center justify-center">
+        <div class="w-8 h-8 rounded-none bg-zinc-800 border border-white/10 text-white flex items-center justify-center">
           <span class="material-symbols-outlined text-[18px]">terminal</span>
         </div>
         <div>
@@ -947,7 +965,7 @@
           <p class="text-xs text-zinc-400" id="remediation-subtitle">SOC 2 Evidence Remediation Guide</p>
         </div>
       </div>
-      <button onclick="closeRemediationModal()" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
+      <button onclick="closeRemediationModal()" class="w-8 h-8 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center">
         <span class="material-symbols-outlined text-[18px]">close</span>
       </button>
     </div>
@@ -955,24 +973,24 @@
     <p id="remediation-desc" class="text-xs text-zinc-300 leading-relaxed"></p>
 
     <!-- 1-Click Fix CLI Box -->
-    <div class="bg-black/60 border border-white/10 p-4 rounded-xl space-y-2.5 text-xs">
+    <div class="bg-black/60 border border-white/10 p-4 rounded-none space-y-2.5 text-xs">
       <div class="flex items-center justify-between text-zinc-300">
         <span class="font-medium flex items-center gap-1.5 text-white">
           <span class="material-symbols-outlined text-[15px] text-amber-400">terminal</span>
           <span>Run in your terminal:</span>
         </span>
-        <button onclick="copyToClipboard(document.getElementById('remediation-fix-cmd').innerText, this)" class="text-xs text-zinc-300 hover:text-white px-2 py-1 rounded bg-zinc-800 border border-white/10 flex items-center gap-1 transition-colors">
+        <button onclick="copyToClipboard(document.getElementById('remediation-fix-cmd').innerText, this)" class="text-xs text-zinc-300 hover:text-white px-2 py-1 rounded-none bg-zinc-800 border border-white/10 flex items-center gap-1 transition-colors">
           <span class="material-symbols-outlined text-[13px]">content_copy</span>
           <span>Copy</span>
         </button>
       </div>
-      <code id="remediation-fix-cmd" class="block font-mono text-zinc-200 bg-zinc-900/90 p-3 rounded-lg text-xs overflow-x-auto select-all break-all"></code>
+      <code id="remediation-fix-cmd" class="block font-mono text-zinc-200 bg-zinc-900/90 p-3 rounded-none text-xs overflow-x-auto select-all break-all"></code>
       <p class="text-[11px] text-zinc-400 leading-relaxed">
         Applies required security baseline controls (enables default-deny incoming host firewall) and synchronizes verified compliance state with Roam Central.
       </p>
 
       <!-- Statutory Liability & Operational Notice -->
-      <div class="p-2.5 rounded-lg bg-zinc-900/60 border border-white/5 text-[11px] text-zinc-400 space-y-1">
+      <div class="p-2.5 rounded-none bg-zinc-900/60 border border-white/5 text-[11px] text-zinc-400 space-y-1">
         <span class="font-semibold text-zinc-300 flex items-center gap-1">
           <span class="material-symbols-outlined text-[13px] text-zinc-400">gavel</span>
           Administrative Responsibility & Liability Limitation
@@ -997,11 +1015,11 @@
 
     <!-- Action Buttons -->
     <div class="pt-3 border-t border-white/5 flex flex-col sm:flex-row gap-2.5">
-      <button onclick="triggerReAudit(activeDevice?.device_id || 'inspiron', this)" id="modal-verify-btn" class="flex-1 py-3 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs flex items-center justify-center gap-2 shadow transition-all">
+      <button onclick="triggerReAudit(activeDevice?.device_id || 'inspiron', this)" id="modal-verify-btn" class="flex-1 py-3 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold text-xs flex items-center justify-center gap-2 shadow transition-all">
         <span class="material-symbols-outlined text-[17px]">verified</span>
         <span>Verify Fix & Mark Audit-Ready</span>
       </button>
-      <button onclick="closeRemediationModal()" class="py-3 px-5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
+      <button onclick="closeRemediationModal()" class="py-3 px-5 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
         Close
       </button>
     </div>
@@ -1012,26 +1030,26 @@
 <!-- MODAL: Guided 3-Stage Onboarding Wizard                                   -->
 <!-- ========================================================================= -->
 <div id="onboarding-modal" class="hidden fixed inset-0 z-50 bg-[#09090b] flex items-center justify-center p-4 sm:p-6 transition-all duration-200">
-  <div class="bg-card w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6 sm:p-7 space-y-6 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
+  <div class="bg-card w-full max-w-lg rounded-none border border-white/10 shadow-2xl p-6 sm:p-7 space-y-6 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/5 pb-4">
       <div class="flex items-center gap-2.5">
-        <div class="w-7 h-7 rounded-lg bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300">
+        <div class="w-7 h-7 rounded-none bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-300">
           <span class="material-symbols-outlined text-[16px]">shield</span>
         </div>
         <span class="text-xs font-semibold text-white tracking-tight">Organization Setup</span>
       </div>
       <div class="flex items-center gap-2">
         <span id="onboard-step-pill" class="text-xs text-zinc-400 font-mono">Step 1 of 3</span>
-        <button id="onboard-close-btn" onclick="closeOnboardingModal()" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors">
+        <button id="onboard-close-btn" onclick="closeOnboardingModal()" class="w-7 h-7 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-colors">
           <span class="material-symbols-outlined text-[15px]">close</span>
         </button>
       </div>
     </div>
 
     <div class="grid grid-cols-3 gap-2">
-      <div id="wizard-tab-1" class="h-1 rounded-full bg-white transition-all duration-300"></div>
-      <div id="wizard-tab-2" class="h-1 rounded-full bg-zinc-800 transition-all duration-300"></div>
-      <div id="wizard-tab-3" class="h-1 rounded-full bg-zinc-800 transition-all duration-300"></div>
+      <div id="wizard-tab-1" class="h-1 rounded-none bg-white transition-all duration-300"></div>
+      <div id="wizard-tab-2" class="h-1 rounded-none bg-zinc-800 transition-all duration-300"></div>
+      <div id="wizard-tab-3" class="h-1 rounded-none bg-zinc-800 transition-all duration-300"></div>
     </div>
 
     <!-- STAGE 1: Profile -->
@@ -1043,21 +1061,21 @@
       <form onsubmit="handleOnboardingStep1(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1.5">Company or Project Name</label>
-          <input type="text" id="onboard-company-name" required placeholder="Acme Robotics" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+          <input type="text" id="onboard-company-name" required placeholder="Acme Robotics" class="w-full px-3.5 py-2.5 rounded-none bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1.5">Admin / Founder Email</label>
-          <input type="email" id="onboard-founder-email" required placeholder="founder@company.com" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
+          <input type="email" id="onboard-founder-email" required placeholder="founder@company.com" class="w-full px-3.5 py-2.5 rounded-none bg-zinc-900 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1.5">Target Compliance Framework</label>
-          <select id="onboard-framework" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none">
+          <select id="onboard-framework" class="w-full px-3.5 py-2.5 rounded-none bg-zinc-900 border border-white/10 text-xs text-white focus:outline-none">
             <option value="SOC 2 Type II">SOC 2 Type II (Continuous Monitoring)</option>
             <option value="SOC 2 Type I">SOC 2 Type I (Point-in-Time)</option>
             <option value="ISO 27001">ISO 27001</option>
           </select>
         </div>
-        <button type="submit" id="onboard-step1-btn" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+        <button type="submit" id="onboard-step1-btn" class="w-full py-2.5 px-4 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
           <span>Continue</span>
           <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
         </button>
@@ -1072,7 +1090,7 @@
       </div>
 
       <div id="handshake-ready-state" class="space-y-4">
-        <div class="bg-black/40 border border-white/5 p-3.5 rounded-xl space-y-2">
+        <div class="bg-black/40 border border-white/5 p-3.5 rounded-none space-y-2">
           <div class="flex items-center justify-between text-xs text-zinc-300">
             <span class="font-medium">Run in terminal:</span>
             <button onclick="copyToClipboard(document.getElementById('ws-enroll-code').innerText, this)" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
@@ -1080,9 +1098,9 @@
               <span>Copy</span>
             </button>
           </div>
-          <code id="ws-enroll-code" class="block font-mono text-[11px] text-zinc-300 bg-zinc-900/90 p-2.5 rounded-lg overflow-x-auto select-all leading-relaxed whitespace-pre-wrap"></code>
+          <code id="ws-enroll-code" class="block font-mono text-[11px] text-zinc-300 bg-zinc-900/90 p-2.5 rounded-none overflow-x-auto select-all leading-relaxed whitespace-pre-wrap"></code>
         </div>
-        <button onclick="triggerLiveTrustScan()" class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+        <button onclick="triggerLiveTrustScan()" class="w-full py-2.5 px-4 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
           <span>Connect Machine & Verify</span>
           <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
         </button>
@@ -1094,7 +1112,7 @@
           <span class="text-zinc-300 font-medium" id="scan-status-title">Checking device posture...</span>
           <span class="font-mono text-zinc-400" id="scan-progress-num">0%</span>
         </div>
-        <div class="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+        <div class="w-full h-1.5 rounded-none bg-zinc-800 overflow-hidden">
           <div id="scan-progress-bar" class="h-full bg-white transition-all duration-300 w-0"></div>
         </div>
         <div class="space-y-2 text-xs text-zinc-400 pt-1" id="diag-steps-list">
@@ -1116,7 +1134,7 @@
 
     <!-- STAGE 3: Completed -->
     <div id="wizard-step-3" class="hidden space-y-5 text-center py-2">
-      <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
+      <div class="w-12 h-12 rounded-none bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
         <span class="material-symbols-outlined text-[24px]">check</span>
       </div>
       <div class="space-y-1">
@@ -1124,7 +1142,7 @@
         <p class="text-xs text-zinc-400 max-w-sm mx-auto">Your workspace is connected to the continuous SOC 2 audit vault.</p>
       </div>
 
-      <div class="bg-black/40 border border-white/5 p-4 rounded-xl space-y-2 text-left max-w-sm mx-auto">
+      <div class="bg-black/40 border border-white/5 p-4 rounded-none space-y-2 text-left max-w-sm mx-auto">
         <div class="flex items-center justify-between text-xs text-zinc-400">
           <span>Enrolled Node</span>
           <span class="text-white font-medium font-mono text-[11px]" id="success-hostname">inspiron</span>
@@ -1135,7 +1153,7 @@
         </div>
       </div>
 
-      <button onclick="completeOnboardingAndLaunch()" class="w-full max-w-sm mx-auto py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+      <button onclick="completeOnboardingAndLaunch()" class="w-full max-w-sm mx-auto py-2.5 px-4 rounded-none bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
         <span>Go to Dashboard</span>
       </button>
     </div>
@@ -1145,12 +1163,12 @@
 <!-- ========================================================================= -->
 <!-- MODAL: Add / Register Node Modal                                          -->
 <!-- ========================================================================= -->
-<div id="add-node-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-200">
-  <div class="bg-card w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl p-6 space-y-5 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
+<div id="add-node-modal" class="hidden fixed inset-0 z-50 bg-black/80  flex items-center justify-center p-4 transition-all duration-200">
+  <div class="bg-card w-full max-w-lg rounded-none border border-white/10 shadow-2xl p-6 space-y-5 relative text-zinc-100 max-h-[92vh] overflow-y-auto">
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-white/5 pb-4">
       <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+        <div class="w-8 h-8 rounded-none bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
           <span class="material-symbols-outlined text-[18px]">add_circle</span>
         </div>
         <div>
@@ -1158,17 +1176,17 @@
           <p class="text-xs text-zinc-400">Register workstations, edge computers, or autonomous robotics nodes</p>
         </div>
       </div>
-      <button onclick="closeAddNodeModal()" class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+      <button onclick="closeAddNodeModal()" class="w-7 h-7 rounded-none hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
         <span class="material-symbols-outlined text-[18px]">close</span>
       </button>
     </div>
 
     <!-- Mode Selector Tabs -->
-    <div class="flex rounded-xl bg-zinc-900 p-1 border border-white/5 text-xs">
-      <button type="button" onclick="switchAddNodeTab('manual')" id="addnode-tab-manual" class="flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors">
+    <div class="flex rounded-none bg-zinc-900 p-1 border border-white/5 text-xs">
+      <button type="button" onclick="switchAddNodeTab('manual')" id="addnode-tab-manual" class="flex-1 py-1.5 rounded-none bg-zinc-800 text-white font-medium transition-colors">
         Manual Quick-Add
       </button>
-      <button type="button" onclick="switchAddNodeTab('terminal')" id="addnode-tab-terminal" class="flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors">
+      <button type="button" onclick="switchAddNodeTab('terminal')" id="addnode-tab-terminal" class="flex-1 py-1.5 rounded-none text-zinc-400 hover:text-white transition-colors">
         1-Line Terminal Setup
       </button>
     </div>
@@ -1177,31 +1195,31 @@
     <form id="addnode-form" onsubmit="submitAddNode(event)" class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-zinc-300 mb-1">Hostname / Machine Name</label>
-        <input type="text" id="addnode-hostname" required placeholder="e.g. amr-boulder-05 or dev-thinkpad-x1" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
+        <input type="text" id="addnode-hostname" required placeholder="e.g. amr-boulder-05 or dev-thinkpad-x1" class="w-full px-3 py-2 rounded-none bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1">Node Type</label>
-          <select id="addnode-mode" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
+          <select id="addnode-mode" class="w-full px-3 py-2 rounded-none bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
             <option value="workstation">Developer Workstation</option>
             <option value="robot">Robot / Edge Node (ROS 2)</option>
           </select>
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1">Facility / Fleet Tag</label>
-          <input type="text" id="addnode-tag" placeholder="e.g. warehouse-amr, dev-laptops" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
+          <input type="text" id="addnode-tag" placeholder="e.g. warehouse-amr, dev-laptops" class="w-full px-3 py-2 rounded-none bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 font-mono" />
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1">Assigned Owner Email</label>
-          <input type="email" id="addnode-email" placeholder="aldentmcqueen@gmail.com" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
+          <input type="email" id="addnode-email" placeholder="aldentmcqueen@gmail.com" class="w-full px-3 py-2 rounded-none bg-zinc-950 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500" />
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-300 mb-1">Initial Compliance Posture</label>
-          <select id="addnode-posture" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
+          <select id="addnode-posture" class="w-full px-3 py-2 rounded-none bg-zinc-950 border border-white/10 text-xs text-zinc-300 focus:outline-none focus:border-blue-500">
             <option value="compliant">Compliant (All Controls Passing)</option>
             <option value="non_compliant">Action Required (Flagged Baseline)</option>
           </select>
@@ -1209,10 +1227,10 @@
       </div>
 
       <div class="pt-2 flex items-center justify-end gap-2 border-t border-white/5">
-        <button type="button" onclick="closeAddNodeModal()" class="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 transition-colors">
+        <button type="button" onclick="closeAddNodeModal()" class="px-4 py-2 rounded-none bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 transition-colors">
           Cancel
         </button>
-        <button type="submit" id="addnode-submit-btn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+        <button type="submit" id="addnode-submit-btn" class="px-5 py-2 rounded-none bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
           <span class="material-symbols-outlined text-[16px]">save</span>
           <span>Register Node</span>
         </button>
@@ -1225,17 +1243,17 @@
       
       <div class="space-y-1.5">
         <div class="text-[11px] text-zinc-400 font-mono">Option A: Quick 1-Shot Audit (Read-Only)</div>
-        <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-emerald-400 flex items-center justify-between gap-2">
+        <div class="bg-black/60 border border-white/5 rounded-none p-3 font-mono text-xs text-emerald-400 flex items-center justify-between gap-2">
           <span class="select-all overflow-x-auto">curl -sSL https://roamcompliance.com/audit.py | python3</span>
-          <button onclick="copyToClipboard('curl -sSL https://roamcompliance.com/audit.py | python3', this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
+          <button onclick="copyToClipboard('curl -sSL https://roamcompliance.com/audit.py | python3', this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-none text-[11px] shrink-0">Copy</button>
         </div>
       </div>
 
       <div class="space-y-1.5 pt-2">
         <div class="text-[11px] text-zinc-400 font-mono">Option B: Continuous Background Agent (systemd service)</div>
-        <div class="bg-black/60 border border-white/5 rounded-xl p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2" id="addnode-continuous-cmd">
+        <div class="bg-black/60 border border-white/5 rounded-none p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2" id="addnode-continuous-cmd">
           <span class="select-all overflow-x-auto" id="addnode-continuous-span">curl -sSL "https://roamcompliance.com/install.sh" | sudo bash</span>
-          <button onclick="copyToClipboard(document.getElementById('addnode-continuous-span').innerText, this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-[11px] shrink-0">Copy</button>
+          <button onclick="copyToClipboard(document.getElementById('addnode-continuous-span').innerText, this)" class="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-none text-[11px] shrink-0">Copy</button>
         </div>
       </div>
     </div>
@@ -1296,7 +1314,6 @@ function animateMeter(targetPct) {
   const gaugeArc = document.getElementById("gauge-arc");
   const gaugePercent = document.getElementById("gauge-percent");
   const gaugeLabel = document.getElementById("gauge-label");
-  const glowEl = document.getElementById("m3-celebrate-glow");
   
   const circumference = 339.29; // 2 * pi * 54
   const targetOffset = circumference - (circumference * targetPct / 100);
@@ -1310,21 +1327,13 @@ function animateMeter(targetPct) {
     gaugeArc.style.strokeDashoffset = targetOffset;
   }
 
-  if (glowEl) {
-    if (targetPct === 100) {
-      glowEl.classList.add("m3-glow-active");
-    } else {
-      glowEl.classList.remove("m3-glow-active");
-    }
-  }
-
   if (gaugeLabel) {
     if (targetPct === 100) {
       gaugeLabel.innerText = "Audit Ready";
-      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-none text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
     } else {
       gaugeLabel.innerText = "Action Req.";
-      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400";
+      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-none text-[10px] font-semibold tracking-wider uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400";
     }
   }
 
@@ -1568,28 +1577,28 @@ function updateScopeUI(scope) {
   const applyPillState = (btnWs, btnFl, pill, text) => {
     if (isWsOnly) {
       if (btnWs) {
-        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
+        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
       }
       if (btnFl) {
-        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
+        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
       }
       if (pill) {
         pill.innerText = "Workstations Only";
-        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
+        pill.className = "px-2 py-0.5 rounded-none text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
       }
       if (text) {
         text.innerText = "Developer workstations in SOC 2 audit scope. Physical robotics in CC6.1 inventory.";
       }
     } else {
       if (btnFl) {
-        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
+        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
       }
       if (btnWs) {
-        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
+        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-none text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
       }
       if (pill) {
         pill.innerText = "Full Fleet (Robots + Workstations)";
-        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
+        pill.className = "px-2 py-0.5 rounded-none text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
       }
       if (text) {
         text.innerText = "Workstations and robotics edge nodes both evaluated for SOC 2 compliance.";
@@ -1606,10 +1615,10 @@ function updateScopeUI(scope) {
   if (roboticsBadge) {
     if (isWsOnly) {
       roboticsBadge.innerText = "Asset Inventory (CC6.1)";
-      roboticsBadge.className = "px-2 py-0.5 rounded text-[10px] font-mono bg-card-subtle text-zinc-400 border border-borderline";
+      roboticsBadge.className = "px-2 py-0.5 rounded-none text-[10px] font-mono bg-card-subtle text-zinc-400 border border-borderline";
     } else {
       roboticsBadge.innerText = "SOC 2 In-Scope";
-      roboticsBadge.className = "px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      roboticsBadge.className = "px-2 py-0.5 rounded-none text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
     }
   }
 }
@@ -1756,21 +1765,21 @@ function renderDashboard(devices) {
 
   if (totalInScope === 0) {
     if (heroBadge) heroBadge.innerText = "Setup Required";
-    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-none bg-amber-400 ";
     if (heroHeadline) heroHeadline.innerText = "No In-Scope Devices Enrolled";
     if (heroSubtext) heroSubtext.innerText = "Connect an engineer workstation or edge node to establish continuous SOC 2 evidence.";
     if (heroBtnLabel) heroBtnLabel.innerText = "Enroll Workstation";
     if (heroFixBtn) heroFixBtn.onclick = () => openOnboardingModal();
   } else if (failing.length === 0) {
     if (heroBadge) heroBadge.innerText = "Continuous SOC 2 Verified";
-    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-none bg-emerald-400";
     if (heroHeadline) heroHeadline.innerHTML = `<span class="text-emerald-500 font-bold">${totalInScope} of ${totalInScope} Compliant</span>`;
     if (heroSubtext) heroSubtext.innerText = "All in-scope assets pass active SOC 2 security controls.";
     if (heroBtnLabel) heroBtnLabel.innerText = "Verify Posture";
     if (heroFixBtn) heroFixBtn.onclick = () => triggerReAudit(activeDevice?.device_id);
   } else {
     if (heroBadge) heroBadge.innerText = "Action Needed";
-    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-amber-400/90 animate-pulse";
+    if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-none bg-amber-400/90 ";
     if (heroHeadline) heroHeadline.innerHTML = `<span class="text-white">${failing.length} ${failing.length === 1 ? 'Asset Requires' : 'Assets Require'} Attention</span>`;
     if (heroSubtext) heroSubtext.innerText = `${passing.length} of ${totalInScope} devices satisfy SOC 2 requirements.`;
     if (heroBtnLabel) heroBtnLabel.innerText = failing.length === 1 ? "Fix Flagged Device" : "Fix Flagged Items";
@@ -1851,17 +1860,17 @@ function renderChecklist(inScopeDevices) {
   if (pill) {
     pill.innerText = `${totalPassed} / 5 Verified`;
     pill.className = totalPassed === 5
-      ? "px-2 py-0.2 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-      : "px-2 py-0.2 rounded-full text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      ? "px-2 py-0.2 rounded-none text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+      : "px-2 py-0.2 rounded-none text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20";
   }
 
   container.innerHTML = "";
   checklist.forEach(item => {
     const card = document.createElement("div");
-    card.className = "bg-card-subtle p-3 rounded-xl border border-white/5 flex items-center justify-between gap-2.5";
+    card.className = "bg-card-subtle p-3 rounded-none border border-white/5 flex items-center justify-between gap-2.5";
     card.innerHTML = `
       <div class="flex items-center gap-2.5 min-w-0">
-        <span class="w-6 h-6 rounded-full ${item.passed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'} flex items-center justify-center shrink-0">
+        <span class="w-6 h-6 rounded-none ${item.passed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'} flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined text-[14px]">${item.passed ? 'check' : 'priority_high'}</span>
         </span>
         <div class="min-w-0">
@@ -1872,7 +1881,7 @@ function renderChecklist(inScopeDevices) {
           <p class="text-[11px] text-zinc-400 truncate mt-0.5">${item.desc}</p>
         </div>
       </div>
-      <button onclick="${item.action}" class="px-2.5 py-1 rounded-md text-[11px] font-medium ${item.passed ? 'text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700' : 'text-black bg-white hover:bg-zinc-200 font-semibold'} transition-colors shrink-0">
+      <button onclick="${item.action}" class="px-2.5 py-1 rounded-none text-[11px] font-medium ${item.passed ? 'text-zinc-400 hover:text-white bg-zinc-800/80 hover:bg-zinc-700' : 'text-black bg-white hover:bg-zinc-200 font-semibold'} transition-colors shrink-0">
         ${item.passed ? 'View' : 'Fix'}
       </button>
     `;
@@ -1926,10 +1935,10 @@ function renderActionItems(failing) {
     }
 
     const card = document.createElement("div");
-    card.className = "bg-card rounded-xl p-4 sm:p-5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4";
+    card.className = "bg-card rounded-none p-4 sm:p-5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4";
     card.innerHTML = `
       <div class="flex items-start sm:items-center gap-3.5">
-        <div class="w-9 h-9 rounded-lg bg-zinc-800/80 border border-white/5 text-zinc-300 flex items-center justify-center shrink-0">
+        <div class="w-9 h-9 rounded-none bg-zinc-800/80 border border-white/5 text-zinc-300 flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined text-[19px]">${icon}</span>
         </div>
         <div>
@@ -1937,17 +1946,17 @@ function renderActionItems(failing) {
             <span class="font-medium text-white text-sm">${primaryIssue}</span>
             <span class="text-zinc-600 text-xs">•</span>
             <span class="text-zinc-400 font-mono text-xs">${dev.hostname}</span>
-            <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">${typeLabel}</span>
+            <span class="px-1.5 py-0.2 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">${typeLabel}</span>
           </div>
           <p class="text-xs text-zinc-400 mt-0.5 leading-relaxed">${explanation}</p>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-        <button onclick="triggerReAudit('${dev.device_id}', this)" class="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm" title="Re-check fix and mark audit-ready">
+        <button onclick="triggerReAudit('${dev.device_id}', this)" class="px-3 py-1.5 rounded-none border border-white/10 hover:border-white/20 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm" title="Re-check fix and mark audit-ready">
           <span class="material-symbols-outlined text-[15px]">refresh</span>
           <span>Re-Check</span>
         </button>
-        <button onclick="openRemediationModal('${targetControl}', '${dev.device_id}')" class="px-3.5 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+        <button onclick="openRemediationModal('${targetControl}', '${dev.device_id}')" class="px-3.5 py-1.5 rounded-none bg-white hover:bg-zinc-200 text-black text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
           <span>${btnLabel}</span>
           <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
         </button>
@@ -1966,9 +1975,9 @@ function setFilterStatus(status) {
     const btn = document.getElementById(`filter-status-${s}`);
     if (btn) {
       if (s === status) {
-        btn.className = "px-2.5 py-1 rounded bg-zinc-800 text-white font-medium transition-colors";
+        btn.className = "px-2.5 py-1 rounded-none bg-zinc-800 text-white font-medium transition-colors";
       } else {
-        btn.className = "px-2.5 py-1 rounded text-zinc-400 hover:text-white transition-colors";
+        btn.className = "px-2.5 py-1 rounded-none text-zinc-400 hover:text-white transition-colors";
       }
     }
   });
@@ -2028,13 +2037,13 @@ function renderFilteredDevicesTables(workstations, robots) {
         row.className = "px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#252525] transition-colors border-b border-borderline last:border-b-0";
         row.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
+            <div class="w-8 h-8 rounded-none bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
               <span class="material-symbols-outlined text-[16px]">laptop_mac</span>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-semibold text-zinc-100 font-mono">${w.hostname}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">Workstation</span>
+                <span class="px-2 py-0.5 rounded-none text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">Workstation</span>
                 <span class="text-[11px] text-zinc-400">${w.os_distro || 'Linux'} ${w.os_version || ''}</span>
               </div>
               <div class="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
@@ -2047,18 +2056,18 @@ function renderFilteredDevicesTables(workstations, robots) {
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium mr-1 ${isPass ? 'bg-[#1c3829] text-[#4dab78] border border-[#265339]' : 'bg-[#382424] text-[#d44c47] border border-[#4d2828]'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isPass ? 'bg-[#4dab78]' : 'bg-[#d44c47]'}"></span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none text-[11px] font-medium mr-1 ${isPass ? 'bg-[#1c3829] text-[#4dab78] border border-[#265339]' : 'bg-[#382424] text-[#d44c47] border border-[#4d2828]'}">
+              <span class="w-1.5 h-1.5 rounded-none ${isPass ? 'bg-[#4dab78]' : 'bg-[#d44c47]'}"></span>
               <span>${isPass ? 'Compliant' : 'Action Required'}</span>
             </span>
-            <button onclick="triggerReAudit('${w.device_id}', this)" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors flex items-center gap-1" title="Re-run security checks">
+            <button onclick="triggerReAudit('${w.device_id}', this)" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded-none bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors flex items-center gap-1" title="Re-run security checks">
               <span class="material-symbols-outlined text-[13px]">refresh</span>
               <span>Check</span>
             </button>
-            <button onclick="openDetailsModal('${w.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors">
+            <button onclick="openDetailsModal('${w.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded-none bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors">
               Inspect
             </button>
-            <button onclick="deleteNode('${w.device_id}', '${w.hostname}')" class="px-2 py-1 text-xs text-[#d44c47] hover:text-[#f87171] rounded bg-[#2a1e1e] hover:bg-[#382424] border border-[#4d2828] transition-colors flex items-center gap-1" title="Remove workstation from fleet">
+            <button onclick="deleteNode('${w.device_id}', '${w.hostname}')" class="px-2 py-1 text-xs text-[#d44c47] hover:text-[#f87171] rounded-none bg-[#2a1e1e] hover:bg-[#382424] border border-[#4d2828] transition-colors flex items-center gap-1" title="Remove workstation from fleet">
               <span class="material-symbols-outlined text-[13px]">delete</span>
               <span class="hidden sm:inline">Remove</span>
             </button>
@@ -2086,14 +2095,14 @@ function renderFilteredDevicesTables(workstations, robots) {
         row.className = "px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#252525] transition-colors border-b border-borderline last:border-b-0";
         row.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
+            <div class="w-8 h-8 rounded-none bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
               <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-semibold text-zinc-100 font-mono">${r.hostname}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#2b1f3d] text-[#9d68d3] border border-[#3f2b5c]">Robotics Node</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-[#252525] text-zinc-400 border border-[#333333]">${r.fleet_tag || 'facility'}</span>
+                <span class="px-2 py-0.5 rounded-none text-[10px] font-medium bg-[#2b1f3d] text-[#9d68d3] border border-[#3f2b5c]">Robotics Node</span>
+                <span class="px-1.5 py-0.2 rounded-none text-[10px] font-mono bg-[#252525] text-zinc-400 border border-[#333333]">${r.fleet_tag || 'facility'}</span>
                 <span class="text-[11px] text-zinc-400 font-mono">${r.os_distro || 'Linux'} (${r.os_version || 'RT'})</span>
               </div>
               <div class="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
@@ -2104,14 +2113,14 @@ function renderFilteredDevicesTables(workstations, robots) {
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-medium mr-1 ${isPass ? 'bg-[#1c3829] text-[#4dab78] border border-[#265339]' : 'bg-[#382424] text-[#d44c47] border border-[#4d2828]'}">
-              <span class="w-1.5 h-1.5 rounded-full ${isPass ? 'bg-[#4dab78]' : 'bg-[#d44c47]'}"></span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-none text-[11px] font-medium mr-1 ${isPass ? 'bg-[#1c3829] text-[#4dab78] border border-[#265339]' : 'bg-[#382424] text-[#d44c47] border border-[#4d2828]'}">
+              <span class="w-1.5 h-1.5 rounded-none ${isPass ? 'bg-[#4dab78]' : 'bg-[#d44c47]'}"></span>
               <span>${isPass ? 'Inventory Verified' : 'Port Flagged'}</span>
             </span>
-            <button onclick="openDetailsModal('${r.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors">
+            <button onclick="openDetailsModal('${r.device_id}')" class="px-2.5 py-1 text-xs text-zinc-300 hover:text-white rounded-none bg-[#2a2a2a] hover:bg-[#323232] border border-[#383838] transition-colors">
               Inspect
             </button>
-            <button onclick="deleteNode('${r.device_id}', '${r.hostname}')" class="px-2 py-1 text-xs text-[#d44c47] hover:text-[#f87171] rounded bg-[#2a1e1e] hover:bg-[#382424] border border-[#4d2828] transition-colors flex items-center gap-1" title="Remove robot from fleet">
+            <button onclick="deleteNode('${r.device_id}', '${r.hostname}')" class="px-2 py-1 text-xs text-[#d44c47] hover:text-[#f87171] rounded-none bg-[#2a1e1e] hover:bg-[#382424] border border-[#4d2828] transition-colors flex items-center gap-1" title="Remove robot from fleet">
               <span class="material-symbols-outlined text-[13px]">delete</span>
               <span class="hidden sm:inline">Remove</span>
             </button>
@@ -2153,12 +2162,12 @@ async function loadPolicies() {
     activePolicies.forEach(pol => {
       const isAdopted = pol.status === "adopted";
       const card = document.createElement("div");
-      card.className = "bg-card rounded-2xl border border-white/10 p-5 space-y-4 flex flex-col justify-between";
+      card.className = "bg-card rounded-none border border-white/10 p-5 space-y-4 flex flex-col justify-between";
       card.innerHTML = `
         <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-white/5">${pol.category}</span>
-            <span class="px-2 py-0.5 rounded text-[10px] font-mono ${isAdopted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+            <span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-300 border border-white/5">${pol.category}</span>
+            <span class="px-2 py-0.5 rounded-none text-[10px] font-mono ${isAdopted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
               ${isAdopted ? 'APPROVED & ACTIVE' : 'DRAFT'}
             </span>
           </div>
@@ -2176,11 +2185,11 @@ async function loadPolicies() {
             `}
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openPolicyModal('${pol.policy_key}')" class="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
+            <button onclick="openPolicyModal('${pol.policy_key}')" class="px-3 py-1.5 rounded-none bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium transition-colors">
               Read
             </button>
             ${!isAdopted ? `
-              <button onclick="adoptPolicy('${pol.policy_key}', this)" class="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold transition-colors flex items-center gap-1">
+              <button onclick="adoptPolicy('${pol.policy_key}', this)" class="px-3 py-1.5 rounded-none bg-white hover:bg-zinc-200 text-black text-xs font-semibold transition-colors flex items-center gap-1">
                 <span class="material-symbols-outlined text-[13px]">check</span>
                 <span>Approve</span>
               </button>
@@ -2307,10 +2316,10 @@ async function loadTeamUsers() {
       row.className = "p-4 flex items-center justify-between hover:bg-white/[0.01] transition-colors gap-3";
 
       const roleBadges = {
-        admin: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white text-black font-semibold">ADMIN</span>',
-        security_officer: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-200 border border-white/10">SECURITY</span>',
-        auditor: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">AUDITOR (CPA)</span>',
-        engineer: '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-white/5">ENGINEER</span>',
+        admin: '<span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-white text-black font-semibold">ADMIN</span>',
+        security_officer: '<span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-200 border border-white/10">SECURITY</span>',
+        auditor: '<span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">AUDITOR (CPA)</span>',
+        engineer: '<span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-white/5">ENGINEER</span>',
       };
       const badge = roleBadges[u.role] || roleBadges.engineer;
 
@@ -2319,8 +2328,8 @@ async function loadTeamUsers() {
         const isPass = u.device_posture === 'compliant';
         const dotColor = isPass ? 'bg-emerald-400' : 'bg-amber-400/80';
         deviceHtml = `
-          <div class="flex items-center gap-1.5 text-zinc-300 bg-zinc-900/80 px-2.5 py-1 rounded-lg border border-white/5 font-mono text-[11px]">
-            <span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span>
+          <div class="flex items-center gap-1.5 text-zinc-300 bg-zinc-900/80 px-2.5 py-1 rounded-none border border-white/5 font-mono text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-none ${dotColor}"></span>
             <span>${u.device_hostname}</span>
           </div>
         `;
@@ -2330,12 +2339,12 @@ async function loadTeamUsers() {
 
       const isCurrent = currentSessionUser && u.email && u.email.toLowerCase() === currentSessionUser.email.toLowerCase();
       const deleteBtn = isCurrent
-        ? `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">You</span>`
-        : `<button onclick="deleteTeamUser('${u.id}', '${(u.name || u.email).replace(/'/g, "\\'")}')" class="text-zinc-500 hover:text-red-400 px-2 py-1 rounded hover:bg-red-500/10 transition-colors flex items-center gap-1 text-[11px]" title="Remove member"><span class="material-symbols-outlined text-[15px]">delete</span><span>Remove</span></button>`;
+        ? `<span class="px-2 py-0.5 rounded-none text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-white/5">You</span>`
+        : `<button onclick="deleteTeamUser('${u.id}', '${(u.name || u.email).replace(/'/g, "\\'")}')" class="text-zinc-500 hover:text-red-400 px-2 py-1 rounded-none hover:bg-red-500/10 transition-colors flex items-center gap-1 text-[11px]" title="Remove member"><span class="material-symbols-outlined text-[15px]">delete</span><span>Remove</span></button>`;
 
       row.innerHTML = `
         <div class="flex items-center gap-3.5 min-w-0">
-          <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 text-zinc-300 flex items-center justify-center font-medium text-xs shrink-0">
+          <div class="w-8 h-8 rounded-none bg-zinc-800 border border-white/10 text-zinc-300 flex items-center justify-center font-medium text-xs shrink-0">
             ${(u.name || 'U').charAt(0).toUpperCase()}
           </div>
           <div class="min-w-0">
@@ -2774,7 +2783,7 @@ function renderRemediationContent() {
     if (platformData && platformData.steps) {
       platformData.steps.forEach(step => {
         const stepDiv = document.createElement("div");
-        stepDiv.className = "bg-black/60 rounded-xl border border-white/5 p-3 space-y-2";
+        stepDiv.className = "bg-black/60 rounded-none border border-white/5 p-3 space-y-2";
         stepDiv.innerHTML = `
           <div class="flex items-center justify-between text-[11px] text-zinc-300">
             <span class="font-medium">${step.title}:</span>
@@ -2783,7 +2792,7 @@ function renderRemediationContent() {
               <span>Copy</span>
             </button>
           </div>
-          <pre class="font-mono text-white text-xs bg-zinc-900 p-2.5 rounded-lg overflow-x-auto select-all leading-relaxed whitespace-pre-wrap">${step.code}</pre>
+          <pre class="font-mono text-white text-xs bg-zinc-900 p-2.5 rounded-none overflow-x-auto select-all leading-relaxed whitespace-pre-wrap">${step.code}</pre>
         `;
         stepsContainer.appendChild(stepDiv);
       });
@@ -2881,14 +2890,14 @@ function openDetailsModal(idOrIdx) {
     const isPass = item.status === "pass";
     const badgeColor = isPass ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-zinc-300 bg-zinc-800 border-zinc-700/60";
     const div = document.createElement("div");
-    div.className = "bg-black/30 p-2.5 rounded-lg border border-white/5 flex items-center justify-between";
+    div.className = "bg-black/30 p-2.5 rounded-none border border-white/5 flex items-center justify-between";
     div.innerHTML = `
       <div>
         <p class="text-zinc-300 font-medium">${item.name}</p>
         <p class="text-[11px] text-zinc-500">${item.detail}</p>
       </div>
       <div class="flex items-center gap-2">
-        <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeColor}">${item.status.toUpperCase()}</span>
+        <span class="px-2 py-0.5 rounded-none text-[10px] font-mono border ${badgeColor}">${item.status.toUpperCase()}</span>
         ${!isPass ? `<button onclick="closeDetailsModal(); openRemediationModal('${item.id}', activeDevice?.device_id)" class="text-xs text-white hover:underline">Fix</button>` : ''}
       </div>
     `;
@@ -2908,7 +2917,7 @@ function openDetailsModal(idOrIdx) {
       div.className = "flex items-center justify-between py-1 border-b border-white/5 last:border-0";
       div.innerHTML = `
         <span class="text-zinc-300">${p.proto.toUpperCase()} port ${p.port} (${p.ip})</span>
-        <span class="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700/60 font-mono">WILDCARD EXPOSED</span>
+        <span class="text-[10px] text-zinc-400 bg-zinc-800 px-1.5 py-0.5 rounded-none border border-zinc-700/60 font-mono">WILDCARD EXPOSED</span>
       `;
       portsList.appendChild(div);
     });
@@ -2959,7 +2968,7 @@ function setWizardStep(step) {
     const tab = document.getElementById(`wizard-tab-${i}`);
     const page = document.getElementById(`wizard-step-${i}`);
     if (tab) {
-      tab.className = i <= step ? "h-1 rounded-full bg-white transition-all duration-300" : "h-1 rounded-full bg-zinc-800 transition-all duration-300";
+      tab.className = i <= step ? "h-1 rounded-none bg-white transition-all duration-300" : "h-1 rounded-none bg-zinc-800 transition-all duration-300";
     }
     if (page) {
       if (i === step) page.classList.remove("hidden");
@@ -3147,13 +3156,13 @@ function switchAddNodeTab(tab) {
   const terminal = document.getElementById("addnode-terminal-pane");
 
   if (tab === "manual") {
-    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors";
-    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors";
+    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-none bg-zinc-800 text-white font-medium transition-colors";
+    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-none text-zinc-400 hover:text-white transition-colors";
     if (form) form.classList.remove("hidden");
     if (terminal) terminal.classList.add("hidden");
   } else {
-    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-colors";
-    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-lg bg-zinc-800 text-white font-medium transition-colors";
+    if (manualBtn) manualBtn.className = "flex-1 py-1.5 rounded-none text-zinc-400 hover:text-white transition-colors";
+    if (terminalBtn) terminalBtn.className = "flex-1 py-1.5 rounded-none bg-zinc-800 text-white font-medium transition-colors";
     if (form) form.classList.add("hidden");
     if (terminal) terminal.classList.remove("hidden");
   }
