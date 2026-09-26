@@ -40,6 +40,12 @@ class TestServerAndAgentIntegration(unittest.TestCase):
         cls.server.server_close()
         cls.temp_dir.cleanup()
 
+    def setUp(self):
+        with self.db.connection() as conn:
+            conn.execute("DELETE FROM devices;")
+            conn.execute("DELETE FROM telemetry_records;")
+            conn.commit()
+
     def test_health_check(self):
         req = urllib.request.Request(f"{self.api_url}/api/v1/health")
         with urllib.request.urlopen(req) as resp:
