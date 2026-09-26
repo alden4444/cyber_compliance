@@ -1,9 +1,26 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>ROAM // Fleet Cyber Compliance & Continuous SOC 2</title>
+<script>
+  // Instant Theme Initializer to prevent visual flash
+  (function() {
+    try {
+      const saved = localStorage.getItem("roam_theme");
+      if (saved === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
+      }
+    } catch (e) {
+      document.documentElement.classList.add("light");
+    }
+  })();
+</script>
 <!-- Google Fonts: Inter & JetBrains Mono -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -21,24 +38,110 @@
           mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
         },
         colors: {
-          obsidian: '#191919',
-          card: '#202020',
-          'card-subtle': '#252525',
-          borderline: '#2e2e2e',
+          canvas: 'var(--bg-canvas)',
+          obsidian: 'var(--bg-canvas)',
+          card: 'var(--bg-card)',
+          'card-subtle': 'var(--bg-card-subtle)',
+          'card-hover': 'var(--bg-card-hover)',
+          borderline: 'var(--borderline)',
+          'borderline-strong': 'var(--borderline-strong)',
         }
       }
     }
   }
 </script>
 <style>
+  :root {
+    --bg-canvas: #ffffff;
+    --bg-card: #f7f7f5;
+    --bg-card-subtle: #f1f1ef;
+    --bg-card-hover: #ebeae7;
+    --bg-input: #ffffff;
+    --bg-inset: #f1f1ef;
+    --borderline: #e3e2e0;
+    --borderline-strong: #d3d1cb;
+    --borderline-subtle: #eeedea;
+    --text-primary: #37352f;
+    --text-secondary: #5f5e5b;
+    --text-muted: #787774;
+    --text-dim: #9b9a97;
+    --header-bg: rgba(255, 255, 255, 0.96);
+    --btn-secondary-bg: #f1f1ef;
+    --btn-secondary-hover: #ebeae7;
+    --btn-secondary-border: #e3e2e0;
+    --code-bg: #f1f1ef;
+    --code-border: #e3e2e0;
+    --meter-track: #e3e2e0;
+    --scope-active-bg: #ffffff;
+    --scope-active-text: #37352f;
+    --scope-active-border: #d3d1cb;
+    --pill-green-bg: #e6f4ea;
+    --pill-green-text: #137333;
+    --pill-green-border: #ceead6;
+    --pill-red-bg: #fce8e6;
+    --pill-red-text: #c5221f;
+    --pill-red-border: #fad2cf;
+    --pill-blue-bg: #e8f0fe;
+    --pill-blue-text: #1967d2;
+    --pill-blue-border: #d2e3fc;
+    --dropdown-bg: #ffffff;
+    --modal-bg: #ffffff;
+  }
+
+  html.dark {
+    --bg-canvas: #191919;
+    --bg-card: #202020;
+    --bg-card-subtle: #252525;
+    --bg-card-hover: #2a2a2a;
+    --bg-input: #141414;
+    --bg-inset: #141414;
+    --borderline: #2e2e2e;
+    --borderline-strong: #3e3e3e;
+    --borderline-subtle: #252525;
+    --text-primary: #e3e2e0;
+    --text-secondary: #c7c6c4;
+    --text-muted: #9b9b9b;
+    --text-dim: #6a6a6a;
+    --header-bg: rgba(25, 25, 25, 0.95);
+    --btn-secondary-bg: #2a2a2a;
+    --btn-secondary-hover: #323232;
+    --btn-secondary-border: #383838;
+    --code-bg: #141414;
+    --code-border: #2e2e2e;
+    --meter-track: #2a2a2a;
+    --scope-active-bg: #2a2a2a;
+    --scope-active-text: #ffffff;
+    --scope-active-border: #3e3e3e;
+    --pill-green-bg: #1c3829;
+    --pill-green-text: #4dab78;
+    --pill-green-border: #265339;
+    --pill-red-bg: #382424;
+    --pill-red-text: #d44c47;
+    --pill-red-border: #4d2828;
+    --pill-blue-bg: #1e2d42;
+    --pill-blue-text: #529cca;
+    --pill-blue-border: #243c5a;
+    --dropdown-bg: #202020;
+    --modal-bg: #202020;
+  }
+
   * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   body {
-    background-color: #191919;
-    color: #e3e2e0;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  header {
+    background-color: var(--header-bg) !important;
+    border-color: var(--borderline) !important;
+  }
+  nav {
+    background-color: var(--bg-canvas) !important;
+    border-color: var(--borderline) !important;
   }
   .material-symbols-outlined {
     font-size: 18px;
@@ -53,18 +156,77 @@
     100% { transform: rotate(360deg); }
   }
   .tab-btn.active {
-    color: #ffffff;
-    background-color: #252525;
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card-subtle) !important;
     border-radius: 6px;
   }
   .tab-btn:not(.active) {
-    color: #9b9b9b;
-    background-color: transparent;
+    color: var(--text-muted) !important;
+    background-color: transparent !important;
     border-radius: 6px;
   }
   .tab-btn:not(.active):hover {
-    color: #e3e2e0;
-    background-color: #202020;
+    color: var(--text-primary) !important;
+    background-color: var(--btn-secondary-hover) !important;
+  }
+
+  /* Material 3 Expressive Animations */
+  @keyframes m3-celebrate-glow {
+    0% { transform: scale(0.92); opacity: 0.2; }
+    50% { transform: scale(1.08); opacity: 0.65; }
+    100% { transform: scale(0.96); opacity: 0.35; }
+  }
+  .m3-glow-active {
+    opacity: 1 !important;
+    animation: m3-celebrate-glow 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  }
+  .m3-progress-arc {
+    transition: stroke-dashoffset 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Notion Light Mode Adaptive Classes */
+  html:not(.dark) .bg-obsidian { background-color: var(--bg-canvas) !important; }
+  html:not(.dark) .bg-card { background-color: var(--bg-card) !important; border-color: var(--borderline) !important; }
+  html:not(.dark) .bg-card-subtle { background-color: var(--bg-card-subtle) !important; }
+  html:not(.dark) .text-white { color: var(--text-primary) !important; }
+  html:not(.dark) .text-zinc-100 { color: var(--text-primary) !important; }
+  html:not(.dark) .text-zinc-200 { color: var(--text-secondary) !important; }
+  html:not(.dark) .text-zinc-300 { color: var(--text-secondary) !important; }
+  html:not(.dark) .text-zinc-400 { color: var(--text-muted) !important; }
+  html:not(.dark) .text-zinc-500 { color: var(--text-dim) !important; }
+  html:not(.dark) .border-borderline,
+  html:not(.dark) .border-white\/10,
+  html:not(.dark) .border-white\/5,
+  html:not(.dark) .border-\[\#2e2e2e\],
+  html:not(.dark) .border-\[\#333333\],
+  html:not(.dark) .border-\[\#383838\],
+  html:not(.dark) .border-\[\#3e3e3e\] { border-color: var(--borderline) !important; }
+  html:not(.dark) .bg-\[\#191919\] { background-color: var(--bg-canvas) !important; }
+  html:not(.dark) .bg-\[\#202020\] { background-color: var(--bg-card) !important; }
+  html:not(.dark) .bg-\[\#252525\] { background-color: var(--bg-card-subtle) !important; }
+  html:not(.dark) .bg-\[\#141414\] { background-color: var(--bg-inset) !important; }
+  html:not(.dark) .bg-\[\#2a2a2a\] { background-color: var(--btn-secondary-bg) !important; color: var(--text-primary) !important; border-color: var(--btn-secondary-border) !important; }
+  html:not(.dark) .bg-zinc-800 { background-color: var(--bg-card-subtle) !important; color: var(--text-secondary) !important; }
+  html:not(.dark) .bg-zinc-900 { background-color: var(--bg-card-subtle) !important; color: var(--text-secondary) !important; }
+  html:not(.dark) .bg-zinc-950 { background-color: var(--bg-inset) !important; color: var(--text-primary) !important; }
+  html:not(.dark) .bg-black\/40,
+  html:not(.dark) .bg-black\/50,
+  html:not(.dark) .bg-black\/60 { background-color: var(--bg-inset) !important; color: var(--text-primary) !important; }
+  html:not(.dark) .bg-white { background-color: #2383e2 !important; color: #ffffff !important; }
+  html:not(.dark) .bg-white.text-black { background-color: #2383e2 !important; color: #ffffff !important; }
+  html:not(.dark) .hover\:bg-zinc-200:hover { background-color: #1b6ec2 !important; }
+  html:not(.dark) .text-\[\#e3e2e0\] { color: var(--text-primary) !important; }
+  html:not(.dark) .text-\[\#9b9b9b\] { color: var(--text-muted) !important; }
+  html:not(.dark) .text-\[\#6a6a6a\] { color: var(--text-dim) !important; }
+  html:not(.dark) #org-dropdown { background-color: var(--dropdown-bg) !important; border-color: var(--borderline) !important; }
+  html:not(.dark) #policy-modal > div,
+  html:not(.dark) #details-modal > div,
+  html:not(.dark) #remediation-modal > div,
+  html:not(.dark) #add-node-modal > div,
+  html:not(.dark) #onboarding-modal > div {
+    background-color: var(--modal-bg) !important;
+    border-color: var(--borderline) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   }
 </style>
 </head>
@@ -76,7 +238,7 @@
 <header class="border-b border-[#2e2e2e] px-6 lg:px-12 py-3 flex items-center justify-between bg-[#191919]/95 backdrop-blur-md sticky top-0 z-30">
   <div class="flex items-center space-x-3">
     <div class="w-7 h-7 rounded-md bg-[#252525] border border-[#2e2e2e] flex items-center justify-center text-sm shadow-sm">
-      🛡️
+      <span class="material-symbols-outlined text-[17px] text-[#2383e2] dark:text-[#529cca]">shield</span>
     </div>
     <div class="flex items-center gap-2 text-xs">
       <span class="font-semibold text-white">Roam</span>
@@ -97,10 +259,15 @@
     </div>
   </div>
 
-  <!-- Right: Refresh, Certificate, Settings Dropdown -->
+  <!-- Right: Theme Toggle, Refresh, Certificate, Settings Dropdown -->
   <div class="flex items-center space-x-2 sm:space-x-3">
+    <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light / Dark mode" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#9b9b9b] hover:text-[#e3e2e0] transition-colors">
+      <span class="material-symbols-outlined text-[15px]" id="theme-toggle-icon">dark_mode</span>
+      <span class="hidden xl:inline text-[11px]" id="theme-toggle-label">Theme</span>
+    </button>
+
     <a id="header-cert-btn" href="/certificate" target="_blank" title="View formal Certificate of Cyber Compliance" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#202020] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-[#e3e2e0] font-medium transition-colors">
-      <span class="text-sm">📜</span>
+      <span class="material-symbols-outlined text-[15px]">workspace_premium</span>
       <span>Cyber Certificate</span>
     </a>
 
@@ -167,26 +334,26 @@
 <!-- ========================================================================= -->
 <nav class="border-b border-[#2e2e2e] px-6 lg:px-12 flex items-center gap-1 sm:gap-2 bg-[#191919] sticky top-[49px] z-20 overflow-x-auto py-2">
   <button onclick="switchTab('overview')" id="tab-btn-overview" class="tab-btn active flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
-    <span>📋</span>
+    <span class="material-symbols-outlined text-[16px]">dashboard</span>
     <span>Overview</span>
   </button>
   <button onclick="switchTab('devices')" id="tab-btn-devices" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
-    <span>💻</span>
+    <span class="material-symbols-outlined text-[16px]">laptop_mac</span>
     <span>Devices & Hardware</span>
     <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-devices-badge">--</span>
   </button>
   <button onclick="switchTab('team')" id="tab-btn-team" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
-    <span>👥</span>
+    <span class="material-symbols-outlined text-[16px]">group</span>
     <span>Team & Access</span>
     <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-team-badge">--</span>
   </button>
   <button onclick="switchTab('policies')" id="tab-btn-policies" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
-    <span>📜</span>
+    <span class="material-symbols-outlined text-[16px]">description</span>
     <span>Policies</span>
     <span class="px-1.5 py-0.2 rounded-full bg-[#2a2a2a] text-[10px] font-mono text-zinc-300" id="tab-policies-badge">4/4</span>
   </button>
   <button onclick="switchTab('audit')" id="tab-btn-audit" class="tab-btn flex items-center gap-2 py-1.5 px-3 text-xs font-medium transition-colors shrink-0">
-    <span>🏛️</span>
+    <span class="material-symbols-outlined text-[16px]">account_balance</span>
     <span>Audit Vault</span>
     <span class="px-1.5 py-0.2 rounded bg-[#1c3829] text-[#4dab78] text-[10px] font-mono border border-[#265339]">CPA</span>
   </button>
@@ -202,41 +369,39 @@
   <!-- ======================================================================= -->
   <div id="view-overview" class="tab-view space-y-6">
 
-    <!-- Prominent Notion Compliance Scope Switcher -->
+    <!-- Notion-Style Segmented Scope Switcher -->
     <div class="bg-card rounded-xl border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
       <div class="flex items-start sm:items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
-          🎯
+          <span class="material-symbols-outlined text-[18px] text-[var(--text-muted)]">tune</span>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-zinc-100">Compliance Audit Scope</span>
+            <span class="text-xs font-semibold text-zinc-100">Audit Scope</span>
             <span id="scope-status-pill-overview" class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
-              Workstations Only (Standard Scope)
+              Workstations Only
             </span>
           </div>
           <p class="text-[11px] text-zinc-400 mt-0.5" id="scope-helper-text-overview">
-            Evaluating developer workstations for SOC 2 Type II audit readiness. Physical robotics are tracked under CC6.1 asset inventory.
+            Developer workstations in SOC 2 audit scope. Physical robotics in CC6.1 inventory.
           </p>
         </div>
       </div>
 
       <!-- Notion-Style Segmented Button Group -->
       <div class="inline-flex p-1 rounded-lg bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
-        <button type="button" id="scope-btn-workstations-overview" onclick="setFleetScope('workstations_only')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>💻 Workstations Only</span>
-          <span class="text-[10px] opacity-70 font-mono">(Standard)</span>
+        <button type="button" id="scope-btn-workstations-overview" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
+          <span class="material-symbols-outlined text-[14px]">laptop_mac</span>
+          <span>Workstations Only</span>
         </button>
-        <button type="button" id="scope-btn-fleet-overview" onclick="setFleetScope('full_fleet')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
-          <span class="w-2 h-2 rounded-full bg-zinc-600"></span>
-          <span>🤖 Full Fleet</span>
-          <span class="text-[10px] opacity-70 font-mono">(Robots + PCs)</span>
+        <button type="button" id="scope-btn-fleet-overview" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
+          <span class="material-symbols-outlined text-[14px]">precision_manufacturing</span>
+          <span>Full Fleet</span>
         </button>
       </div>
     </div>
 
-    <!-- Hero Readiness Hub -->
+    <!-- Hero Readiness Hub with Material 3 Expressive Progress Meter -->
     <section class="bg-card rounded-xl p-6 sm:p-7 border border-borderline shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div class="space-y-2">
@@ -245,32 +410,48 @@
             <span id="hero-badge">Continuous SOC 2 Verified</span>
           </div>
           <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-white leading-tight" id="hero-headline">
-            All Systems Clear: 1 of 1 Compliant
+            1 of 1 Compliant
           </h1>
           <p class="text-zinc-400 text-xs sm:text-sm max-w-xl leading-relaxed" id="hero-subtext">
-            All 1 monitored in-scope assets meet continuous SOC 2 controls. Telemetry synced.
+            All in-scope assets pass active SOC 2 security controls.
           </p>
         </div>
 
-        <!-- Gauge & Quick Stats -->
-        <div class="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-borderline pt-4 sm:pt-0 shrink-0">
-          <div class="relative w-20 h-20 flex items-center justify-center">
-            <svg class="w-20 h-20 -rotate-90 transform" viewBox="0 0 36 36">
-              <path class="text-zinc-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
-              <path class="text-emerald-400 transition-all duration-700" id="gauge-arc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="3"></path>
+        <!-- Material 3 Expressive Readiness Meter (Google Health / Fitbit style) -->
+        <div class="flex flex-col items-center sm:items-end justify-center border-t sm:border-t-0 border-borderline pt-5 sm:pt-0 shrink-0">
+          <div class="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center">
+            <!-- M3 Breathing Celebration Glow (active at 100%) -->
+            <div id="m3-celebrate-glow" class="absolute inset-2 rounded-full bg-emerald-500/20 blur-xl pointer-events-none transition-opacity duration-700 opacity-0"></div>
+            
+            <svg class="w-36 h-36 sm:w-40 sm:h-40 -rotate-90 transform" viewBox="0 0 140 140">
+              <defs>
+                <linearGradient id="m3-progress-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#06b6d4"></stop>
+                  <stop offset="50%" stop-color="#10b981"></stop>
+                  <stop offset="100%" stop-color="#34d399"></stop>
+                </linearGradient>
+                <linearGradient id="m3-progress-action-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"></stop>
+                  <stop offset="100%" stop-color="#ef4444"></stop>
+                </linearGradient>
+              </defs>
+              <!-- Background Inset Track -->
+              <circle cx="70" cy="70" r="54" fill="none" stroke="var(--meter-track)" stroke-width="11" class="transition-colors"></circle>
+              <!-- M3 Expressive Arc with Spring Easing -->
+              <circle id="gauge-arc" cx="70" cy="70" r="54" fill="none" stroke="url(#m3-progress-grad)" stroke-width="11" stroke-linecap="round" stroke-dasharray="339.29" stroke-dashoffset="0" class="m3-progress-arc"></circle>
             </svg>
-            <div class="absolute flex flex-col items-center justify-center text-center">
-              <span class="text-lg font-bold tracking-tight text-white" id="gauge-percent">100%</span>
-              <span class="text-[8px] text-zinc-500 uppercase tracking-wider font-medium">Ready</span>
+            <div class="absolute flex flex-col items-center justify-center text-center select-none">
+              <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white" id="gauge-percent">100%</span>
+              <span id="gauge-label" class="mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-400">Audit Ready</span>
             </div>
           </div>
-          <div class="flex items-center gap-3 text-xs mt-2">
+          <div class="flex items-center gap-3 text-xs mt-3">
             <span class="flex items-center gap-1.5 text-zinc-300 font-medium">
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span> <span id="stat-passing-count">1</span> Passing
             </span>
-            <span class="text-zinc-700">|</span>
+            <span class="text-zinc-600 dark:text-zinc-700">|</span>
             <span class="flex items-center gap-1.5 text-zinc-400 font-medium">
-              <span class="w-2 h-2 rounded-full bg-zinc-600"></span> <span id="stat-action-count">0</span> Action
+              <span class="w-2 h-2 rounded-full bg-zinc-500"></span> <span id="stat-action-count">0</span> Action
             </span>
           </div>
         </div>
@@ -279,12 +460,12 @@
       <!-- Action Footer -->
       <div class="mt-5 pt-4 border-t border-borderline flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-xs text-zinc-400">
-          <span>🛡️</span>
-          <span>Zero-payload security metadata • Independent CPA certification ready</span>
+          <span class="material-symbols-outlined text-[15px] text-[var(--text-muted)]">verified_user</span>
+          <span>Zero-payload security metadata • Independent CPA certified</span>
         </div>
         <button id="hero-fix-btn" onclick="triggerReAudit(activeDevice?.device_id)" class="px-3.5 py-1.5 rounded-md bg-[#2a2a2a] hover:bg-[#323232] text-white border border-[#3e3e3e] font-medium text-xs transition-all flex items-center justify-center gap-2 shadow-sm">
           <span class="material-symbols-outlined text-[15px]">refresh</span>
-          <span id="hero-btn-label">Verify All (Re-Audit)</span>
+          <span id="hero-btn-label">Verify Posture</span>
         </button>
       </div>
     </section>
@@ -368,36 +549,34 @@
   <!-- ======================================================================= -->
   <div id="view-devices" class="tab-view hidden space-y-6">
 
-    <!-- Prominent Notion Compliance Scope Switcher -->
+    <!-- Notion-Style Segmented Scope Switcher -->
     <div class="bg-card rounded-xl border border-borderline p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
       <div class="flex items-start sm:items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-card-subtle border border-borderline flex items-center justify-center text-sm shrink-0">
-          🎯
+          <span class="material-symbols-outlined text-[18px] text-[var(--text-muted)]">tune</span>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-zinc-100">Compliance Audit Scope</span>
+            <span class="text-xs font-semibold text-zinc-100">Audit Scope</span>
             <span id="scope-status-pill-devices" class="px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]">
-              Workstations Only (Standard Scope)
+              Workstations Only
             </span>
           </div>
           <p class="text-[11px] text-zinc-400 mt-0.5" id="scope-helper-text-devices">
-            Evaluating developer workstations for SOC 2 Type II audit readiness. Physical robotics are tracked under CC6.1 asset inventory.
+            Developer workstations in SOC 2 audit scope. Physical robotics in CC6.1 inventory.
           </p>
         </div>
       </div>
 
       <!-- Notion-Style Segmented Button Group -->
       <div class="inline-flex p-1 rounded-lg bg-[#141414] border border-borderline shrink-0 self-start md:self-auto" role="group" aria-label="Scope Toggle">
-        <button type="button" id="scope-btn-workstations-devices" onclick="setFleetScope('workstations_only')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>💻 Workstations Only</span>
-          <span class="text-[10px] opacity-70 font-mono">(Standard)</span>
+        <button type="button" id="scope-btn-workstations-devices" onclick="setFleetScope('workstations_only')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]">
+          <span class="material-symbols-outlined text-[14px]">laptop_mac</span>
+          <span>Workstations Only</span>
         </button>
-        <button type="button" id="scope-btn-fleet-devices" onclick="setFleetScope('full_fleet')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
-          <span class="w-2 h-2 rounded-full bg-zinc-600"></span>
-          <span>🤖 Full Fleet</span>
-          <span class="text-[10px] opacity-70 font-mono">(Robots + PCs)</span>
+        <button type="button" id="scope-btn-fleet-devices" onclick="setFleetScope('full_fleet')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent">
+          <span class="material-symbols-outlined text-[14px]">precision_manufacturing</span>
+          <span>Full Fleet</span>
         </button>
       </div>
     </div>
@@ -545,11 +724,12 @@
           <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Governance Framework</span>
           <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" id="policy-progress-pill">4 of 4 Adopted</span>
         </div>
-        <h2 class="text-lg font-semibold text-white">Statutory SOC 2 Security Policies</h2>
-        <p class="text-xs text-zinc-400 max-w-xl">Pre-drafted, audit-vetted compliance policies governing company operations, access controls, asset inventory, and incident response.</p>
+        <h2 class="text-base sm:text-lg font-semibold text-white">Statutory SOC 2 Policies</h2>
+        <p class="text-xs text-zinc-400 max-w-xl">Approved governance policies for SOC 2 Type II compliance.</p>
       </div>
-      <button onclick="adoptAllPolicies()" class="self-start sm:self-center px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors shadow-sm">
-        ✍️ Approve All Policies
+      <button onclick="adoptAllPolicies()" class="self-start sm:self-center px-4 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-semibold shrink-0 transition-colors shadow-sm flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[15px]">done_all</span>
+        <span>Approve All Policies</span>
       </button>
     </div>
 
@@ -699,7 +879,10 @@
           <span>Export .md</span>
         </button>
         <button onclick="closePolicyModal()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300">Close</button>
-        <button id="policy-modal-adopt-btn" onclick="adoptCurrentPolicyModal()" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold">✍️ Approve Policy</button>
+        <button id="policy-modal-adopt-btn" onclick="adoptCurrentPolicyModal()" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-black font-semibold flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[15px]">check</span>
+          <span>Approve Policy</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1066,6 +1249,109 @@
 let ORG_TOKEN = "";
 const API_BASE = window.location.origin;
 
+// =========================================================================
+// THEME MANAGEMENT (Notion Light / Dark with Persistence)
+// =========================================================================
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains("dark");
+  setTheme(isDark ? "light" : "dark");
+}
+
+function setTheme(theme) {
+  const icon = document.getElementById("theme-toggle-icon");
+  const btn = document.getElementById("theme-toggle-btn");
+  if (theme === "light") {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.add("light");
+    try { localStorage.setItem("roam_theme", "light"); } catch(e){}
+    if (icon) icon.innerText = "dark_mode";
+    if (btn) btn.title = "Switch to Dark mode";
+  } else {
+    document.documentElement.classList.remove("light");
+    document.documentElement.classList.add("dark");
+    try { localStorage.setItem("roam_theme", "dark"); } catch(e){}
+    if (icon) icon.innerText = "light_mode";
+    if (btn) btn.title = "Switch to Light mode";
+  }
+  const scope = (activeOrg?.fleet_scope) || "workstations_only";
+  updateScopeUI(scope);
+}
+
+// Initial theme icon sync
+document.addEventListener("DOMContentLoaded", () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  const icon = document.getElementById("theme-toggle-icon");
+  const btn = document.getElementById("theme-toggle-btn");
+  if (icon) icon.innerText = isDark ? "light_mode" : "dark_mode";
+  if (btn) btn.title = isDark ? "Switch to Light mode" : "Switch to Dark mode";
+});
+
+// =========================================================================
+// MATERIAL 3 EXPRESSIVE PROGRESS METER (Google Health / Fitbit style)
+// =========================================================================
+let currentMeterPct = 0;
+let meterAnimFrame = null;
+
+function animateMeter(targetPct) {
+  const gaugeArc = document.getElementById("gauge-arc");
+  const gaugePercent = document.getElementById("gauge-percent");
+  const gaugeLabel = document.getElementById("gauge-label");
+  const glowEl = document.getElementById("m3-celebrate-glow");
+  
+  const circumference = 339.29; // 2 * pi * 54
+  const targetOffset = circumference - (circumference * targetPct / 100);
+
+  if (gaugeArc) {
+    if (targetPct === 100) {
+      gaugeArc.setAttribute("stroke", "url(#m3-progress-grad)");
+    } else {
+      gaugeArc.setAttribute("stroke", "url(#m3-progress-action-grad)");
+    }
+    gaugeArc.style.strokeDashoffset = targetOffset;
+  }
+
+  if (glowEl) {
+    if (targetPct === 100) {
+      glowEl.classList.add("m3-glow-active");
+    } else {
+      glowEl.classList.remove("m3-glow-active");
+    }
+  }
+
+  if (gaugeLabel) {
+    if (targetPct === 100) {
+      gaugeLabel.innerText = "Audit Ready";
+      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+    } else {
+      gaugeLabel.innerText = "Action Req.";
+      gaugeLabel.className = "mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400";
+    }
+  }
+
+  if (gaugePercent) {
+    if (meterAnimFrame) cancelAnimationFrame(meterAnimFrame);
+    const startVal = currentMeterPct;
+    const startTime = performance.now();
+    const duration = 1200; // ms
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic: 1 - (1 - t)^3
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const interpolated = Math.round(startVal + (targetPct - startVal) * easeOut);
+      gaugePercent.innerText = `${interpolated}%`;
+      if (progress < 1) {
+        meterAnimFrame = requestAnimationFrame(step);
+      } else {
+        currentMeterPct = targetPct;
+        gaugePercent.innerText = `${targetPct}%`;
+      }
+    }
+    meterAnimFrame = requestAnimationFrame(step);
+  }
+}
+
 let activeDevices = [];
 let activeDevice = null;
 let activeUsers = [];
@@ -1282,39 +1568,31 @@ function updateScopeUI(scope) {
   const applyPillState = (btnWs, btnFl, pill, text) => {
     if (isWsOnly) {
       if (btnWs) {
-        btnWs.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]";
-        const dot = btnWs.querySelector("span:first-child");
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
       }
       if (btnFl) {
-        btnFl.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent";
-        const dot = btnFl.querySelector("span:first-child");
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-zinc-600";
+        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
       }
       if (pill) {
-        pill.innerText = "Workstations Only (Standard Scope)";
-        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[#1e2d42] text-[#529cca] border border-[#243c5a]";
+        pill.innerText = "Workstations Only";
+        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
       }
       if (text) {
-        text.innerText = "Evaluating developer workstations for SOC 2 Type II audit readiness. Physical robotics are tracked under CC6.1 asset inventory.";
+        text.innerText = "Developer workstations in SOC 2 audit scope. Physical robotics in CC6.1 inventory.";
       }
     } else {
       if (btnFl) {
-        btnFl.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all bg-[#2a2a2a] text-white shadow-sm border border-[#3e3e3e]";
-        const dot = btnFl.querySelector("span:first-child");
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-[#529cca]";
+        btnFl.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm border border-[var(--scope-active-border)] bg-[var(--scope-active-bg)] text-[var(--scope-active-text)]";
       }
       if (btnWs) {
-        btnWs.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-zinc-400 hover:text-zinc-200 hover:bg-[#202020] border border-transparent";
-        const dot = btnWs.querySelector("span:first-child");
-        if (dot) dot.className = "w-2 h-2 rounded-full bg-zinc-600";
+        btnWs.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-hover)] border border-transparent";
       }
       if (pill) {
         pill.innerText = "Full Fleet (Robots + Workstations)";
-        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[#2b1f3d] text-[#9d68d3] border border-[#3f2b5c]";
+        pill.className = "px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--pill-blue-bg)] text-[var(--pill-blue-text)] border border-[var(--pill-blue-border)]";
       }
       if (text) {
-        text.innerText = "Full Fleet Mode: Both engineering workstations and all physical robotics edge nodes are evaluated for SOC 2 Type II audit readiness.";
+        text.innerText = "Workstations and robotics edge nodes both evaluated for SOC 2 compliance.";
       }
     }
   };
@@ -1435,16 +1713,14 @@ function renderDashboard(devices) {
 
   activeDevice = inScopeDevices[0] || devices[0] || null;
 
-  // Percentage & Readiness Gauge
+  // Material 3 Expressive Readiness Gauge & Live Counter
   const pct = totalInScope > 0 ? Math.round((passing.length / totalInScope) * 100) : 0;
-  const gaugePercent = document.getElementById("gauge-percent");
-  const gaugeArc = document.getElementById("gauge-arc");
+  animateMeter(pct);
+
   const statPassing = document.getElementById("stat-passing-count");
   const statAction = document.getElementById("stat-action-count");
   const attentionBadge = document.getElementById("attention-badge-count");
 
-  if (gaugePercent) gaugePercent.innerText = `${pct}%`;
-  if (gaugeArc) gaugeArc.setAttribute("stroke-dasharray", `${pct}, 100`);
   if (statPassing) statPassing.innerText = passing.length;
   if (statAction) statAction.innerText = failing.length;
   if (attentionBadge) attentionBadge.innerText = failing.length;
@@ -1488,15 +1764,15 @@ function renderDashboard(devices) {
   } else if (failing.length === 0) {
     if (heroBadge) heroBadge.innerText = "Continuous SOC 2 Verified";
     if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
-    if (heroHeadline) heroHeadline.innerHTML = `All Systems Clear: <span class="text-emerald-400">${totalInScope} of ${totalInScope} Compliant</span>`;
-    if (heroSubtext) heroSubtext.innerText = `All ${totalInScope} monitored in-scope assets meet continuous SOC 2 controls. Telemetry synced.`;
-    if (heroBtnLabel) heroBtnLabel.innerText = "Verify All (Re-Audit)";
+    if (heroHeadline) heroHeadline.innerHTML = `<span class="text-emerald-500 font-bold">${totalInScope} of ${totalInScope} Compliant</span>`;
+    if (heroSubtext) heroSubtext.innerText = "All in-scope assets pass active SOC 2 security controls.";
+    if (heroBtnLabel) heroBtnLabel.innerText = "Verify Posture";
     if (heroFixBtn) heroFixBtn.onclick = () => triggerReAudit(activeDevice?.device_id);
   } else {
-    if (heroBadge) heroBadge.innerText = "Action Needed Before Audit";
+    if (heroBadge) heroBadge.innerText = "Action Needed";
     if (heroPulse) heroPulse.className = "w-1.5 h-1.5 rounded-full bg-amber-400/90 animate-pulse";
-    if (heroHeadline) heroHeadline.innerHTML = `Action Needed: <span class="text-white">${failing.length} ${failing.length === 1 ? 'device is' : 'devices are'} flagged</span>`;
-    if (heroSubtext) heroSubtext.innerText = `${passing.length} of ${totalInScope} devices satisfy SOC 2 requirements. Fix takes under 1 minute.`;
+    if (heroHeadline) heroHeadline.innerHTML = `<span class="text-white">${failing.length} ${failing.length === 1 ? 'Asset Requires' : 'Assets Require'} Attention</span>`;
+    if (heroSubtext) heroSubtext.innerText = `${passing.length} of ${totalInScope} devices satisfy SOC 2 requirements.`;
     if (heroBtnLabel) heroBtnLabel.innerText = failing.length === 1 ? "Fix Flagged Device" : "Fix Flagged Items";
     if (heroFixBtn) heroFixBtn.onclick = () => openRemediationModal(null, failing[0]?.device_id);
   }
@@ -1752,8 +2028,8 @@ function renderFilteredDevicesTables(workstations, robots) {
         row.className = "px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#252525] transition-colors border-b border-borderline last:border-b-0";
         row.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0 text-sm">
-              💻
+            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
+              <span class="material-symbols-outlined text-[16px]">laptop_mac</span>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
@@ -1762,7 +2038,7 @@ function renderFilteredDevicesTables(workstations, robots) {
                 <span class="text-[11px] text-zinc-400">${w.os_distro || 'Linux'} ${w.os_version || ''}</span>
               </div>
               <div class="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
-                <span>👤 ${w.owner_email || 'aldentmcqueen@gmail.com'}</span>
+                <span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">person</span>${w.owner_email || 'aldentmcqueen@gmail.com'}</span>
                 <span>•</span>
                 <span class="font-mono text-[10px] text-zinc-400">${w.fleet_tag || 'engineering'}</span>
                 <span>•</span>
@@ -1810,8 +2086,8 @@ function renderFilteredDevicesTables(workstations, robots) {
         row.className = "px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#252525] transition-colors border-b border-borderline last:border-b-0";
         row.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0 text-sm">
-              🤖
+            <div class="w-8 h-8 rounded-md bg-[#252525] border border-[#333333] flex items-center justify-center text-zinc-300 shrink-0">
+              <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
@@ -1904,8 +2180,9 @@ async function loadPolicies() {
               Read
             </button>
             ${!isAdopted ? `
-              <button onclick="adoptPolicy('${pol.policy_key}', this)" class="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold transition-colors">
-                ✍️ Approve
+              <button onclick="adoptPolicy('${pol.policy_key}', this)" class="px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-200 text-black text-xs font-semibold transition-colors flex items-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">check</span>
+                <span>Approve</span>
               </button>
             ` : `
               <span class="text-emerald-400 material-symbols-outlined text-[18px]">verified</span>

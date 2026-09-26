@@ -478,8 +478,8 @@ def generate_audit_packet_html(evidence, org, users, base_url="http://127.0.0.1:
         <span style="font-size:12px; color:#cbd5e1;">Continuous {framework} Executive Packet</span>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-        <button onclick="window.print()">🖨️ Print / Save as PDF</button>
-        <button class="btn-secondary" onclick="navigator.clipboard.writeText(window.location.href); alert('Auditor link copied to clipboard!');">📋 Copy Auditor URL</button>
+        <button onclick="window.print()">Print / Save as PDF</button>
+        <button class="btn-secondary" onclick="navigator.clipboard.writeText(window.location.href); alert('Auditor link copied to clipboard!');">Copy Auditor URL</button>
         <a href="/dashboard" class="btn-secondary">✕ Return to Dashboard</a>
     </div>
 </div>
